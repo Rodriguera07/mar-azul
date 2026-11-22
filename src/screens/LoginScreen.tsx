@@ -28,7 +28,7 @@ import { useAuthStore } from '../context/useAuthStore';
 import { useMinimumVisible } from '../hooks/useMinimumVisible';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { sendPasswordReset } from '../services/adminApi';
-import { colors, monoFontFamily, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, nunitoFontFamily, shape, spacing, typography } from '../theme';
 import { showAlert } from '../utils/alert';
 
 // Paleta "mar ao amanhecer" usada só no hero desta tela (ver mockup de
@@ -45,12 +45,6 @@ const HERO = {
   bronzeDeep: '#9a6a1c',
   tabTrack: '#e7dcc4',
 };
-
-const FEATURES: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
-  { icon: 'flash-outline', label: 'Tempo real' },
-  { icon: 'bar-chart-outline', label: 'Relatórios' },
-  { icon: 'people-outline', label: 'Equipe' },
-];
 
 const WELCOME_COPY: Record<Mode, { title: string; subtitle: string }> = {
   login: {
@@ -92,7 +86,7 @@ export function LoginScreen() {
   const isCompact = isShort || mode === 'signup';
   // Cadastro + tela baixa é a combinação mais apertada (4 campos + selo) —
   // encolhe o selo ainda mais só nesse caso pra sobrar espaço pro formulário.
-  const heroHeight = mode === 'signup' && isShort ? 44 : isShort ? 60 : isCompact ? 80 : 108;
+  const heroHeight = mode === 'signup' && isShort ? 40 : isShort ? 52 : isCompact ? 64 : 80;
   const showDecor = mode === 'login' && !isShort;
   const showIntro = !(mode === 'signup' && isShort);
   const fieldGapStyle = { marginTop: isCompact ? spacing.xs : spacing.md };
@@ -293,22 +287,6 @@ export function LoginScreen() {
 
                 <Text style={styles.brandTiny}>TRAILER</Text>
                 <Text style={styles.brandBig}>MAR AZUL</Text>
-
-                <Animated.View style={{ opacity: introFade, alignItems: 'center' }}>
-                  <Text style={styles.brandSub}>{welcome.title}</Text>
-                  {showIntro && <Text style={styles.brandIntro}>{welcome.subtitle}</Text>}
-                </Animated.View>
-
-                {showDecor && (
-                  <View style={styles.featureRow}>
-                    {FEATURES.map((f) => (
-                      <View key={f.label} style={styles.featureBadge}>
-                        <Ionicons name={f.icon} size={13} color={HERO.leadText} />
-                        <Text style={styles.featureBadgeText}>{f.label}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
               </Animated.View>
 
               {showDecor && <LoginHeroScene />}
@@ -318,15 +296,13 @@ export function LoginScreen() {
 
             <Animated.View style={sheetStyle}>
               <View style={[styles.sheet, isCompact && styles.sheetCompact]}>
+                <Animated.View style={{ opacity: introFade }}>
+                  <Text style={styles.title}>{welcome.title}</Text>
+                  {showIntro && <Text style={styles.subtitle}>{welcome.subtitle}</Text>}
+                </Animated.View>
+
                 <View style={[styles.modeSwitch, isCompact && styles.modeSwitchCompact]}>
-                  <Animated.View style={[styles.modeIndicator, { left: indicatorLeft }]}>
-                    <LinearGradient
-                      colors={[HERO.bronzeLight, HERO.bronze, HERO.bronzeDeep]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 0, y: 1 }}
-                      style={StyleSheet.absoluteFillObject}
-                    />
-                  </Animated.View>
+                  <Animated.View style={[styles.modeIndicator, { left: indicatorLeft }]} />
                   <AnimatedPressable
                     style={styles.modeTab}
                     stateLayerColor={colors.onSurface}
@@ -342,18 +318,14 @@ export function LoginScreen() {
                     onPress={() => switchMode('signup')}
                   >
                     <Text style={[styles.modeTabText, mode === 'signup' && styles.modeTabTextActive]}>
-                      Cadastrar
+                      Criar conta
                     </Text>
                   </AnimatedPressable>
                 </View>
 
-                <Text style={[styles.sheetLabel, isCompact && styles.sheetLabelCompact]}>
-                  {mode === 'login' ? 'ACESSO AO CAIXA' : 'CRIAR CONTA DO QUIOSQUE'}
-                </Text>
-
                 {mode === 'signup' && (
                   <>
-                    <Text style={styles.fieldLabel}>NOME DO QUIOSQUE</Text>
+                    <Text style={styles.fieldLabel}>Nome do quiosque</Text>
                     <View
                       style={[
                         styles.inputWrap,
@@ -363,7 +335,7 @@ export function LoginScreen() {
                     >
                       <Ionicons
                         name="storefront-outline"
-                        size={17}
+                        size={19}
                         color={focusedField === 'org' ? HERO.sea : colors.textMuted}
                       />
                       <TextInput
@@ -381,7 +353,7 @@ export function LoginScreen() {
                       />
                     </View>
 
-                    <Text style={[styles.fieldLabel, fieldGapStyle]}>SEU NOME</Text>
+                    <Text style={[styles.fieldLabel, fieldGapStyle]}>Seu nome</Text>
                     <View
                       style={[
                         styles.inputWrap,
@@ -391,7 +363,7 @@ export function LoginScreen() {
                     >
                       <Ionicons
                         name="person-outline"
-                        size={17}
+                        size={19}
                         color={focusedField === 'name' ? HERO.sea : colors.textMuted}
                       />
                       <TextInput
@@ -411,9 +383,7 @@ export function LoginScreen() {
                   </>
                 )}
 
-                <Text style={[styles.fieldLabel, mode === 'signup' && fieldGapStyle]}>
-                  E-MAIL
-                </Text>
+                <Text style={[styles.fieldLabel, mode === 'signup' && fieldGapStyle]}>E-mail</Text>
                 <View
                   style={[
                     styles.inputWrap,
@@ -423,7 +393,7 @@ export function LoginScreen() {
                 >
                   <Ionicons
                     name="mail-outline"
-                    size={17}
+                    size={19}
                     color={focusedField === 'user' ? HERO.sea : colors.textMuted}
                   />
                   <TextInput
@@ -444,7 +414,7 @@ export function LoginScreen() {
                   />
                 </View>
 
-                <Text style={[styles.fieldLabel, fieldGapStyle]}>SENHA</Text>
+                <Text style={[styles.fieldLabel, fieldGapStyle]}>Senha</Text>
                 <View
                   style={[
                     styles.inputWrap,
@@ -454,7 +424,7 @@ export function LoginScreen() {
                 >
                   <Ionicons
                     name="lock-closed-outline"
-                    size={17}
+                    size={19}
                     color={focusedField === 'pass' ? HERO.sea : colors.textMuted}
                   />
                   <TextInput
@@ -481,7 +451,7 @@ export function LoginScreen() {
                   >
                     <Ionicons
                       name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={17}
+                      size={19}
                       color={colors.textSecondary}
                     />
                   </Pressable>
@@ -609,12 +579,14 @@ const styles = StyleSheet.create({
   logoBadge: {
     borderRadius: shape.extraLarge,
     overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.35)',
     shadowColor: HERO.shadowColor,
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 6,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   logoImage: {
     width: '100%',
@@ -624,50 +596,14 @@ const styles = StyleSheet.create({
     ...typography.label,
     color: HERO.trailerText,
     letterSpacing: 4,
+    fontSize: 10,
   },
   brandBig: {
     ...typography.display,
-    fontSize: 30,
+    fontSize: 26,
     color: colors.white,
     letterSpacing: 1,
-    marginTop: 2,
-  },
-  brandSub: {
-    ...typography.h3,
-    fontFamily: nunitoFontFamily.extraBold,
-    color: colors.white,
-    marginTop: spacing.sm,
-  },
-  brandIntro: {
-    ...typography.bodySm,
-    color: HERO.leadText,
-    textAlign: 'center',
-    lineHeight: 18,
-    marginTop: 3,
-    maxWidth: 300,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.md,
-  },
-  featureBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
-    borderRadius: shape.full,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 5,
-  },
-  featureBadgeText: {
-    ...typography.caption,
-    fontFamily: nunitoFontFamily.bold,
-    color: '#eafaf6',
+    marginTop: 0,
   },
   sheet: {
     flex: 1,
@@ -676,7 +612,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: shape.extraLarge,
     marginTop: -18,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xl,
     paddingBottom: spacing.xl,
   },
   sheetCompact: {
@@ -689,9 +625,11 @@ const styles = StyleSheet.create({
     backgroundColor: HERO.tabTrack,
     borderRadius: shape.full,
     padding: 4,
+    marginTop: spacing.md,
     marginBottom: spacing.lg,
   },
   modeSwitchCompact: {
+    marginTop: spacing.sm,
     marginBottom: spacing.sm,
   },
   modeIndicator: {
@@ -700,16 +638,16 @@ const styles = StyleSheet.create({
     bottom: 4,
     width: '50%',
     borderRadius: shape.full,
-    overflow: 'hidden',
-    shadowColor: HERO.bronzeDeep,
-    shadowOpacity: 0.35,
+    backgroundColor: colors.surface,
+    shadowColor: '#2C2419',
+    shadowOpacity: 0.12,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
   modeTab: {
     flex: 1,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.xs + 2,
     borderRadius: shape.full,
     overflow: 'hidden',
     alignItems: 'center',
@@ -719,41 +657,47 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   modeTabTextActive: {
-    color: colors.textInverse,
-    fontFamily: nunitoFontFamily.bold,
+    color: colors.textPrimary,
+    fontFamily: nunitoFontFamily.extraBold,
   },
-  sheetLabel: {
-    ...typography.caption,
-    fontFamily: monoFontFamily,
-    letterSpacing: 2.5,
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
+  title: {
+    ...typography.h1,
+    fontSize: 28,
+    fontFamily: nunitoFontFamily.extraBold,
+    color: colors.textPrimary,
   },
-  sheetLabelCompact: {
-    marginBottom: spacing.sm,
+  subtitle: {
+    ...typography.body,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    marginTop: 4,
   },
   fieldLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    marginBottom: spacing.xs,
+    ...typography.bodySm,
+    fontFamily: nunitoFontFamily.bold,
+    color: colors.textPrimary,
+    marginBottom: 6,
   },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceContainerLow,
+    backgroundColor: colors.surface,
     borderRadius: shape.large,
     borderWidth: 1.5,
     borderColor: colors.outlineVariant,
-    paddingHorizontal: spacing.sm,
-    height: 50,
-    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    height: 54,
+    gap: spacing.sm,
   },
   inputWrapCompact: {
-    height: 44,
+    height: 48,
   },
   inputWrapFocused: {
     borderColor: HERO.sea,
+    shadowColor: HERO.sea,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
   },
   input: {
     flex: 1,
@@ -790,18 +734,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    borderRadius: shape.full,
-    height: 54,
+    borderRadius: shape.large,
+    height: 56,
     marginTop: spacing.xl,
     overflow: 'hidden',
     shadowColor: HERO.bronzeDeep,
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.35,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
     elevation: 5,
   },
   enterBtnCompact: {
-    height: 48,
+    height: 50,
     marginTop: spacing.md,
   },
   enterBtnText: {
