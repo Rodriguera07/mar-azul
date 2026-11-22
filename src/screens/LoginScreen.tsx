@@ -18,11 +18,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
-import { HeroWave } from '../components/HeroWave';
 import { LegalDocument } from '../components/LegalDocument';
 import { LoadingScreen } from '../components/LoadingScreen';
-import { LoginHeroBackground } from '../components/LoginHeroBackground';
-import { LoginHeroScene } from '../components/LoginHeroScene';
+import { LoginFoodMarquee } from '../components/LoginFoodMarquee';
 import { PRIVACY_POLICY, TERMS_OF_USE } from '../content/legal';
 import { useAuthStore } from '../context/useAuthStore';
 import { useMinimumVisible } from '../hooks/useMinimumVisible';
@@ -31,25 +29,25 @@ import { sendPasswordReset } from '../services/adminApi';
 import { colors, nunitoFontFamily, shape, spacing, typography } from '../theme';
 import { showAlert } from '../utils/alert';
 
-// Paleta "mar ao amanhecer" usada só no hero desta tela (ver mockup de
-// design) — o resto do app mantém o teal/areia padrão de `theme/colors.ts`.
+// Paleta "delivery" desta tela: coral vivo + amarelo sol sobre tinta escura
+// (fotos de comida ao fundo). O resto do app mantém o teal/areia padrão.
 const HERO = {
-  shadowColor: '#0E0047',
-  seaLight: '#2a9a89',
-  sea: '#17756a',
-  seaDeep: '#0b4a42',
-  trailerText: '#8fe0d0',
-  leadText: '#cdeae3',
-  bronzeLight: '#d9a648',
-  bronze: '#c68f34',
-  bronzeDeep: '#9a6a1c',
-  tabTrack: '#e7dcc4',
+  shadowColor: '#2B0A04',
+  ink: '#1C0E09',
+  sea: '#F0432B', // cor de ação (foco, links, ícones ativos)
+  seaDeep: '#C92A18',
+  sun: '#FFB020',
+  bronzeLight: '#FF7A45', // gradiente do botão principal
+  bronze: '#F0432B',
+  bronzeDeep: '#D02E1B',
+  tabTrack: '#F1ECE8',
+  fieldBg: '#F6F3F0',
 };
 
 const WELCOME_COPY: Record<Mode, { title: string; subtitle: string }> = {
   login: {
     title: 'Bem-vindo de volta',
-    subtitle: 'Entre para acompanhar mesas, vendas e sua equipe em tempo real.',
+    subtitle: 'Entre para acompanhar pedidos, mesas e vendas em tempo real.',
   },
   signup: {
     title: 'Vamos começar',
@@ -86,8 +84,8 @@ export function LoginScreen() {
   const isCompact = isShort || mode === 'signup';
   // Cadastro + tela baixa é a combinação mais apertada (4 campos + selo) —
   // encolhe o selo ainda mais só nesse caso pra sobrar espaço pro formulário.
-  const heroHeight = mode === 'signup' && isShort ? 40 : isShort ? 52 : isCompact ? 64 : 80;
-  const showDecor = mode === 'login' && !isShort;
+  const tile = isShort ? 58 : 76;
+  const heroHeight = mode === 'signup' && isShort ? 170 : isShort ? 215 : isCompact ? 250 : 320;
   const showIntro = !(mode === 'signup' && isShort);
   const fieldGapStyle = { marginTop: isCompact ? spacing.xs : spacing.md };
 
@@ -268,32 +266,28 @@ export function LoginScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={[styles.hero, isCompact && styles.heroCompact]}>
-              <LoginHeroBackground />
+            <View style={[styles.hero, { height: heroHeight }]}>
+              <LoginFoodMarquee tile={tile} />
+              <LinearGradient
+                colors={['rgba(28,14,9,0.15)', 'rgba(28,14,9,0.55)', 'rgba(28,14,9,0.96)']}
+                locations={[0, 0.5, 1]}
+                style={StyleSheet.absoluteFillObject}
+                pointerEvents="none"
+              />
 
               <Animated.View style={[styles.brandWrap, brandStyle]}>
-                <Animated.View
-                  style={[
-                    styles.logoBadge,
-                    { width: heroHeight, height: heroHeight, transform: [{ translateY: heroFloatY }] },
-                  ]}
-                >
+                <Animated.View style={[styles.logoBadge, { transform: [{ translateY: heroFloatY }] }]}>
                   <Image
                     source={require('../../assets/icon.png')}
                     style={styles.logoImage}
                     resizeMode="cover"
                   />
                 </Animated.View>
-
-                <Text style={styles.brandTiny}>TRAILER</Text>
-                <Text style={styles.brandBig}>MAR AZUL</Text>
+                <View style={styles.brandTextWrap}>
+                  <Text style={styles.brandTiny}>TRAILER</Text>
+                  <Text style={styles.brandBig}>MAR AZUL</Text>
+                </View>
               </Animated.View>
-
-              {showDecor && <LoginHeroScene />}
-
-              <View style={styles.waveBleed}>
-                <HeroWave color={colors.background} />
-              </View>
             </View>
 
             <Animated.View style={sheetStyle}>
@@ -558,7 +552,7 @@ export function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1, backgroundColor: '#FFFFFF' },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
@@ -568,58 +562,60 @@ const styles = StyleSheet.create({
   hero: {
     position: 'relative',
     overflow: 'hidden',
-    paddingTop: spacing.xl,
+    justifyContent: 'flex-end',
     paddingHorizontal: spacing.xl,
-    backgroundColor: HERO.sea,
-  },
-  heroCompact: {
-    paddingTop: spacing.lg,
-  },
-  waveBleed: {
-    marginHorizontal: -spacing.xl,
-    marginBottom: -1,
+    paddingBottom: spacing.xl + 14,
+    backgroundColor: HERO.ink,
   },
   brandWrap: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
   },
   logoBadge: {
-    borderRadius: shape.extraLarge,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.35)',
-    shadowColor: HERO.shadowColor,
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
+    borderColor: 'rgba(255,255,255,0.9)',
+    shadowColor: '#000',
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 6,
-    marginBottom: spacing.sm,
   },
   logoImage: {
     width: '100%',
     height: '100%',
   },
+  brandTextWrap: {
+    flex: 1,
+  },
   brandTiny: {
     ...typography.label,
-    color: HERO.trailerText,
-    letterSpacing: 4,
+    color: HERO.sun,
+    letterSpacing: 3,
     fontSize: 10,
   },
   brandBig: {
     ...typography.display,
-    fontSize: 26,
+    fontSize: 24,
     color: colors.white,
-    letterSpacing: 1,
-    marginTop: 0,
+    letterSpacing: 0.5,
   },
   sheet: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    marginTop: -24,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
     paddingBottom: spacing.xl,
   },
   sheetCompact: {
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
   },
   modeSwitch: {
@@ -641,7 +637,7 @@ const styles = StyleSheet.create({
     bottom: 4,
     width: '50%',
     borderRadius: shape.full,
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
     shadowColor: '#2C2419',
     shadowOpacity: 0.12,
     shadowRadius: 6,
@@ -665,7 +661,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h1,
-    fontSize: 28,
+    fontSize: 26,
     fontFamily: nunitoFontFamily.extraBold,
     color: colors.textPrimary,
   },
@@ -684,10 +680,10 @@ const styles = StyleSheet.create({
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: HERO.fieldBg,
     borderRadius: shape.large,
     borderWidth: 1.5,
-    borderColor: colors.outlineVariant,
+    borderColor: 'transparent',
     paddingHorizontal: spacing.md,
     height: 54,
     gap: spacing.sm,
@@ -697,10 +693,7 @@ const styles = StyleSheet.create({
   },
   inputWrapFocused: {
     borderColor: HERO.sea,
-    shadowColor: HERO.sea,
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 0 },
+    backgroundColor: '#FFFFFF',
   },
   input: {
     flex: 1,
