@@ -1,22 +1,21 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { dashboardPalette } from '../theme/dashboardPalette';
-import { colors, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { LoginFoodMarquee } from './LoginFoodMarquee';
+import { colors, nunitoFontFamily, spacing, typography } from '../theme';
 
 interface Props {
   message?: string;
 }
 
-// Mesma paleta "mar ao amanhecer" do hero da tela de login (ver
-// LoginHeroBackground) — reaproveitada aqui para que a transição
-// abertura do app -> login -> painel pareça uma única cena, não telas soltas.
-const SEA = {
-  light: '#2a9a89',
-  mid: '#17756a',
-  deep: '#0b4a42',
-  trailerText: '#8fe0d0',
-  leadText: '#cdeae3',
+// Mesma linguagem da tela de login ("delivery"): fotos do cardápio em
+// movimento sob um degradê escuro, coral + amarelo como acentos — a abertura
+// do app, o login e o painel parecem uma única cena, não telas soltas.
+const UI = {
+  ink: '#140A06',
+  accent: '#F0432B',
+  accentLight: '#FF7A45',
+  sun: '#FFB020',
 };
 
 function LoadingDots() {
@@ -67,63 +66,54 @@ function LoadingDots() {
   );
 }
 
-// Tela de loading com a mesma linguagem visual do hero de login (gradiente
-// "mar ao amanhecer" + selo do logo) — usada tanto na abertura do app
-// (restaurando sessão / carregando fontes) quanto logo após o envio do
-// login, pra evitar o corte seco de "formulário" direto pro painel.
+// Tela de loading usada tanto na abertura do app (restaurando sessão /
+// carregando fontes) quanto logo após o envio do login, pra evitar o corte
+// seco de "formulário" direto pro painel.
 export function LoadingScreen({ message = 'Carregando…' }: Props) {
-  const float = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
   const fade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(fade, { toValue: 1, duration: 320, useNativeDriver: true }).start();
   }, [fade]);
 
+  // Anel que se expande e some a partir do logo — indica "trabalhando" sem
+  // depender de uma barra de progresso real.
   useEffect(() => {
     const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(float, {
-          toValue: 1,
-          duration: 1800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(float, {
-          toValue: 0,
-          duration: 1800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ])
+      Animated.timing(pulse, {
+        toValue: 1,
+        duration: 1600,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      })
     );
     loop.start();
     return () => loop.stop();
-  }, [float]);
+  }, [pulse]);
 
-  const floatY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
+  const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.9] });
+  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 0] });
 
   return (
     <View style={styles.flex}>
-      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" preserveAspectRatio="none">
-        <Defs>
-          <RadialGradient id="loadingSea" cx="50%" cy="28%" r="85%">
-            <Stop offset="0%" stopColor={SEA.light} />
-            <Stop offset="45%" stopColor={SEA.mid} />
-            <Stop offset="100%" stopColor={SEA.deep} />
-          </RadialGradient>
-          <RadialGradient id="loadingSun" cx="82%" cy="8%" r="55%">
-            <Stop offset="0%" stopColor="#ec9a3f" stopOpacity={0.5} />
-            <Stop offset="70%" stopColor="#ec9a3f" stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Rect x={0} y={0} width="100%" height="100%" fill="url(#loadingSea)" />
-        <Circle cx="85%" cy="6%" r="42%" fill="url(#loadingSun)" />
-      </Svg>
+      <LoginFoodMarquee tile={84} />
+      <LinearGradient
+        colors={['rgba(20,10,6,0.78)', 'rgba(20,10,6,0.88)', 'rgba(20,10,6,0.97)']}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
 
       <Animated.View style={[styles.center, { opacity: fade }]}>
-        <Animated.View style={[styles.logoBadge, { transform: [{ translateY: floatY }] }]}>
-          <Image source={require('../../assets/icon.png')} style={styles.logoImage} resizeMode="cover" />
-        </Animated.View>
+        <View style={styles.logoWrap}>
+          <Animated.View
+            style={[styles.ring, { opacity: ringOpacity, transform: [{ scale: ringScale }] }]}
+          />
+          <View style={styles.logoBadge}>
+            <Image source={require('../../assets/icon.png')} style={styles.logoImage} resizeMode="cover" />
+          </View>
+        </View>
 
         <Text style={styles.brandTiny}>TRAILER</Text>
         <Text style={styles.brandBig}>MAR AZUL</Text>
@@ -138,34 +128,50 @@ export function LoadingScreen({ message = 'Carregando…' }: Props) {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: SEA.deep },
+  flex: { flex: 1, backgroundColor: UI.ink },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
   },
+  logoWrap: {
+    width: 92,
+    height: 92,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+  },
+  ring: {
+    position: 'absolute',
+    width: 92,
+    height: 92,
+    borderRadius: 28,
+    borderWidth: 3,
+    borderColor: UI.accentLight,
+  },
   logoBadge: {
-    width: 84,
-    height: 84,
-    borderRadius: shape.extraLarge,
+    width: 92,
+    height: 92,
+    borderRadius: 28,
     overflow: 'hidden',
-    shadowColor: '#0E0047',
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
+    borderWidth: 2.5,
+    borderColor: 'rgba(255,255,255,0.92)',
+    shadowColor: UI.accent,
+    shadowOpacity: 0.5,
+    shadowRadius: 22,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
-    marginBottom: spacing.md,
+    elevation: 8,
   },
   logoImage: { width: '100%', height: '100%' },
   brandTiny: {
     ...typography.label,
-    color: SEA.trailerText,
+    color: UI.sun,
     letterSpacing: 4,
   },
   brandBig: {
     ...typography.display,
-    fontSize: 28,
+    fontSize: 30,
     color: colors.white,
     letterSpacing: 1,
     marginTop: 2,
@@ -183,12 +189,12 @@ const styles = StyleSheet.create({
     width: 9,
     height: 9,
     borderRadius: 999,
-    backgroundColor: dashboardPalette.mint,
+    backgroundColor: UI.sun,
   },
   message: {
     ...typography.bodySm,
     fontFamily: nunitoFontFamily.semiBold,
-    color: SEA.leadText,
+    color: 'rgba(255,255,255,0.75)',
     marginTop: spacing.xs,
   },
 });
