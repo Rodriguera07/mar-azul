@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Animated, Easing, Image, ImageSourcePropType, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Image, ImageSourcePropType, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 // Fotos reais do cardápio, em três faixas inclinadas que deslizam sem parar
 // em sentidos alternados — mesma linguagem de apps de delivery (fundo vivo
@@ -71,7 +71,7 @@ function Row({ images, tile, reverse, duration }: {
         <Image
           key={i}
           source={src}
-          style={{ width: tile, height: tile, borderRadius: 18, marginRight: GAP }}
+          style={{ width: tile, height: tile, borderRadius: 22, marginRight: GAP }}
           resizeMode="cover"
         />
       ))}
@@ -80,7 +80,14 @@ function Row({ images, tile, reverse, duration }: {
 }
 
 export function LoginFoodMarquee({ tile }: { tile: number }) {
-  const rows = useMemo(() => ROWS, []);
+  const { height } = useWindowDimensions();
+  // Faixas suficientes para cobrir a tela inteira (o conjunto é inclinado,
+  // então sobram duas de margem para não aparecer vazio nos cantos).
+  const count = Math.ceil(height / (tile + GAP)) + 2;
+  const rows = useMemo(
+    () => Array.from({ length: count }, (_, i) => ROWS[i % ROWS.length]),
+    [count]
+  );
   return (
     <View style={styles.wrap} pointerEvents="none">
       <View style={styles.tilt}>
@@ -90,7 +97,7 @@ export function LoginFoodMarquee({ tile }: { tile: number }) {
             images={images}
             tile={tile}
             reverse={i % 2 === 1}
-            duration={DURATIONS[i]}
+            duration={DURATIONS[i % DURATIONS.length]}
           />
         ))}
       </View>

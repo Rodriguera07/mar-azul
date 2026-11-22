@@ -3,7 +3,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
-  Easing,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -12,12 +11,12 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
+import { FloatingField } from '../components/FloatingField';
 import { LegalDocument } from '../components/LegalDocument';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { LoginFoodMarquee } from '../components/LoginFoodMarquee';
@@ -26,36 +25,39 @@ import { useAuthStore } from '../context/useAuthStore';
 import { useMinimumVisible } from '../hooks/useMinimumVisible';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { sendPasswordReset } from '../services/adminApi';
-import { colors, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, nunitoFontFamily, spacing, typography } from '../theme';
 import { showAlert } from '../utils/alert';
 
-// Paleta "delivery" desta tela: coral vivo + amarelo sol sobre tinta escura
-// (fotos de comida ao fundo). O resto do app mantém o teal/areia padrão.
-const HERO = {
-  shadowColor: '#2B0A04',
-  ink: '#1C0E09',
-  sea: '#F0432B', // cor de ação (foco, links, ícones ativos)
-  seaDeep: '#C92A18',
+// Paleta "delivery": coral vivo + amarelo sol sobre tinta escura, com as
+// fotos do cardápio ao fundo. O resto do app mantém o teal/areia padrão.
+const UI = {
+  ink: '#140A06',
+  accent: '#F0432B',
+  accentLight: '#FF7A45',
+  accentDeep: '#D02E1B',
   sun: '#FFB020',
-  bronzeLight: '#FF7A45', // gradiente do botão principal
-  bronze: '#F0432B',
-  bronzeDeep: '#D02E1B',
-  tabTrack: '#F1ECE8',
-  fieldBg: '#F6F3F0',
-};
-
-const WELCOME_COPY: Record<Mode, { title: string; subtitle: string }> = {
-  login: {
-    title: 'Bem-vindo de volta',
-    subtitle: 'Entre para acompanhar pedidos, mesas e vendas em tempo real.',
-  },
-  signup: {
-    title: 'Vamos começar',
-    subtitle: 'Crie sua conta e organize seu quiosque em poucos minutos.',
-  },
 };
 
 type Mode = 'login' | 'signup';
+
+const COPY: Record<Mode, { title: string; subtitle: string; cta: string; busy: string; switchText: string; switchAction: string }> = {
+  login: {
+    title: 'Entrar',
+    subtitle: 'Acompanhe pedidos, mesas e vendas em tempo real.',
+    cta: 'Entrar',
+    busy: 'Entrando…',
+    switchText: 'Ainda não tem conta?',
+    switchAction: 'Criar conta',
+  },
+  signup: {
+    title: 'Criar conta',
+    subtitle: 'Organize seu quiosque em poucos minutos.',
+    cta: 'Criar conta',
+    busy: 'Criando conta…',
+    switchText: 'Já tem uma conta?',
+    switchAction: 'Entrar',
+  },
+};
 
 export function LoginScreen() {
   const login = useAuthStore((s) => s.login);
@@ -70,84 +72,35 @@ export function LoginScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
   const [legalDoc, setLegalDoc] = useState<'privacy' | 'terms' | null>(null);
   const { contentStyle } = useResponsiveContent(440);
 
-  // Cadastro tem mais campos que login (nome do quiosque + nome do
-  // responsável), então precisa de mais espaço vertical — a ilustração e os
-  // selos decorativos cedem lugar ao formulário antes, e mais cedo, do que no
-  // login. Em telas baixas (celulares menores), ambos os modos comprimem
-  // ainda mais para caber sem rolagem antes do teclado abrir.
+  // Telas baixas e o cadastro (4 campos) comprimem o título e os campos para
+  // caber sem rolagem antes do teclado abrir.
   const { height: windowHeight } = useWindowDimensions();
-  const isShort = windowHeight < 900;
+  const isShort = windowHeight < 760;
   const isCompact = isShort || mode === 'signup';
-  // Cadastro + tela baixa é a combinação mais apertada (4 campos + selo) —
-  // encolhe o selo ainda mais só nesse caso pra sobrar espaço pro formulário.
-  const tile = isShort ? 58 : 76;
-  const heroHeight = mode === 'signup' && isShort ? 170 : isShort ? 215 : isCompact ? 250 : 320;
-  const showIntro = !(mode === 'signup' && isShort);
-  const fieldGapStyle = { marginTop: isCompact ? spacing.xs : spacing.md };
+  const tile = isShort ? 64 : 84;
+  const showHeadline = !(mode === 'signup' && isShort);
+  const fieldGap = isCompact ? 10 : 12;
 
   const enter = useRef(new Animated.Value(0)).current;
   const shake = useRef(new Animated.Value(0)).current;
-  const heroFloat = useRef(new Animated.Value(0)).current;
-  const introFade = useRef(new Animated.Value(0)).current;
-  const indicatorAnim = useRef(new Animated.Value(0)).current;
+  const modeFade = useRef(new Animated.Value(1)).current;
   const loadingOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(enter, {
-      toValue: 1,
-      duration: 650,
-      useNativeDriver: true,
-    }).start();
+    Animated.timing(enter, { toValue: 1, duration: 700, useNativeDriver: true }).start();
   }, [enter]);
 
-  // Logo flutua suavemente sem parar — dá vida à tela sem disputar atenção
-  // com o formulário.
+  // Troca de modo: o conteúdo do cartão faz um fade rápido em vez de piscar.
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(heroFloat, {
-          toValue: 1,
-          duration: 1800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(heroFloat, {
-          toValue: 0,
-          duration: 1800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [heroFloat]);
+    modeFade.setValue(0);
+    Animated.timing(modeFade, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+  }, [mode, modeFade]);
 
-  // Saudação e indicador da aba reagem à troca de modo (login/cadastro) com
-  // um leve fade e um pill que desliza, em vez de trocar de estado seco.
-  useEffect(() => {
-    introFade.setValue(0);
-    Animated.timing(introFade, { toValue: 1, duration: 380, useNativeDriver: true }).start();
-  }, [mode, introFade]);
-
-  useEffect(() => {
-    Animated.spring(indicatorAnim, {
-      toValue: mode === 'login' ? 0 : 1,
-      useNativeDriver: false,
-      speed: 16,
-      bounciness: 8,
-    }).start();
-  }, [mode, indicatorAnim]);
-
-  // Cobre o formulário com a mesma cena "mar ao amanhecer" da abertura do
-  // app enquanto autentica, em vez do usuário ver só o texto do botão mudar
-  // e depois um corte seco pro painel quando a sessão autentica. Sustenta a
-  // mesma duração mínima do loading de abertura do app, pra não piscar em
-  // logins muito rápidos.
+  // Cobre o formulário com a tela de loading do app enquanto autentica
+  // (mesma duração mínima da abertura, pra não piscar em logins rápidos).
   const showLoadingOverlay = useMinimumVisible(loading);
   useEffect(() => {
     Animated.timing(loadingOpacity, {
@@ -237,25 +190,33 @@ export function LoginScreen() {
 
   const handleSubmit = mode === 'login' ? handleLogin : handleSignUp;
 
-  const brandStyle = {
-    opacity: enter,
-    transform: [
-      { translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [-16, 0] }) },
-    ],
+  const clearError = () => {
+    if (error) setError('');
   };
-  const sheetStyle = {
+
+  const copy = COPY[mode];
+  const headlineStyle = {
+    opacity: enter,
+    transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [-14, 0] }) }],
+  };
+  const cardStyle = {
     opacity: enter,
     transform: [
-      { translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [28, 0] }) },
+      { translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) },
       { translateX: shake.interpolate({ inputRange: [-1, 1], outputRange: [-8, 8] }) },
     ],
   };
-  const heroFloatY = heroFloat.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
-  const indicatorLeft = indicatorAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '50%'] });
-  const welcome = WELCOME_COPY[mode];
 
   return (
-    <View style={styles.flex}>
+    <View style={styles.root}>
+      <LoginFoodMarquee tile={tile} />
+      <LinearGradient
+        colors={['rgba(20,10,6,0.72)', 'rgba(20,10,6,0.82)', 'rgba(20,10,6,0.97)']}
+        locations={[0, 0.45, 0.85]}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
+
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -266,191 +227,113 @@ export function LoginScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={[styles.hero, { height: heroHeight }]}>
-              <LoginFoodMarquee tile={tile} />
-              <LinearGradient
-                colors={['rgba(28,14,9,0.15)', 'rgba(28,14,9,0.55)', 'rgba(28,14,9,0.96)']}
-                locations={[0, 0.5, 1]}
-                style={StyleSheet.absoluteFillObject}
-                pointerEvents="none"
-              />
-
-              <Animated.View style={[styles.brandWrap, brandStyle]}>
-                <Animated.View style={[styles.logoBadge, { transform: [{ translateY: heroFloatY }] }]}>
+            <Animated.View style={[styles.top, headlineStyle]}>
+              <View style={styles.brandRow}>
+                <View style={styles.logoBadge}>
                   <Image
                     source={require('../../assets/icon.png')}
                     style={styles.logoImage}
                     resizeMode="cover"
                   />
-                </Animated.View>
-                <View style={styles.brandTextWrap}>
+                </View>
+                <View>
                   <Text style={styles.brandTiny}>TRAILER</Text>
                   <Text style={styles.brandBig}>MAR AZUL</Text>
                 </View>
-              </Animated.View>
-            </View>
+              </View>
 
-            <Animated.View style={sheetStyle}>
-              <View style={[styles.sheet, isCompact && styles.sheetCompact]}>
-                <Animated.View style={{ opacity: introFade }}>
-                  <Text style={styles.title}>{welcome.title}</Text>
-                  {showIntro && <Text style={styles.subtitle}>{welcome.subtitle}</Text>}
-                </Animated.View>
+              {showHeadline && (
+                <Text style={[styles.headline, isShort && styles.headlineSmall]}>
+                  Seu quiosque,{'\n'}
+                  <Text style={styles.headlineAccent}>na palma da mão.</Text>
+                </Text>
+              )}
+            </Animated.View>
 
-                <View style={[styles.modeSwitch, isCompact && styles.modeSwitchCompact]}>
-                  <Animated.View style={[styles.modeIndicator, { left: indicatorLeft }]} />
-                  <AnimatedPressable
-                    style={styles.modeTab}
-                    stateLayerColor={colors.onSurface}
-                    onPress={() => switchMode('login')}
-                  >
-                    <Text style={[styles.modeTabText, mode === 'login' && styles.modeTabTextActive]}>
-                      Entrar
-                    </Text>
-                  </AnimatedPressable>
-                  <AnimatedPressable
-                    style={styles.modeTab}
-                    stateLayerColor={colors.onSurface}
-                    onPress={() => switchMode('signup')}
-                  >
-                    <Text style={[styles.modeTabText, mode === 'signup' && styles.modeTabTextActive]}>
-                      Criar conta
-                    </Text>
-                  </AnimatedPressable>
-                </View>
+            <Animated.View style={[styles.card, isCompact && styles.cardCompact, cardStyle]}>
+              <Animated.View style={{ opacity: modeFade }}>
+                <Text style={styles.title}>{copy.title}</Text>
+                <Text style={styles.subtitle}>{copy.subtitle}</Text>
 
-                {mode === 'signup' && (
-                  <>
-                    <Text style={styles.fieldLabel}>Nome do quiosque</Text>
-                    <View
-                      style={[
-                        styles.inputWrap,
-                        isCompact && styles.inputWrapCompact,
-                        focusedField === 'org' && styles.inputWrapFocused,
-                      ]}
-                    >
-                      <Ionicons
-                        name="storefront-outline"
-                        size={19}
-                        color={focusedField === 'org' ? HERO.sea : colors.textMuted}
-                      />
-                      <TextInput
+                <View style={[styles.fields, { gap: fieldGap }]}>
+                  {mode === 'signup' && (
+                    <>
+                      <FloatingField
+                        label="Nome do quiosque"
+                        icon="storefront-outline"
+                        accent={UI.accent}
+                        compact={isCompact}
                         value={orgName}
                         onChangeText={(v) => {
                           setOrgName(v);
-                          if (error) setError('');
+                          clearError();
                         }}
-                        onFocus={() => setFocusedField('org')}
-                        onBlur={() => setFocusedField(null)}
                         placeholder="Quiosque do Rodrigo"
-                        placeholderTextColor={colors.textMuted}
-                        style={styles.input}
                         returnKeyType="next"
                       />
-                    </View>
-
-                    <Text style={[styles.fieldLabel, fieldGapStyle]}>Seu nome</Text>
-                    <View
-                      style={[
-                        styles.inputWrap,
-                        isCompact && styles.inputWrapCompact,
-                        focusedField === 'name' && styles.inputWrapFocused,
-                      ]}
-                    >
-                      <Ionicons
-                        name="person-outline"
-                        size={19}
-                        color={focusedField === 'name' ? HERO.sea : colors.textMuted}
-                      />
-                      <TextInput
+                      <FloatingField
+                        label="Seu nome"
+                        icon="person-outline"
+                        accent={UI.accent}
+                        compact={isCompact}
                         value={displayName}
                         onChangeText={(v) => {
                           setDisplayName(v);
-                          if (error) setError('');
+                          clearError();
                         }}
-                        onFocus={() => setFocusedField('name')}
-                        onBlur={() => setFocusedField(null)}
                         placeholder="Seu nome completo"
-                        placeholderTextColor={colors.textMuted}
-                        style={styles.input}
                         returnKeyType="next"
                       />
-                    </View>
-                  </>
-                )}
+                    </>
+                  )}
 
-                <Text style={[styles.fieldLabel, mode === 'signup' && fieldGapStyle]}>E-mail</Text>
-                <View
-                  style={[
-                    styles.inputWrap,
-                    isCompact && styles.inputWrapCompact,
-                    focusedField === 'user' && styles.inputWrapFocused,
-                  ]}
-                >
-                  <Ionicons
-                    name="mail-outline"
-                    size={19}
-                    color={focusedField === 'user' ? HERO.sea : colors.textMuted}
-                  />
-                  <TextInput
+                  <FloatingField
+                    label="E-mail"
+                    icon="mail-outline"
+                    accent={UI.accent}
+                    compact={isCompact}
                     value={email}
                     onChangeText={(v) => {
                       setEmail(v);
-                      if (error) setError('');
+                      clearError();
                     }}
-                    onFocus={() => setFocusedField('user')}
-                    onBlur={() => setFocusedField(null)}
                     placeholder="voce@quiosque.com"
-                    placeholderTextColor={colors.textMuted}
                     autoCapitalize="none"
                     autoCorrect={false}
                     keyboardType="email-address"
-                    style={styles.input}
                     returnKeyType="next"
                   />
-                </View>
 
-                <Text style={[styles.fieldLabel, fieldGapStyle]}>Senha</Text>
-                <View
-                  style={[
-                    styles.inputWrap,
-                    isCompact && styles.inputWrapCompact,
-                    focusedField === 'pass' && styles.inputWrapFocused,
-                  ]}
-                >
-                  <Ionicons
-                    name="lock-closed-outline"
-                    size={19}
-                    color={focusedField === 'pass' ? HERO.sea : colors.textMuted}
-                  />
-                  <TextInput
+                  <FloatingField
+                    label="Senha"
+                    icon="lock-closed-outline"
+                    accent={UI.accent}
+                    compact={isCompact}
                     value={password}
                     onChangeText={(v) => {
                       setPassword(v);
-                      if (error) setError('');
+                      clearError();
                     }}
-                    onFocus={() => setFocusedField('pass')}
-                    onBlur={() => setFocusedField(null)}
                     placeholder={mode === 'signup' ? 'Mínimo 6 caracteres' : '••••••••'}
-                    placeholderTextColor={colors.textMuted}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    style={styles.input}
                     onSubmitEditing={handleSubmit}
                     returnKeyType="go"
+                    accessory={
+                      <Pressable
+                        hitSlop={10}
+                        onPress={() => setShowPassword((v) => !v)}
+                        accessibilityLabel={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      >
+                        <Ionicons
+                          name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                          size={20}
+                          color={colors.textSecondary}
+                        />
+                      </Pressable>
+                    }
                   />
-                  <Pressable
-                    hitSlop={10}
-                    onPress={() => setShowPassword((v) => !v)}
-                    accessibilityLabel={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                  >
-                    <Ionicons
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={19}
-                      color={colors.textSecondary}
-                    />
-                  </Pressable>
                 </View>
 
                 {mode === 'login' && (
@@ -468,50 +351,54 @@ export function LoginScreen() {
 
                 {error ? (
                   <View style={styles.errorBox}>
-                    <Ionicons name="alert-circle" size={14} color={colors.danger} />
+                    <Ionicons name="alert-circle" size={16} color={colors.danger} />
                     <Text style={styles.error}>{error}</Text>
                   </View>
                 ) : null}
 
                 <AnimatedPressable
-                  style={[styles.enterBtn, isCompact && styles.enterBtnCompact]}
+                  style={[styles.cta, isCompact && styles.ctaCompact]}
                   stateLayerColor={colors.white}
                   onPress={handleSubmit}
                   disabled={loading}
                 >
                   <LinearGradient
-                    colors={[HERO.bronzeLight, HERO.bronze, HERO.bronzeDeep]}
+                    colors={[UI.accentLight, UI.accent, UI.accentDeep]}
                     start={{ x: 0, y: 0 }}
-                    end={{ x: 0, y: 1 }}
+                    end={{ x: 1, y: 1 }}
                     style={StyleSheet.absoluteFillObject}
                   />
-                  <Text style={styles.enterBtnText}>
-                    {loading
-                      ? mode === 'login'
-                        ? 'Entrando…'
-                        : 'Criando conta…'
-                      : mode === 'login'
-                        ? 'Entrar'
-                        : 'Criar conta'}
-                  </Text>
+                  <Text style={styles.ctaText}>{loading ? copy.busy : copy.cta}</Text>
                   {!loading ? (
-                    <Ionicons name="arrow-forward" size={19} color={colors.textInverse} />
+                    <View style={styles.ctaArrow}>
+                      <Ionicons name="arrow-forward" size={18} color={UI.accent} />
+                    </View>
                   ) : null}
                 </AnimatedPressable>
 
-                <Text style={[styles.legalText, isCompact && styles.legalTextCompact]}>
-                  Ao continuar, você concorda com o{' '}
-                  <Text style={styles.legalLink} onPress={() => setLegalDoc('terms')}>
-                    Termo de Uso
-                  </Text>{' '}
-                  e a{' '}
-                  <Text style={styles.legalLink} onPress={() => setLegalDoc('privacy')}>
-                    Política de Privacidade
-                  </Text>
-                  .
-                </Text>
-              </View>
+                <View style={styles.switchRow}>
+                  <Text style={styles.switchText}>{copy.switchText}</Text>
+                  <Pressable
+                    hitSlop={8}
+                    onPress={() => switchMode(mode === 'login' ? 'signup' : 'login')}
+                  >
+                    <Text style={styles.switchAction}>{copy.switchAction}</Text>
+                  </Pressable>
+                </View>
+              </Animated.View>
             </Animated.View>
+
+            <Text style={styles.legalText}>
+              Ao continuar, você concorda com o{' '}
+              <Text style={styles.legalLink} onPress={() => setLegalDoc('terms')}>
+                Termo de Uso
+              </Text>{' '}
+              e a{' '}
+              <Text style={styles.legalLink} onPress={() => setLegalDoc('privacy')}>
+                Política de Privacidade
+              </Text>
+              .
+            </Text>
           </ScrollView>
 
           <Modal
@@ -519,7 +406,7 @@ export function LoginScreen() {
             animationType="slide"
             onRequestClose={() => setLegalDoc(null)}
           >
-            <SafeAreaView style={styles.flex} edges={['top', 'left', 'right', 'bottom']}>
+            <SafeAreaView style={styles.modalRoot} edges={['top', 'left', 'right', 'bottom']}>
               <View style={styles.legalModalHeader}>
                 <Text style={styles.legalModalTitle}>
                   {legalDoc === 'privacy' ? PRIVACY_POLICY.title : TERMS_OF_USE.title}
@@ -552,162 +439,72 @@ export function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#FFFFFF' },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
+  root: { flex: 1, backgroundColor: UI.ink },
+  flex: { flex: 1 },
+  modalRoot: { flex: 1, backgroundColor: colors.background },
+  loadingOverlay: { ...StyleSheet.absoluteFillObject },
   scroll: {
     flexGrow: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
-  hero: {
-    position: 'relative',
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl + 14,
-    backgroundColor: HERO.ink,
+  top: {
+    paddingHorizontal: spacing.xs,
+    gap: spacing.xl,
+    paddingBottom: spacing.lg,
   },
-  brandWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   logoBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
+    width: 46,
+    height: 46,
+    borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.9)',
-    shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
   },
-  logoImage: {
-    width: '100%',
-    height: '100%',
-  },
-  brandTextWrap: {
-    flex: 1,
-  },
-  brandTiny: {
-    ...typography.label,
-    color: HERO.sun,
-    letterSpacing: 3,
-    fontSize: 10,
-  },
-  brandBig: {
-    ...typography.display,
-    fontSize: 24,
+  logoImage: { width: '100%', height: '100%' },
+  brandTiny: { ...typography.label, color: UI.sun, letterSpacing: 3, fontSize: 10 },
+  brandBig: { ...typography.display, fontSize: 20, color: colors.white, letterSpacing: 0.5 },
+  headline: {
+    fontFamily: nunitoFontFamily.extraBold,
+    fontSize: 40,
+    lineHeight: 44,
+    letterSpacing: -1,
     color: colors.white,
-    letterSpacing: 0.5,
   },
-  sheet: {
-    flex: 1,
+  headlineSmall: { fontSize: 30, lineHeight: 34 },
+  headlineAccent: { color: UI.sun },
+  card: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    marginTop: -24,
-    paddingHorizontal: spacing.xl,
+    borderRadius: 32,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.lg,
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 16 },
+    elevation: 12,
   },
-  sheetCompact: {
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  modeSwitch: {
-    position: 'relative',
-    flexDirection: 'row',
-    backgroundColor: HERO.tabTrack,
-    borderRadius: shape.full,
-    padding: 4,
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  modeSwitchCompact: {
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  modeIndicator: {
-    position: 'absolute',
-    top: 4,
-    bottom: 4,
-    width: '50%',
-    borderRadius: shape.full,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#2C2419',
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  modeTab: {
-    flex: 1,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: shape.full,
-    overflow: 'hidden',
-    alignItems: 'center',
-  },
-  modeTabText: {
-    ...typography.bodySm,
-    color: colors.textSecondary,
-  },
-  modeTabTextActive: {
-    color: colors.textPrimary,
-    fontFamily: nunitoFontFamily.extraBold,
-  },
+  cardCompact: { paddingTop: spacing.lg, paddingBottom: spacing.md },
   title: {
-    ...typography.h1,
-    fontSize: 26,
     fontFamily: nunitoFontFamily.extraBold,
+    fontSize: 26,
+    letterSpacing: -0.5,
     color: colors.textPrimary,
   },
   subtitle: {
     ...typography.body,
     color: colors.textSecondary,
-    lineHeight: 20,
-    marginTop: 4,
+    marginTop: 2,
   },
-  fieldLabel: {
-    ...typography.bodySm,
-    fontFamily: nunitoFontFamily.bold,
-    color: colors.textPrimary,
-    marginBottom: 6,
-  },
-  inputWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: HERO.fieldBg,
-    borderRadius: shape.large,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-    paddingHorizontal: spacing.md,
-    height: 54,
-    gap: spacing.sm,
-  },
-  inputWrapCompact: {
-    height: 48,
-  },
-  inputWrapFocused: {
-    borderColor: HERO.sea,
-    backgroundColor: '#FFFFFF',
-  },
-  input: {
-    flex: 1,
-    ...typography.bodyLg,
-    color: colors.textPrimary,
-    height: '100%',
-  },
-  forgotPasswordWrap: {
-    alignSelf: 'flex-end',
-    marginTop: spacing.xs,
-  },
+  fields: { marginTop: spacing.md },
+  forgotPasswordWrap: { alignSelf: 'flex-end', marginTop: spacing.sm },
   forgotPasswordText: {
     ...typography.bodySm,
-    color: HERO.sea,
+    color: UI.accent,
     fontFamily: nunitoFontFamily.bold,
   },
   errorBox: {
@@ -715,53 +512,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: colors.dangerMuted,
-    borderRadius: shape.medium,
+    borderRadius: 14,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.xs + 2,
     marginTop: spacing.md,
   },
-  error: {
-    ...typography.bodySm,
-    color: colors.danger,
-    flexShrink: 1,
-  },
-  enterBtn: {
+  error: { ...typography.bodySm, color: colors.danger, flexShrink: 1 },
+  cta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
-    borderRadius: shape.large,
-    height: 56,
-    marginTop: spacing.xl,
+    height: 58,
+    borderRadius: 999,
+    marginTop: spacing.lg,
     overflow: 'hidden',
-    shadowColor: HERO.bronzeDeep,
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
+    shadowColor: UI.accentDeep,
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 5,
+    elevation: 6,
   },
-  enterBtnCompact: {
-    height: 50,
+  ctaCompact: { height: 52, marginTop: spacing.md },
+  ctaText: { ...typography.h3, fontFamily: nunitoFontFamily.extraBold, color: colors.white },
+  ctaArrow: {
+    position: 'absolute',
+    right: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
     marginTop: spacing.md,
   },
-  enterBtnText: {
-    ...typography.h3,
-    color: colors.textInverse,
-  },
+  switchText: { ...typography.bodySm, color: colors.textSecondary },
+  switchAction: { ...typography.bodySm, color: UI.accent, fontFamily: nunitoFontFamily.extraBold },
   legalText: {
     ...typography.caption,
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.65)',
     textAlign: 'center',
     lineHeight: 17,
+    paddingHorizontal: spacing.lg,
     marginTop: spacing.md,
   },
-  legalTextCompact: {
-    marginTop: spacing.xs,
-  },
-  legalLink: {
-    color: HERO.sea,
-    fontFamily: nunitoFontFamily.bold,
-  },
+  legalLink: { color: colors.white, fontFamily: nunitoFontFamily.bold },
   legalModalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -770,14 +570,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
-  legalModalTitle: {
-    ...typography.h2,
-    color: colors.textPrimary,
-  },
+  legalModalTitle: { ...typography.h2, color: colors.textPrimary },
   legalCloseBtn: {
     width: 36,
     height: 36,
-    borderRadius: shape.full,
+    borderRadius: 999,
     overflow: 'hidden',
     backgroundColor: colors.surfaceContainerHigh,
     alignItems: 'center',
