@@ -291,7 +291,9 @@ export function LoginScreen() {
 
               {showDecor && <LoginHeroScene />}
 
-              <HeroWave color={colors.background} />
+              <View style={styles.waveBleed}>
+                <HeroWave color={colors.background} />
+              </View>
             </View>
 
             <Animated.View style={sheetStyle}>
@@ -573,6 +575,10 @@ const styles = StyleSheet.create({
   heroCompact: {
     paddingTop: spacing.lg,
   },
+  waveBleed: {
+    marginHorizontal: -spacing.xl,
+    marginBottom: -1,
+  },
   brandWrap: {
     alignItems: 'center',
   },
@@ -608,11 +614,8 @@ const styles = StyleSheet.create({
   sheet: {
     flex: 1,
     backgroundColor: colors.background,
-    borderTopLeftRadius: shape.extraLarge,
-    borderTopRightRadius: shape.extraLarge,
-    marginTop: -18,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
   },
   sheetCompact: {
