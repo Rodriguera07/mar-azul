@@ -50,7 +50,9 @@ function normalize(text: string): string {
 }
 
 export function AddItemsScreen({ navigation, route }: Props) {
-  const { tableId } = route.params;
+  // `route.params` pode vir vazio (tela reaberta sem parâmetros): sem este
+  // cuidado, a desestruturação lançava erro e a tela ficava em branco.
+  const tableId = route.params?.tableId ?? '';
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [search, setSearch] = useState('');
   const { contentStyle } = useResponsiveContent();

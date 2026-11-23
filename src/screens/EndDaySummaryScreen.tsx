@@ -11,13 +11,24 @@ import { dashboardPalette } from '../theme/dashboardPalette';
 import { colors, font, elevationShadow, shape, spacing, typography } from '../theme';
 import { PaymentMethod } from '../types';
 import { formatCurrency, formatDateLabel, formatTime } from '../utils/format';
+import { MissingTable } from '../components/MissingTable';
 import { PAYMENT_LABELS, describeSalePayments } from '../utils/payments';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EndDaySummary'>;
 
 export function EndDaySummaryScreen({ navigation, route }: Props) {
-  const { summary } = route.params;
+  const summary = route.params?.summary;
   const { contentStyle } = useResponsiveContent();
+
+  if (!summary) {
+    return (
+      <MissingTable
+        title="Resumo indisponível"
+        subtitle="O resumo do dia já foi gravado. Veja os valores em Relatórios."
+        onBack={() => navigation.popToTop()}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>

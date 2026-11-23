@@ -28,7 +28,9 @@ import { formatCurrency, formatTime } from '../utils/format';
 type Props = NativeStackScreenProps<RootStackParamList, 'TableDetail'>;
 
 export function TableDetailScreen({ navigation, route }: Props) {
-  const { tableId } = route.params;
+  // `route.params` pode vir vazio (tela reaberta sem parâmetros): sem este
+  // cuidado, a desestruturação lançava erro e a tela ficava em branco.
+  const tableId = route.params?.tableId ?? '';
   const table = usePosStore((s) => s.tables.find((t) => t.id === tableId));
   const incrementItem = usePosStore((s) => s.incrementItem);
   const decrementItem = usePosStore((s) => s.decrementItem);

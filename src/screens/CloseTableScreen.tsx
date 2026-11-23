@@ -41,7 +41,9 @@ const METHOD_META: Record<PaymentMethod, { icon: keyof typeof Ionicons.glyphMap;
 };
 
 export function CloseTableScreen({ navigation, route }: Props) {
-  const { tableId } = route.params;
+  // `route.params` pode vir vazio (tela reaberta sem parâmetros): sem este
+  // cuidado, a desestruturação lançava erro e a tela ficava em branco.
+  const tableId = route.params?.tableId ?? '';
   const table = usePosStore((s) => s.tables.find((t) => t.id === tableId));
   const recordPayment = usePosStore((s) => s.recordPayment);
   const closeTable = usePosStore((s) => s.closeTable);

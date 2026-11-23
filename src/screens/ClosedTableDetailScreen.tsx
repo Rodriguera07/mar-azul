@@ -4,6 +4,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
+import { MissingTable } from '../components/MissingTable';
 import { OrderItemRow } from '../components/OrderItemRow';
 import { BarPill, ScreenBar } from '../components/ScreenBar';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
@@ -15,8 +16,18 @@ import { PAYMENT_LABELS } from '../utils/payments';
 type Props = NativeStackScreenProps<RootStackParamList, 'ClosedTableDetail'>;
 
 export function ClosedTableDetailScreen({ navigation, route }: Props) {
-  const { sale } = route.params;
+  const sale = route.params?.sale;
   const { contentStyle } = useResponsiveContent();
+
+  if (!sale) {
+    return (
+      <MissingTable
+        title="Venda não encontrada"
+        subtitle="Não foi possível abrir os detalhes desta mesa. Volte e tente de novo."
+        onBack={() => navigation.goBack()}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
