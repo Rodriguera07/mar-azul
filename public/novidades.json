@@ -1,0 +1,9 @@
+{
+  "titulo": "Cardápio antigo e novo",
+  "itens": [
+    "Agora o admin escolhe entre o cardápio novo e o antigo na tela Cardápio",
+    "Janela nova para trocar de cardápio, mostrando os preços que mudam",
+    "A Porção de Porquinho saiu dos dois cardápios",
+    "Este aviso passa a mostrar o que mudou em cada versão"
+  ]
+}

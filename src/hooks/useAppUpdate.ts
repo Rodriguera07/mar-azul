@@ -33,8 +33,32 @@ export function applyUpdate() {
   if (typeof window !== 'undefined') window.location.reload();
 }
 
-export function useAppUpdate(): { updateAvailable: boolean } {
+// Novidades da versão publicada (public/novidades.json, atualizado a cada
+// publicação) — mostradas no aviso de atualização para a equipe saber o que
+// mudou antes de tocar em "Atualizar".
+export interface ReleaseNotes {
+  title: string;
+  items: string[];
+}
+
+async function fetchReleaseNotes(): Promise<ReleaseNotes | null> {
+  try {
+    const res = await fetch(`/novidades.json?_=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const title = typeof data?.titulo === 'string' ? data.titulo.trim() : '';
+    const items = Array.isArray(data?.itens)
+      ? data.itens.filter((i: unknown): i is string => typeof i === 'string' && i.trim() !== '').slice(0, 6)
+      : [];
+    return title || items.length ? { title, items } : null;
+  } catch {
+    return null;
+  }
+}
+
+export function useAppUpdate(): { updateAvailable: boolean; notes: ReleaseNotes | null } {
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [notes, setNotes] = useState<ReleaseNotes | null>(null);
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
@@ -53,6 +77,11 @@ export function useAppUpdate(): { updateAvailable: boolean } {
         const html = await res.text();
         const latest = html.match(BUNDLE_PATTERN)?.[0];
         if (!cancelled && latest && latest !== loaded) {
+          if (!found) {
+            fetchReleaseNotes().then((n) => {
+              if (!cancelled) setNotes(n);
+            });
+          }
           found = true;
           setUpdateAvailable(true);
         }
@@ -87,5 +116,5 @@ export function useAppUpdate(): { updateAvailable: boolean } {
     };
   }, []);
 
-  return { updateAvailable };
+  return { updateAvailable, notes };
 }
