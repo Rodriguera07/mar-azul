@@ -1,7 +1,14 @@
 import { create } from 'zustand';
 import { clearLiveEvents, pushLiveEvent } from '../services/liveFeed';
 import { resetSyncStatus } from '../services/syncStatus';
-import { DEFAULT_IMAGE_BY_ID, DEFAULT_MENU_ITEMS, normalizePortionItems, sortMenuItems } from '../data/menu';
+import {
+  applyDefaultPrices,
+  DEFAULT_IMAGE_BY_ID,
+  DEFAULT_MENU_ITEMS,
+  normalizePortionItems,
+  PRICE_TABLE_VERSION,
+  sortMenuItems,
+} from '../data/menu';
 import {
   clearClosedTablesAndSummarize,
   closeTableTransaction,
@@ -70,7 +77,11 @@ interface PosState {
   orgId: string | null;
   currentUser: CurrentUser | null;
 
-  initOrgSync: (orgId: string, user: CurrentUser, options?: { liveToasts?: boolean }) => void;
+  initOrgSync: (
+    orgId: string,
+    user: CurrentUser,
+    options?: { liveToasts?: boolean; isAdmin?: boolean }
+  ) => void;
   teardownOrgSync: () => void;
   saveMenuItems: (items: MenuItemInput[]) => Promise<boolean>;
 
@@ -90,6 +101,11 @@ interface PosState {
 
 // Enche `image` (require() de asset local) a partir do catálogo padrão, por
 // id — itens do Firestore nunca carregam imagem própria (ver MenuItemInput).
+function stripImage(item: MenuItem): MenuItemInput {
+  const { image, ...rest } = item;
+  return rest;
+}
+
 function hydrateMenu(items: MenuItemInput[]): MenuItem[] {
   return sortMenuItems(
     normalizePortionItems(items).map((item) => ({ ...item, image: DEFAULT_IMAGE_BY_ID[item.id] }))
@@ -189,6 +205,9 @@ function commitItems(
 let tablesUnsubscribe: Unsubscribe | null = null;
 let closedSalesUnsubscribe: Unsubscribe | null = null;
 let menuUnsubscribe: Unsubscribe | null = null;
+// Evita gravar a atualização da tabela duas vezes se o servidor reenviar o
+// documento antes de a primeira gravação terminar.
+let upgradingMenu = false;
 
 export const usePosStore = create<PosState>((set, get) => ({
   tables: [],
@@ -242,8 +261,39 @@ export const usePosStore = create<PosState>((set, get) => ({
       );
     });
 
-    menuUnsubscribe = subscribeMenu(orgId, (items) => {
-      set({ menuItems: items ? hydrateMenu(items) : DEFAULT_MENU_ITEMS });
+    menuUnsubscribe = subscribeMenu(orgId, (items, version) => {
+      if (!items) {
+        set({ menuItems: DEFAULT_MENU_ITEMS });
+        return;
+      }
+      const hydrated = hydrateMenu(items);
+      if (version >= PRICE_TABLE_VERSION) {
+        set({ menuItems: hydrated });
+        return;
+      }
+      // Cardápio salvo com uma tabela de preços mais antiga: TODOS passam a ver
+      // a tabela nova na hora (sem esperar ninguém). Quem é admin também grava
+      // no servidor — uma vez só, porque a gravação sobe a versão e este ramo
+      // deixa de valer. Itens criados pelo admin não são alterados.
+      const { items: upgraded } = applyDefaultPrices(hydrated);
+      set({ menuItems: upgraded });
+      if (options?.isAdmin && !upgradingMenu) {
+        upgradingMenu = true;
+        saveMenu(orgId, upgraded.map(stripImage), PRICE_TABLE_VERSION)
+          .then(() =>
+            logAuditEvent({
+              orgId,
+              userId: user.uid,
+              userName: user.displayName,
+              type: 'menu_updated',
+              detail: 'Tabela de preços atualizada automaticamente',
+            })
+          )
+          .catch((err) => console.warn('[usePosStore] atualizar tabela de preços', err))
+          .finally(() => {
+            upgradingMenu = false;
+          });
+      }
     });
   },
 
@@ -272,7 +322,7 @@ export const usePosStore = create<PosState>((set, get) => ({
     const { orgId, currentUser } = get();
     if (!orgId) return false;
     try {
-      await saveMenu(orgId, items);
+      await saveMenu(orgId, items, PRICE_TABLE_VERSION);
       if (currentUser) {
         logAuditEvent({
           orgId,

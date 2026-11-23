@@ -25,7 +25,7 @@ export function RootNavigator() {
 
   useEffect(() => {
     if (uid && orgId && displayName) {
-      usePosStore.getState().initOrgSync(orgId, { uid, displayName }, { liveToasts: role !== 'admin' });
+      usePosStore.getState().initOrgSync(orgId, { uid, displayName }, { liveToasts: role !== 'admin', isAdmin: role === 'admin' });
       registerForPushNotificationsAsync(orgId, uid);
     } else {
       usePosStore.getState().teardownOrgSync();

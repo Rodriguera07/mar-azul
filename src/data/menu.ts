@@ -6,6 +6,13 @@ import { MenuCategory, MenuItem } from '../types';
 // organização (antes de o admin salvar sua própria edição no Firestore) e
 // como fonte das imagens dos itens originais — itens criados pelo admin na
 // tela de Cardápio não têm imagem (mostram o ícone da categoria).
+// Versão da tabela de preços do catálogo padrão. Aumente este número SEMPRE que
+// mudar preços/nomes dos itens padrão: o cardápio que cada organização salvou
+// guarda a versão que já aplicou, e quem está numa versão menor recebe a
+// tabela nova automaticamente (ver `syncMenu` em usePosStore).
+//   1 = tabela original · 2 = tabela de novembro/2026 (cardápio impresso novo)
+export const PRICE_TABLE_VERSION = 2;
+
 const RAW_MENU_ITEMS: MenuItem[] = [
   // Bebidas
   { id: 'beb-1', category: 'bebidas', name: 'Refrigerante Lata', price: 9, image: require('../../assets/menu/beb-refrigerante.jpg') },
