@@ -32,6 +32,14 @@
       body {
         height: 100%;
         background-color: #F3F6FB;
+        /* iOS: sem zoom automático de texto e sem o "flash" cinza ao tocar. */
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html {
+        overflow: hidden;
+        overscroll-behavior: none;
       }
       /* These styles disable body scrolling if you are using <ScrollView> */
       body {
