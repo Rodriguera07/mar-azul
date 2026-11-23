@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { LoadingScreen } from './src/components/LoadingScreen';
+import { UpdateBanner } from './src/components/UpdateBanner';
 import { initAuthListener, useAuthStore } from './src/context/useAuthStore';
 import { useMinimumVisible } from './src/hooks/useMinimumVisible';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -62,6 +63,7 @@ export default function App() {
           <NavigationContainer theme={navigationTheme}>
             <RootNavigator />
           </NavigationContainer>
+          <UpdateBanner />
         </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>

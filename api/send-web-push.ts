@@ -62,6 +62,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(400).json({ error: 'missing token, orgId, title or body' });
     return;
   }
+  // Qualquer membro autenticado pode chamar esta função — limitar o tamanho
+  // evita que ela vire um canal de spam/abuso para os admins.
+  if (typeof title !== 'string' || typeof body !== 'string' || title.length > 80 || body.length > 240) {
+    res.status(400).json({ error: 'title or body too long' });
+    return;
+  }
 
   try {
     const decoded = await getAuth().verifyIdToken(idToken);

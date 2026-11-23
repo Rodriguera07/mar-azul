@@ -11,6 +11,7 @@ import ReanimatedAnimated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { useAuthStore } from '../context/useAuthStore';
+import { getBuildId } from '../hooks/useAppUpdate';
 import { colors, elevationShadow, font, radius, shape, spacing, typography } from '../theme';
 import { dashboardPalette } from '../theme/dashboardPalette';
 import { RootStackParamList } from './types';
@@ -311,7 +312,9 @@ export function AppDrawerContent({ navigation, state }: DrawerContentComponentPr
           <Ionicons name="log-out-outline" size={19} color={dashboardPalette.rose} />
           <Text style={styles.logoutText}>Sair da conta</Text>
         </AnimatedPressable>
-        <Text style={styles.version}>Trailer Mar Azul</Text>
+        <Text style={styles.version}>
+          Trailer Mar Azul{getBuildId() ? ` · versão ${getBuildId()}` : ''}
+        </Text>
       </View>
     </View>
   );

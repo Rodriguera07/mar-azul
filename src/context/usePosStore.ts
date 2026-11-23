@@ -338,6 +338,18 @@ export const usePosStore = create<PosState>((set, get) => ({
     if (!table || table.status !== 'open') return;
     const trimmed = label.trim();
     if (!trimmed || trimmed === table.label) return;
+    // Mesmo bloqueio de "abrir mesa": dois blocos com o mesmo número deixam a
+    // equipe sem saber qual é qual.
+    const taken = tables.some(
+      (t) =>
+        t.id !== tableId &&
+        t.status === 'open' &&
+        t.label.trim().toLowerCase() === trimmed.toLowerCase()
+    );
+    if (taken) {
+      showAlert('Mesa já existe', `Já há uma mesa aberta com o número "${trimmed}". Escolha outro.`);
+      return;
+    }
 
     updateTable(orgId, tableId, { label: trimmed }).catch(
       warnAndAlert('renomear mesa', 'Não foi possível renomear a mesa')
@@ -588,9 +600,16 @@ export const usePosStore = create<PosState>((set, get) => ({
       totalRevenue += sale.total;
     });
 
+    // O rótulo do dia é o do PRIMEIRO fechamento do turno (as vendas vêm da mais
+    // nova para a mais antiga). `currentDay` é gravado quando o app abre e fica
+    // velho num app deixado aberto por dias — usá-lo aqui gravava o resumo na
+    // data errada e podia sobrescrever o de outro dia.
+    const firstClosedAt = new Date(sales[sales.length - 1].closedAt);
+    const shiftDate = Number.isNaN(firstClosedAt.getTime()) ? currentDay : formatDateKey(firstClosedAt);
+
     const closedAt = new Date().toISOString();
     const summary: DaySummary = {
-      date: currentDay,
+      date: shiftDate,
       totalRevenue: round2(totalRevenue),
       sales,
       closedAt,
@@ -598,7 +617,7 @@ export const usePosStore = create<PosState>((set, get) => ({
     };
 
     await clearClosedTablesAndSummarize(orgId, {
-      date: currentDay,
+      date: shiftDate,
       totalRevenue: summary.totalRevenue,
       paymentBreakdown,
       closedAt,
