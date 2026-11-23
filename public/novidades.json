@@ -1,9 +1,8 @@
 {
-  "titulo": "App instalado no iPhone mais estável",
+  "titulo": "Painel de erros dentro do app",
   "itens": [
-    "Corrige a tela branca e os toques que não respondiam no app instalado na tela de início do iPhone",
-    "O app não pede mais permissão de notificação sozinho na abertura no iPhone",
-    "Tremedeira na tela reduzida: a página não rola mais por baixo do app",
-    "O menu lateral abre pelo botão do avatar"
+    "Se algo der errado, aparece um botão vermelho \"!\" no canto da tela",
+    "Ao tocar nele, dá para ver o que falhou e copiar para mandar ao suporte",
+    "Se a tela ficar em branco, o painel abre sozinho depois de alguns segundos"
   ]
 }

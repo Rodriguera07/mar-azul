@@ -113,6 +113,147 @@
     </script>
 
     <!--
+      Painel de erros: independente do React, então aparece mesmo quando o app
+      não chega a abrir (tela branca). Guarda os últimos erros e avisos; um
+      botão "!" surge no canto assim que algo falha, e se o app continuar em
+      branco depois de 8s o painel abre sozinho, com dados do aparelho para
+      diagnóstico. Também abre com ?debug=1 no endereço.
+    -->
+    <script>
+      (function () {
+        var KEY = 'app-error-log';
+        var MAX = 40;
+        var log = [];
+        try { log = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (_) { log = []; }
+        // Entradas de sessões anteriores ficam marcadas, para não confundir.
+        log.forEach(function (e) { e.old = true; });
+        var btn = null, panel = null;
+
+        function save() { try { localStorage.setItem(KEY, JSON.stringify(log.slice(-MAX))); } catch (_) {} }
+        function fmt(v) {
+          try {
+            if (v && v.stack) return String(v.message || v) + '\n' + String(v.stack).split('\n').slice(0, 4).join('\n');
+            if (v && v.message) return String(v.message);
+            return typeof v === 'string' ? v : JSON.stringify(v);
+          } catch (_) { return String(v); }
+        }
+        function add(kind, text) {
+          if (!text) return;
+          log.push({ t: new Date().toLocaleTimeString('pt-BR'), k: kind, m: String(text).slice(0, 700) });
+          if (log.length > MAX) log.shift();
+          save();
+          if (kind !== 'aviso') showButton();
+          if (panel) render();
+        }
+        function info() {
+          var root = document.getElementById('root');
+          var standalone = (window.navigator.standalone === true) ||
+            (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+          var vv = window.visualViewport;
+          var scripts = Array.prototype.map.call(document.scripts, function (s) { return s.src; })
+            .filter(function (s) { return /_expo\/static/.test(s); }).map(function (s) { return s.split('/').pop(); });
+          return [
+            'Modo instalado (standalone): ' + (standalone ? 'sim' : 'não'),
+            'Tela: ' + window.innerWidth + 'x' + window.innerHeight + (vv ? ' (visual ' + Math.round(vv.width) + 'x' + Math.round(vv.height) + ')' : ''),
+            'Root: ' + (root ? root.offsetWidth + 'x' + root.offsetHeight + ', filhos ' + root.childElementCount : 'ausente'),
+            'Rolagem da página: ' + (window.scrollY || 0),
+            'Pacote: ' + (scripts.join(', ') || 'não encontrado'),
+            'Online: ' + (navigator.onLine ? 'sim' : 'não'),
+            'Navegador: ' + navigator.userAgent
+          ].join('\n');
+        }
+        function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+        function render() {
+          if (!panel) return;
+          var body = log.length
+            ? log.slice().reverse().map(function (e) {
+                return '<div style="padding:8px 0;border-top:1px solid #E2E8F2;' + (e.old ? 'opacity:.55;' : '') + '">' +
+                  '<div style="font-size:11px;color:#5B6B85">' + esc(e.t) + ' · ' + esc(e.k) + (e.old ? ' · sessão anterior' : '') + '</div>' +
+                  '<div style="font-size:12px;white-space:pre-wrap;word-break:break-word;margin-top:2px">' + esc(e.m) + '</div></div>';
+              }).join('')
+            : '<div style="padding:12px 0;font-size:13px;color:#5B6B85">Nenhum erro registrado.</div>';
+          panel.querySelector('[data-body]').innerHTML =
+            '<pre style="margin:0 0 8px;font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word;color:#0F1B33">' + esc(info()) + '</pre>' + body;
+        }
+        function btnStyle(bg, color) {
+          return 'height:40px;padding:0 14px;border:0;border-radius:12px;font-size:13px;font-weight:600;background:' + bg + ';color:' + color;
+        }
+        function openPanel() {
+          if (panel) return;
+          panel = document.createElement('div');
+          panel.id = 'error-panel';
+          panel.setAttribute('style', 'position:fixed;left:0;right:0;bottom:0;top:12%;z-index:100000;display:flex;flex-direction:column;background:#fff;color:#0F1B33;border-radius:20px 20px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.3);font-family:-apple-system,Helvetica,Arial,sans-serif;padding:14px 16px calc(14px + env(safe-area-inset-bottom))');
+          panel.innerHTML =
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+              '<div style="font-size:17px;font-weight:700">Painel de erros</div>' +
+              '<button data-act="close" style="' + btnStyle('#EEF2F8', '#0F1B33') + '">Fechar</button></div>' +
+            '<div data-body style="flex:1;overflow:auto;-webkit-overflow-scrolling:touch"></div>' +
+            '<div style="display:flex;gap:8px;margin-top:10px">' +
+              '<button data-act="copy" style="flex:1;' + btnStyle('#1565D8', '#fff') + '">Copiar</button>' +
+              '<button data-act="clear" style="flex:1;' + btnStyle('#EEF2F8', '#0F1B33') + '">Limpar</button>' +
+              '<button data-act="reload" style="flex:1;' + btnStyle('#EEF2F8', '#0F1B33') + '">Recarregar</button></div>';
+          panel.addEventListener('click', function (ev) {
+            var act = ev.target && ev.target.getAttribute && ev.target.getAttribute('data-act');
+            if (act === 'close') { document.body.removeChild(panel); panel = null; }
+            else if (act === 'reload') { window.location.reload(); }
+            else if (act === 'clear') { log = []; save(); render(); if (btn) { btn.parentNode.removeChild(btn); btn = null; } }
+            else if (act === 'copy') {
+              var text = info() + '\n\n' + log.map(function (e) { return '[' + e.t + ' ' + e.k + '] ' + e.m; }).join('\n');
+              try {
+                navigator.clipboard.writeText(text).then(function () { ev.target.textContent = 'Copiado!'; });
+              } catch (_) {
+                var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+                try { document.execCommand('copy'); ev.target.textContent = 'Copiado!'; } catch (__) {}
+                document.body.removeChild(ta);
+              }
+            }
+          });
+          document.body.appendChild(panel);
+          render();
+        }
+        function showButton() {
+          if (btn || !document.body) return;
+          btn = document.createElement('button');
+          btn.textContent = '!';
+          btn.setAttribute('aria-label', 'Abrir painel de erros');
+          btn.setAttribute('style', 'position:fixed;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:99998;width:34px;height:34px;border:0;border-radius:17px;background:#D6394B;color:#fff;font-size:17px;font-weight:700;opacity:.9');
+          btn.onclick = openPanel;
+          document.body.appendChild(btn);
+        }
+
+        window.addEventListener('error', function (e) {
+          var t = e && e.target;
+          if (t && t !== window && t.tagName) { add('erro', 'Falha ao carregar <' + t.tagName.toLowerCase() + '> ' + (t.src || t.href || '')); return; }
+          add('erro', (e && e.message ? e.message : 'erro') + (e && e.filename ? '\n' + String(e.filename).split('/').pop() + ':' + e.lineno : ''));
+        }, true);
+        window.addEventListener('unhandledrejection', function (e) { add('promessa', fmt(e && e.reason)); });
+        ['error', 'warn'].forEach(function (lvl) {
+          var orig = console[lvl];
+          console[lvl] = function () {
+            try { add(lvl === 'error' ? 'console' : 'aviso', Array.prototype.map.call(arguments, fmt).join(' ')); } catch (_) {}
+            if (orig) orig.apply(console, arguments);
+          };
+        });
+
+        // Já havia erro na sessão anterior: mostra o botão de novo.
+        if (log.some(function (e) { return e.k !== 'aviso'; })) {
+          document.addEventListener('DOMContentLoaded', showButton);
+        }
+        function appVisible() {
+          var root = document.getElementById('root');
+          return !!(root && root.childElementCount > 0 && root.innerText && root.innerText.trim().length > 0);
+        }
+        // Tela em branco depois de 8s: abre sozinho, com os dados do aparelho.
+        setTimeout(function () {
+          if (!appVisible()) { add('aviso', 'O app não desenhou nada em 8s (tela em branco).'); showButton(); openPanel(); }
+        }, 8000);
+        if (/[?&]debug=1/.test(window.location.search)) {
+          document.addEventListener('DOMContentLoaded', function () { showButton(); openPanel(); });
+        }
+      })();
+    </script>
+
+    <!--
       Rede de segurança de abertura: se o aplicativo não chegar a aparecer (ex.:
       um celular com navegador antigo que não entende alguma parte do código),
       mostra uma mensagem com o motivo e um botão para recarregar, em vez de
