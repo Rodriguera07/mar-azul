@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../context/useAuthStore';
-import { AUDIT_EVENT_META } from '../data/auditEvents';
+import { getAuditEventMeta } from '../data/auditEvents';
 import { subscribeAuditLog } from '../services/firestoreOrg';
 import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { AuditEventType, AuditLogEntry } from '../types';
@@ -87,7 +87,7 @@ export function AdminNotificationToasts() {
   }, [toast, anim]);
 
   if (!toast) return null;
-  const meta = AUDIT_EVENT_META[toast.type];
+  const meta = getAuditEventMeta(toast.type);
 
   return (
     <View pointerEvents="none" style={[styles.host, { top: insets.top + spacing.sm }]}>

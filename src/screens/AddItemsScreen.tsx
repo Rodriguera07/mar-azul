@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { Button } from '../components/Button';
 import { EmptyState } from '../components/EmptyState';
+import { MissingTable } from '../components/MissingTable';
 import { CATEGORY_ICONS, CATEGORY_LABELS } from '../data/menu';
 import { usePosStore } from '../context/usePosStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
@@ -132,13 +133,15 @@ export function AddItemsScreen({ navigation, route }: Props) {
     );
   };
 
+  if (!table) return <MissingTable onBack={() => navigation.goBack()} />;
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Adicionar Itens</Text>
-          <Text style={styles.subtitle}>Mesa {table?.label}</Text>
+          <Text style={styles.subtitle}>Mesa {table.label}</Text>
         </View>
         <AnimatedPressable
           onPress={() => navigation.goBack()}

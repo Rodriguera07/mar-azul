@@ -14,6 +14,7 @@ import { PrivacyPolicyScreen } from '../screens/PrivacyPolicyScreen';
 import { TableDetailScreen } from '../screens/TableDetailScreen';
 import { TermsOfUseScreen } from '../screens/TermsOfUseScreen';
 import { UserManagementScreen } from '../screens/UserManagementScreen';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { colors } from '../theme';
 import { MainTabs } from './MainTabs';
 import { RootStackParamList } from './types';
@@ -28,6 +29,9 @@ const modalPresentation = Platform.OS === 'web' ? 'card' : 'modal';
 export function AppStack() {
   return (
     <Stack.Navigator
+      // Cada tela ganha o seu próprio boundary: um erro de renderização fica
+      // contido nela (com "Tentar novamente") em vez de deixar o app em branco.
+      screenLayout={({ children }) => <ErrorBoundary scope="screen">{children}</ErrorBoundary>}
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.background },

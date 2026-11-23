@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useAuthStore } from '../context/useAuthStore';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { MenuManagementScreen } from '../screens/MenuManagementScreen';
@@ -43,6 +44,7 @@ export function MainTabs() {
 
   return (
     <Tab.Navigator
+      screenLayout={({ children }) => <ErrorBoundary scope="screen">{children}</ErrorBoundary>}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: dashboardPalette.brand,

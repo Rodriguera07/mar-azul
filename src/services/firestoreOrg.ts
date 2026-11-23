@@ -26,6 +26,7 @@ import {
   WebPushSubscription,
 } from '../types';
 import { computeNextPaymentAmount, computeTotals, isPaidInFull } from '../utils/billing';
+import { asNumber, sanitizeClosedSale, sanitizeMenuItems, sanitizeTable } from '../utils/sanitize';
 
 const tablesCol = (orgId: string) => collection(db, 'organizations', orgId, 'tables');
 const closedSalesCol = (orgId: string) => collection(db, 'organizations', orgId, 'closedSales');
@@ -76,7 +77,7 @@ export async function recordPaymentTransaction(
     const snap = await tx.get(tableRef);
     if (!snap.exists()) return { status: 'not-found' as const, amount: 0, fullyPaid: false };
 
-    const table = snap.data() as Table;
+    const table = sanitizeTable(snap.id, snap.data());
     const amount = computeNextPaymentAmount(table);
     if (amount <= 0) {
       return { status: 'already-paid' as const, amount: 0, fullyPaid: isPaidInFull(table) };
@@ -104,10 +105,10 @@ export function subscribeTables(orgId: string, cb: (tables: Table[]) => void): U
       const next = new Map(byId);
       for (const change of snap.docChanges()) {
         if (change.type === 'removed') next.delete(change.doc.id);
-        else next.set(change.doc.id, change.doc.data() as Table);
+        else next.set(change.doc.id, sanitizeTable(change.doc.id, change.doc.data()));
       }
       byId = next;
-      cb(snap.docs.map((d) => next.get(d.id) ?? (d.data() as Table)));
+      cb(snap.docs.map((d) => next.get(d.id) ?? sanitizeTable(d.id, d.data())));
     },
     logSnapshotError('tables')
   );
@@ -125,7 +126,7 @@ export function subscribeClosedSalesSince(
   );
   return onSnapshot(
     q,
-    (snap) => cb(snap.docs.map((d) => d.data() as ClosedSale)),
+    (snap) => cb(snap.docs.map((d) => sanitizeClosedSale(d.id, d.data()))),
     logSnapshotError('closedSalesSince')
   );
 }
@@ -137,7 +138,7 @@ export function subscribeClosedSalesSince(
 export async function getClosedSalesSince(orgId: string, sinceIso: string): Promise<ClosedSale[]> {
   const q = query(closedSalesCol(orgId), where('closedAt', '>=', sinceIso), orderBy('closedAt', 'desc'));
   const snap = await getDocs(q);
-  return snap.docs.map((d) => d.data() as ClosedSale);
+  return snap.docs.map((d) => sanitizeClosedSale(d.id, d.data()));
 }
 
 export function subscribeClosedSalesRange(
@@ -154,7 +155,7 @@ export function subscribeClosedSalesRange(
   );
   return onSnapshot(
     q,
-    (snap) => cb(snap.docs.map((d) => d.data() as ClosedSale)),
+    (snap) => cb(snap.docs.map((d) => sanitizeClosedSale(d.id, d.data()))),
     logSnapshotError('closedSalesRange')
   );
 }
@@ -178,7 +179,7 @@ export async function closeTableTransaction(
   return runTransaction(db, async (tx) => {
     const snap = await tx.get(tableRef);
     if (!snap.exists()) return 'not-found';
-    const table = snap.data() as Table;
+    const table = sanitizeTable(snap.id, snap.data());
     if (table.status !== 'open') return 'not-open';
     if (!isPaidInFull(table)) return 'unpaid';
 
@@ -232,7 +233,19 @@ interface DaySummaryRollup {
 // e a comparação simplesmente não aparece — não fabricamos um valor.
 export async function getDaySummary(orgId: string, date: string): Promise<DaySummaryRollup | null> {
   const snap = await getDoc(daySummaryDoc(orgId, date));
-  return snap.exists() ? (snap.data() as DaySummaryRollup) : null;
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return {
+    date: String(data.date ?? date),
+    totalRevenue: asNumber(data.totalRevenue),
+    paymentBreakdown: {
+      pix: asNumber(data.paymentBreakdown?.pix),
+      dinheiro: asNumber(data.paymentBreakdown?.dinheiro),
+      debito: asNumber(data.paymentBreakdown?.debito),
+      credito: asNumber(data.paymentBreakdown?.credito),
+    },
+    closedAt: String(data.closedAt ?? ''),
+  };
 }
 
 // Zera o quadro do dia (apaga as mesas já fechadas) e grava o rollup usado
@@ -322,7 +335,7 @@ export function subscribeMenu(
 ): Unsubscribe {
   return onSnapshot(
     menuDoc(orgId),
-    (snap) => cb(snap.exists() ? (snap.data().items as MenuItemInput[]) : null),
+    (snap) => cb(snap.exists() ? sanitizeMenuItems(snap.data().items) : null),
     logSnapshotError('menu')
   );
 }

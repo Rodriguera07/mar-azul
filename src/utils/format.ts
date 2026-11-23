@@ -1,5 +1,8 @@
 export function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', {
+  // Valor ausente/inválido (dado antigo ou corrompido) vira R$ 0,00 em vez de
+  // lançar erro e derrubar a tela.
+  const safe = Number.isFinite(value) ? value : 0;
+  return safe.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   });
