@@ -3,7 +3,7 @@
 // e verde ficam para atenção e dinheiro.
 export const colors = {
   // Base — areia clara e neutra, tom exato do mock de referência do Dashboard
-  background: '#F5F5F4',
+  background: '#F6F4F1',
   backgroundAlt: '#EFEEEC',
   surface: '#FFFFFF',
   surfaceElevated: '#FFFFFF',

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
+import { BrandHeader } from '../components/BrandHeader';
 import { Button } from '../components/Button';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CATEGORY_ICONS, CATEGORY_LABELS } from '../data/menu';
@@ -173,19 +174,25 @@ export function MenuManagementScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <View style={styles.header}>
-        <AnimatedPressable
-          onPress={handleGoBackPress}
-          style={styles.backBtn}
-          stateLayerColor={colors.onSurface}
-          accessibilityLabel="Abrir menu"
-        >
-          <Ionicons name="menu" size={22} color={colors.textPrimary} />
-        </AnimatedPressable>
-        <Text style={styles.title}>Cardápio</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+      <BrandHeader bottomSpace={18}>
+        <View style={styles.header}>
+          <AnimatedPressable
+            onPress={handleGoBackPress}
+            style={styles.backBtn}
+            stateLayerColor={colors.white}
+            accessibilityLabel="Abrir menu"
+          >
+            <Ionicons name="menu" size={21} color={colors.white} />
+          </AnimatedPressable>
+          <View style={styles.titleWrap}>
+            <Text style={styles.title}>Cardápio</Text>
+            <Text style={styles.subtitle}>
+              {draft.length} {draft.length === 1 ? 'item' : 'itens'} · {isDirty ? 'alterações não salvas' : 'tudo salvo'}
+            </Text>
+          </View>
+        </View>
+      </BrandHeader>
 
       <View style={styles.filterSection}>
         <ScrollView
@@ -299,27 +306,27 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
+    gap: spacing.sm,
   },
   backBtn: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.20)',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  titleWrap: { flex: 1 },
+  subtitle: { fontFamily: font.medium, fontSize: 12.5, color: 'rgba(255,255,255,0.85)', marginTop: 1 },
   title: {
-    ...typography.h2,
-    color: colors.textPrimary,
+    fontFamily: font.extraBold,
+    fontSize: 24,
+    letterSpacing: -0.9,
+    color: colors.white,
   },
   filterSection: {
+    marginTop: spacing.md,
     marginBottom: spacing.xs,
   },
   filterScroll: {

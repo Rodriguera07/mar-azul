@@ -8,6 +8,7 @@ import { Button } from '../components/Button';
 import { MissingTable } from '../components/MissingTable';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { PaymentMethodButton } from '../components/PaymentMethodButton';
+import { ScreenBar } from '../components/ScreenBar';
 import { useResponsiveContent, widthForColumns } from '../hooks/useResponsiveContent';
 import {
   getNextPaymentAmount,
@@ -107,17 +108,11 @@ export function CloseTableScreen({ navigation, route }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Fechar Mesa {table.label}</Text>
-        <AnimatedPressable
-          onPress={() => navigation.goBack()}
-          style={styles.closeBtn}
-          stateLayerColor={colors.onSurface}
-        >
-          <Ionicons name="close" size={22} color={colors.textPrimary} />
-        </AnimatedPressable>
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+      <ScreenBar
+        title={`Fechar Mesa ${table.label}`}
+        onClose={() => navigation.goBack()}
+      />
 
       <ScrollView
         contentContainerStyle={[styles.content, contentStyle]}

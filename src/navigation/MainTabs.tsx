@@ -52,11 +52,17 @@ export function MainTabs() {
         sceneStyle: { backgroundColor: colors.background },
         tabBarStyle: {
           backgroundColor: colors.white,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
+          borderTopWidth: 0,
+          borderTopLeftRadius: 26,
+          borderTopRightRadius: 26,
           height: 62 + tabBarBottomPadding,
           paddingTop: 8,
           paddingBottom: tabBarBottomPadding,
+          shadowColor: '#2B1A12',
+          shadowOpacity: 0.10,
+          shadowRadius: 18,
+          shadowOffset: { width: 0, height: -6 },
+          elevation: 16,
         },
         tabBarIcon: ({ focused, color }) => (
           <TabIcon name={route.name as keyof TabParamList} focused={focused} color={color} />

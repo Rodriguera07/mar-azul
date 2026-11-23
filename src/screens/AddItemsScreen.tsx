@@ -17,10 +17,12 @@ import { AnimatedPressable } from '../components/AnimatedPressable';
 import { Button } from '../components/Button';
 import { EmptyState } from '../components/EmptyState';
 import { MissingTable } from '../components/MissingTable';
+import { ScreenBar } from '../components/ScreenBar';
 import { CATEGORY_ICONS, CATEGORY_LABELS } from '../data/menu';
 import { usePosStore } from '../context/usePosStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
+import { dashboardPalette } from '../theme/dashboardPalette';
 import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { MenuCategory, MenuItem } from '../types';
 import { formatCurrency } from '../utils/format';
@@ -136,21 +138,13 @@ export function AddItemsScreen({ navigation, route }: Props) {
   if (!table) return <MissingTable onBack={() => navigation.goBack()} />;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Adicionar Itens</Text>
-          <Text style={styles.subtitle}>Mesa {table.label}</Text>
-        </View>
-        <AnimatedPressable
-          onPress={() => navigation.goBack()}
-          style={styles.closeBtn}
-          stateLayerColor={colors.onSurface}
-        >
-          <Ionicons name="close" size={22} color={colors.textPrimary} />
-        </AnimatedPressable>
-      </View>
+      <ScreenBar
+        title="Adicionar Itens"
+        subtitle={`Mesa ${table.label}`}
+        onClose={() => navigation.goBack()}
+      />
 
       <View style={[styles.searchWrap, contentStyle]}>
         <Ionicons name="search-outline" size={18} color={colors.textMuted} />
@@ -182,14 +176,14 @@ export function AddItemsScreen({ navigation, route }: Props) {
               <AnimatedPressable
                 key={cat}
                 style={[styles.categoryChip, active && styles.categoryChipActive]}
-                stateLayerColor={active ? colors.primary : colors.onSurface}
+                stateLayerColor={active ? colors.white : colors.onSurface}
                 onPress={() => setActiveCategory(cat)}
               >
                 {cat !== 'all' && (
                   <Ionicons
                     name={CATEGORY_ICONS[cat]}
                     size={14}
-                    color={active ? colors.primary : colors.textSecondary}
+                    color={active ? colors.white : colors.textSecondary}
                   />
                 )}
                 <Text
@@ -266,15 +260,19 @@ const styles = StyleSheet.create({
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.medium,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
+    backgroundColor: colors.white,
+    borderRadius: 16,
     marginHorizontal: spacing.lg,
-    paddingHorizontal: spacing.sm,
-    height: 44,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    height: 48,
     gap: spacing.xs,
     marginBottom: spacing.sm,
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 1,
   },
   searchInput: {
     flex: 1,
@@ -283,9 +281,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   categorySection: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outlineVariant,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   categoryRow: {
     paddingHorizontal: spacing.lg,
@@ -309,13 +305,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   categoryChipActive: {
-    backgroundColor: colors.primaryMuted,
-    borderColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    backgroundColor: dashboardPalette.ink900,
+    borderColor: dashboardPalette.ink900,
   },
   categoryChipText: {
     ...typography.bodySm,
@@ -323,7 +314,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   categoryChipTextActive: {
-    color: colors.primary,
+    color: colors.white,
   },
   list: {
     paddingHorizontal: spacing.lg,

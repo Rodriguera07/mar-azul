@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { PulseDot } from '../components/PulseDot';
 import { SubscriptionReminderBanner } from '../components/SubscriptionReminderBanner';
-import { TableRow } from '../components/TableRow';
+import { BrandHeader } from '../components/BrandHeader';
+import { TableCard } from '../components/TableCard';
 import { useAuthStore } from '../context/useAuthStore';
 import {
   getClosedTablesToday,
@@ -23,22 +23,15 @@ import { TabScreenProps } from '../navigation/types';
 import { getDaySummary } from '../services/firestoreOrg';
 import { formatDateKey, formatTime } from '../utils/format';
 import { useTick } from '../hooks/useTick';
-import { useResponsiveContent } from '../hooks/useResponsiveContent';
+import { useResponsiveContent, widthForColumns } from '../hooks/useResponsiveContent';
 
 type Props = TabScreenProps<'Painel'>;
 
 type EndDayDialog = 'blocked-open' | 'blocked-empty' | 'confirm' | null;
 
 const TOP_ITEMS_COUNT = 3;
-const SPARK_BAR_MAX_HEIGHT = 56;
+const SPARK_BAR_MAX_HEIGHT = 52;
 
-const MAX_OPEN_TABLES_SHOWN = 5;
-
-const SECONDARY_ACTIONS = [
-  { key: 'pedido', icon: 'receipt-outline' as const, label: 'Novo pedido' },
-  { key: 'receber', icon: 'cash-outline' as const, label: 'Receber' },
-  { key: 'relatorios', icon: 'bar-chart-outline' as const, label: 'Relatórios' },
-];
 
 function getGreeting(hour: number) {
   if (hour < 12) return 'Bom dia';
@@ -55,7 +48,8 @@ function splitCurrencyParts(value: number): { main: string; cents: string } {
 export function DashboardScreen({ navigation }: Props) {
   useTick(30000); // mantém o tempo decorrido das mesas atualizado
 
-  const { contentStyle } = useResponsiveContent();
+  const { contentStyle, tableColumns } = useResponsiveContent();
+  const tableCardWidth = widthForColumns(tableColumns);
   const [endDayDialog, setEndDayDialog] = useState<EndDayDialog>(null);
   const [endingDay, setEndingDay] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -68,8 +62,6 @@ export function DashboardScreen({ navigation }: Props) {
   // semana no card "Caixa do dia" — hoje é somado à parte pois é reativo.
   const [weekHistory, setWeekHistory] = useState<{ label: string; value: number }[] | null>(null);
 
-  const scrollRef = useRef<ScrollView>(null);
-  const mesasSectionY = useRef(0);
 
   const userName = useAuthStore((s) => s.user?.displayName ?? null);
   const isAdmin = useAuthStore((s) => s.user?.role === 'admin');
@@ -176,296 +168,257 @@ export function DashboardScreen({ navigation }: Props) {
     }
   };
 
-  // "Novo pedido" e "Receber" dependem de escolher uma mesa primeiro — não
-  // existe fluxo direto sem isso, então rolam até a seção de mesas abertas
-  // (ou mandam abrir uma mesa, se não houver nenhuma).
-  const handleQuickAction = (key: string) => {
-    if (key === 'abrir') {
-      navigation.navigate('OpenTable');
-      return;
-    }
-    if (key === 'relatorios') {
-      navigation.navigate('Relatorios');
-      return;
-    }
-    if (openTables.length === 0) {
-      navigation.navigate('OpenTable');
-      return;
-    }
-    scrollRef.current?.scrollTo({ y: mesasSectionY.current, animated: true });
-  };
-
   const greeting = getGreeting(today.getHours());
   const initial = (userName ?? 'G').trim().charAt(0).toUpperCase();
-  const shownTables = openTables.slice(0, MAX_OPEN_TABLES_SHOWN);
+  // Blocos na ordem em que as mesas foram abertas (a mais antiga primeiro).
+  const orderedTables = [...openTables].sort((a, b) => a.openedAt.localeCompare(b.openedAt));
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <ScrollView
-        ref={scrollRef}
-        style={styles.flex}
-        contentContainerStyle={[styles.scrollContent, contentStyle]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <AnimatedPressable
-            style={styles.avatar}
-            stateLayerColor={colors.white}
-            accessibilityLabel="Abrir menu"
-            accessibilityRole="button"
-            onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-          >
-            <Text style={styles.avatarText}>{initial}</Text>
-          </AnimatedPressable>
-          <View style={styles.headerTextWrap}>
-            <Text style={styles.greeting} numberOfLines={1}>
-              {greeting}, {userName ?? 'Gerente'}
-            </Text>
-            <Text style={styles.date} numberOfLines={1}>
-              {capitalize(dateLabel)}
-            </Text>
-          </View>
-          <View style={styles.headerActions}>
+    <View style={styles.root}>
+      <ScrollView style={styles.flex} showsVerticalScrollIndicator={false}>
+        <BrandHeader bottomSpace={82}>
+          <View style={styles.header}>
             <AnimatedPressable
-              style={styles.iconButton}
-              stateLayerColor={colors.onSurface}
-              accessibilityLabel="Notificações"
-              onPress={() => setNotifOpen(true)}
+              style={styles.avatar}
+              stateLayerColor={dashboardPalette.brand}
+              accessibilityLabel="Abrir menu"
+              accessibilityRole="button"
+              onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
             >
-              <Ionicons name="notifications-outline" size={19} color={colors.textPrimary} />
-              {newTableNotifications.length > 0 && <View style={styles.notifDot} />}
+              <Text style={styles.avatarText}>{initial}</Text>
             </AnimatedPressable>
-            <AnimatedPressable
-              style={styles.iconButton}
-              stateLayerColor={colors.onSurface}
-              accessibilityLabel="Sair"
-              onPress={logout}
-            >
-              <Ionicons name="log-out-outline" size={19} color={colors.textPrimary} />
-            </AnimatedPressable>
-          </View>
-        </View>
-
-        {isAdmin && <SubscriptionReminderBanner />}
-
-        <View style={styles.card}>
-          <View style={styles.revenueTop}>
-            <Text style={styles.revenueCap}>Faturamento de hoje</Text>
-            <View style={styles.statusPill}>
-              <PulseDot color={dashboardPalette.positive} size={6} />
-              <Text style={styles.statusPillText}>Caixa aberto</Text>
+            <View style={styles.headerTextWrap}>
+              <Text style={styles.greeting} numberOfLines={1}>
+                {greeting}, {userName ?? 'Gerente'}
+              </Text>
+              <Text style={styles.date} numberOfLines={1}>
+                {capitalize(dateLabel)}
+              </Text>
+            </View>
+            <View style={styles.headerActions}>
+              <AnimatedPressable
+                style={styles.iconButton}
+                stateLayerColor={colors.white}
+                accessibilityLabel="Notificações"
+                onPress={() => setNotifOpen(true)}
+              >
+                <Ionicons name="notifications" size={18} color={colors.white} />
+                {newTableNotifications.length > 0 && <View style={styles.notifDot} />}
+              </AnimatedPressable>
+              <AnimatedPressable
+                style={styles.iconButton}
+                stateLayerColor={colors.white}
+                accessibilityLabel="Sair"
+                onPress={logout}
+              >
+                <Ionicons name="log-out-outline" size={19} color={colors.white} />
+              </AnimatedPressable>
             </View>
           </View>
+        </BrandHeader>
 
-          <View style={styles.revenueRow}>
-            <Text style={styles.revenuePrefix}>R$</Text>
-            <Text style={styles.revenueMain}>{revenueMain}</Text>
-            <Text style={styles.revenueCents}>,{revenueCents}</Text>
-          </View>
+        <View style={[styles.content, contentStyle]}>
+          <View style={[styles.card, styles.revenueCard]}>
+            <View style={styles.revenueTop}>
+              <Text style={styles.revenueCap}>Faturamento de hoje</Text>
+              <View style={styles.statusPill}>
+                <PulseDot color={dashboardPalette.positive} size={6} />
+                <Text style={styles.statusPillText}>Caixa aberto</Text>
+              </View>
+            </View>
 
-          {trendPct !== null && (
-            <View style={styles.trendRow}>
-              <View
-                style={[
-                  styles.trendChip,
-                  { backgroundColor: trendPct >= 0 ? '#E8F7F0' : '#FDECEF' },
-                ]}
-              >
-                <Ionicons
-                  name={trendPct >= 0 ? 'arrow-up' : 'arrow-down'}
-                  size={11}
-                  color={trendPct >= 0 ? dashboardPalette.positive : dashboardPalette.rose}
-                />
-                <Text
+            <View style={styles.revenueRow}>
+              <Text style={styles.revenuePrefix}>R$</Text>
+              <Text style={styles.revenueMain}>{revenueMain}</Text>
+              <Text style={styles.revenueCents}>,{revenueCents}</Text>
+            </View>
+
+            {trendPct !== null && (
+              <View style={styles.trendRow}>
+                <View
                   style={[
-                    styles.trendChipText,
-                    { color: trendPct >= 0 ? dashboardPalette.positive : dashboardPalette.rose },
+                    styles.trendChip,
+                    { backgroundColor: trendPct >= 0 ? '#E8F7F0' : '#FDECEF' },
                   ]}
                 >
-                  {Math.abs(trendPct).toFixed(0)}%
-                </Text>
+                  <Ionicons
+                    name={trendPct >= 0 ? 'arrow-up' : 'arrow-down'}
+                    size={11}
+                    color={trendPct >= 0 ? dashboardPalette.positive : dashboardPalette.rose}
+                  />
+                  <Text
+                    style={[
+                      styles.trendChipText,
+                      { color: trendPct >= 0 ? dashboardPalette.positive : dashboardPalette.rose },
+                    ]}
+                  >
+                    {Math.abs(trendPct).toFixed(0)}%
+                  </Text>
+                </View>
+                <Text style={styles.trendHint}>em relação a ontem</Text>
               </View>
-              <Text style={styles.trendHint}>em relação a ontem</Text>
-            </View>
-          )}
+            )}
 
-          {sparkDays && (
-            <View style={styles.sparkRow}>
-              {sparkDays.map((day, index) => {
-                const isToday = index === sparkDays.length - 1;
-                return (
-                  <View key={index} style={styles.sparkCol}>
-                    <View style={styles.sparkBarTrack}>
-                      <View
-                        style={[
-                          styles.sparkBar,
-                          isToday && styles.sparkBarToday,
-                          { height: Math.max(4, (day.value / sparkMax) * SPARK_BAR_MAX_HEIGHT) },
-                        ]}
-                      />
+            {sparkDays && (
+              <View style={styles.sparkRow}>
+                {sparkDays.map((day, index) => {
+                  const isToday = index === sparkDays.length - 1;
+                  return (
+                    <View key={index} style={styles.sparkCol}>
+                      <View style={styles.sparkBarTrack}>
+                        <View
+                          style={[
+                            styles.sparkBar,
+                            isToday && styles.sparkBarToday,
+                            { height: Math.max(4, (day.value / sparkMax) * SPARK_BAR_MAX_HEIGHT) },
+                          ]}
+                        />
+                      </View>
+                      <Text style={[styles.sparkLabel, isToday && styles.sparkLabelToday]}>{day.label}</Text>
                     </View>
-                    <Text style={[styles.sparkLabel, isToday && styles.sparkLabelToday]}>{day.label}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
+                  );
+                })}
+              </View>
+            )}
 
-          <View style={styles.metricsRow}>
-            <View style={styles.metricCol}>
-              <Text style={styles.metricValue} numberOfLines={1}>
-                {openTables.length}
-              </Text>
-              <Text style={styles.metricLabel}>Em atendimento</Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricCol}>
-              <Text style={styles.metricValue} numberOfLines={1}>
-                {closedTables.length}
-              </Text>
-              <Text style={styles.metricLabel}>Fechadas</Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricCol}>
-              <Text style={styles.metricValue} numberOfLines={1}>
-                R$ {avgTicket.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-              </Text>
-              <Text style={styles.metricLabel}>Ticket médio</Text>
+            <View style={styles.metricsRow}>
+              <View style={styles.metricCol}>
+                <Text style={styles.metricValue} numberOfLines={1}>
+                  {openTables.length}
+                </Text>
+                <Text style={styles.metricLabel}>Em atendimento</Text>
+              </View>
+              <View style={styles.metricDivider} />
+              <View style={styles.metricCol}>
+                <Text style={styles.metricValue} numberOfLines={1}>
+                  {closedTables.length}
+                </Text>
+                <Text style={styles.metricLabel}>Fechadas</Text>
+              </View>
+              <View style={styles.metricDivider} />
+              <View style={styles.metricCol}>
+                <Text style={styles.metricValue} numberOfLines={1}>
+                  R$ {avgTicket.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </Text>
+                <Text style={styles.metricLabel}>Ticket médio</Text>
+              </View>
             </View>
           </View>
-        </View>
 
-        <AnimatedPressable
-          style={styles.primaryAction}
-          stateLayerColor={colors.white}
-          onPress={() => handleQuickAction('abrir')}
-        >
-          <Ionicons name="add" size={20} color={colors.white} />
-          <Text style={styles.primaryActionText}>Abrir nova mesa</Text>
-        </AnimatedPressable>
+          {isAdmin && (
+            <View style={styles.bannerWrap}>
+              <SubscriptionReminderBanner />
+            </View>
+          )}
 
-        <View style={styles.secondaryActions}>
-          {SECONDARY_ACTIONS.map((action) => (
-            <AnimatedPressable
-              key={action.key}
-              style={styles.secondaryAction}
-              stateLayerColor={colors.onSurface}
-              onPress={() => handleQuickAction(action.key)}
-            >
-              <Ionicons name={action.icon} size={17} color={colors.textPrimary} />
-              <Text style={styles.secondaryActionLabel} numberOfLines={1}>
-                {action.label}
-              </Text>
-            </AnimatedPressable>
-          ))}
-        </View>
+          <AnimatedPressable
+            style={[styles.primaryAction, !isAdmin && { marginTop: spacing.md }]}
+            stateLayerColor={colors.white}
+            onPress={() => navigation.navigate('OpenTable')}
+          >
+            <View style={styles.primaryActionIcon}>
+              <Ionicons name="add" size={20} color={dashboardPalette.brand} />
+            </View>
+            <Text style={styles.primaryActionText}>Abrir nova mesa</Text>
+          </AnimatedPressable>
 
-        <View
-          style={styles.section}
-          onLayout={(e) => {
-            mesasSectionY.current = e.nativeEvent.layout.y;
-          }}
-        >
-          <View style={styles.sectionHead}>
-            <Text style={styles.sectionTitle}>Mesas abertas</Text>
-            {openTables.length > 0 && (
-              <Pressable hitSlop={8} onPress={() => navigation.navigate('Mesas')}>
-                <Text style={styles.sectionLink}>Ver todas</Text>
-              </Pressable>
+          <View style={styles.section}>
+            <View style={styles.sectionHead}>
+              <Text style={styles.sectionTitle}>Mesas abertas</Text>
+              {openTables.length > 0 && (
+                <View style={styles.sectionChip}>
+                  <Text style={styles.sectionChipText}>
+                    {openTables.length} · R${' '}
+                    {openTablesTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {orderedTables.length === 0 ? (
+              <View style={[styles.card, styles.emptyCard]}>
+                <View style={styles.emptyIll}>
+                  <Ionicons name="restaurant-outline" size={24} color={dashboardPalette.brand} />
+                </View>
+                <Text style={styles.emptyTitle}>Nenhuma mesa aberta</Text>
+                <Text style={styles.emptyText}>
+                  Abra uma mesa para lançar pedidos e acompanhar o atendimento em tempo real.
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.tablesGrid}>
+                {orderedTables.map((table) => (
+                  <TableCard
+                    key={table.id}
+                    table={table}
+                    style={{ width: tableCardWidth }}
+                    onPress={() => navigation.navigate('TableDetail', { tableId: table.id })}
+                  />
+                ))}
+              </View>
             )}
           </View>
 
-          {openTables.length === 0 ? (
-            <View style={[styles.card, styles.emptyCard]}>
-              <View style={styles.emptyIll}>
-                <Ionicons name="restaurant-outline" size={22} color={colors.textSecondary} />
-              </View>
-              <Text style={styles.emptyTitle}>Nenhuma mesa aberta</Text>
-              <Text style={styles.emptyText}>
-                Abra uma mesa para lançar pedidos e acompanhar o atendimento em tempo real.
-              </Text>
+          <View style={styles.section}>
+            <View style={styles.sectionHead}>
+              <Text style={styles.sectionTitle}>Mais vendidos hoje</Text>
+              <Text style={styles.sectionMeta}>Top {TOP_ITEMS_COUNT}</Text>
             </View>
-          ) : (
-            <View style={[styles.card, styles.listCard]}>
-              <View style={styles.openTotalRow}>
-                <Text style={styles.openTotalLabel}>Valor em aberto</Text>
-                <Text style={styles.openTotalValue}>
-                  R$ {openTablesTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </Text>
-              </View>
-              {shownTables.map((table, index) => (
-                <TableRow
-                  key={table.id}
-                  table={table}
-                  last={index === shownTables.length - 1}
-                  onPress={() => navigation.navigate('TableDetail', { tableId: table.id })}
-                />
-              ))}
-            </View>
-          )}
-        </View>
 
-        <View style={styles.section}>
-          <View style={styles.sectionHead}>
-            <Text style={styles.sectionTitle}>Mais vendidos hoje</Text>
-            <Text style={styles.sectionMeta}>Top {TOP_ITEMS_COUNT}</Text>
-          </View>
-
-          {topItems.length === 0 ? (
-            <View style={[styles.card, styles.emptyCard]}>
-              <Text style={styles.emptyText}>Nenhum item vendido ainda hoje.</Text>
-            </View>
-          ) : (
-            <View style={[styles.card, styles.listCard]}>
-              {topItems.map((item, index) => {
-                const pct = Math.max(4, Math.round((item.quantity / topMax) * 100));
-                const share = Math.round((item.quantity / topTotalQty) * 100);
-                const image = imageById.get(item.menuItemId);
-                return (
-                  <View
-                    key={item.menuItemId}
-                    style={[styles.sellerRow, index < topItems.length - 1 && styles.sellerDivider]}
-                  >
-                    {image ? (
-                      <Image source={image} style={styles.sellerThumb} resizeMode="cover" />
-                    ) : (
-                      <View style={[styles.sellerThumb, styles.sellerThumbEmpty]}>
-                        <Text style={styles.rankNumber}>{index + 1}</Text>
-                      </View>
-                    )}
-                    <View style={styles.sellerBody}>
-                      <View style={styles.sellerTop}>
-                        <Text style={styles.sellerName} numberOfLines={1}>
-                          {item.name}
-                        </Text>
-                        <Text style={styles.sellerQty}>{item.quantity} un</Text>
-                      </View>
-                      <View style={styles.sellerBarRow}>
-                        <View style={styles.barTrack}>
-                          <View style={[styles.barFill, { width: `${pct}%` }]} />
+            {topItems.length === 0 ? (
+              <View style={[styles.card, styles.emptyCard]}>
+                <Text style={styles.emptyText}>Nenhum item vendido ainda hoje.</Text>
+              </View>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.carousel}
+              >
+                {topItems.map((item, index) => {
+                  const image = imageById.get(item.menuItemId);
+                  const share = Math.round((item.quantity / topTotalQty) * 100);
+                  return (
+                    <View key={item.menuItemId} style={styles.productCard}>
+                      <View style={styles.productImageWrap}>
+                        {image ? (
+                          <Image source={image} style={styles.productImage} resizeMode="cover" />
+                        ) : (
+                          <View style={[styles.productImage, styles.productImageEmpty]}>
+                            <Ionicons name="fast-food-outline" size={28} color={colors.textMuted} />
+                          </View>
+                        )}
+                        <View style={styles.rankBadge}>
+                          <Text style={styles.rankBadgeText}>{index + 1}º</Text>
                         </View>
-                        <Text style={styles.sellerShare}>{share}%</Text>
+                      </View>
+                      <Text style={styles.productName} numberOfLines={2}>
+                        {item.name}
+                      </Text>
+                      <View style={styles.productMeta}>
+                        <Text style={styles.productQty}>{item.quantity} vendidos</Text>
+                        <Text style={styles.productShare}>{share}%</Text>
                       </View>
                     </View>
-                  </View>
-                );
-              })}
-            </View>
+                  );
+                })}
+              </ScrollView>
+            )}
+          </View>
+
+          {isAdmin && (
+            <AnimatedPressable style={styles.closeDay} stateLayerColor={colors.onSurface} onPress={handleEndDay}>
+              <View style={styles.closeIcon}>
+                <Ionicons name="lock-closed-outline" size={17} color={dashboardPalette.rose} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.closeTitle}>Encerrar o dia</Text>
+                <Text style={styles.closeSub}>Fecha o caixa e zera o painel para amanhã</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={17} color={colors.textMuted} />
+            </AnimatedPressable>
           )}
         </View>
-
-        {isAdmin && (
-          <AnimatedPressable style={styles.closeDay} stateLayerColor={colors.onSurface} onPress={handleEndDay}>
-            <View style={styles.closeIcon}>
-              <Ionicons name="lock-closed-outline" size={17} color={dashboardPalette.rose} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.closeTitle}>Encerrar o dia</Text>
-              <Text style={styles.closeSub}>Fecha o caixa e zera o painel para amanhã</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={17} color={colors.textMuted} />
-          </AnimatedPressable>
-        )}
 
       </ScrollView>
 
@@ -558,7 +511,7 @@ export function DashboardScreen({ navigation }: Props) {
           </Pressable>
         </Pressable>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -567,65 +520,43 @@ function capitalize(text: string) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  scrollContent: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.xxl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingTop: 6,
-    paddingBottom: spacing.md,
-  },
+  content: { paddingHorizontal: spacing.md, paddingBottom: spacing.xxl },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: shape.full,
-    backgroundColor: dashboardPalette.ink900,
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  avatarText: { fontFamily: font.bold, fontSize: 17, color: colors.white },
+  avatarText: { fontFamily: font.extraBold, fontSize: 18, color: dashboardPalette.brand },
   headerTextWrap: { flex: 1, minWidth: 0 },
-  greeting: {
-    fontFamily: font.bold,
-    fontSize: 18,
-    letterSpacing: -0.5,
-    color: colors.textPrimary,
-  },
-  date: {
-    fontFamily: font.medium,
-    fontSize: 12.5,
-    color: colors.textSecondary,
-    marginTop: 1,
-  },
-  headerActions: { flexDirection: 'row', gap: 6 },
+  greeting: { fontFamily: font.extraBold, fontSize: 19, letterSpacing: -0.6, color: colors.white },
+  date: { fontFamily: font.medium, fontSize: 12.5, color: 'rgba(255,255,255,0.82)', marginTop: 1 },
+  headerActions: { flexDirection: 'row', gap: 8 },
   iconButton: {
     width: 40,
     height: 40,
     borderRadius: shape.full,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.20)',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   notifDot: {
     position: 'absolute',
-    top: 9,
-    right: 10,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: dashboardPalette.brand,
+    top: 8,
+    right: 9,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: dashboardPalette.amber,
     borderWidth: 1.5,
-    borderColor: colors.white,
+    borderColor: dashboardPalette.brand,
   },
   notifBackdrop: {
     flex: 1,
@@ -714,40 +645,29 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: colors.white,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md + 2,
+    borderRadius: 24,
+    padding: spacing.md + 4,
+    ...elevationShadow(1),
   },
-  listCard: { padding: 0, overflow: 'hidden' },
+  revenueCard: { marginTop: -62 },
+  bannerWrap: { marginTop: spacing.md },
   revenueTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  revenueCap: { fontFamily: font.medium, fontSize: 13, color: colors.textSecondary },
+  revenueCap: { fontFamily: font.semiBold, fontSize: 13, color: colors.textSecondary },
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: '#E8F7F0',
     borderRadius: shape.full,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  statusPillText: { fontFamily: font.semiBold, fontSize: 11.5, color: colors.textPrimary },
-  revenueRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 10 },
-  revenuePrefix: {
-    fontFamily: font.semiBold,
-    fontSize: 18,
-    color: colors.textSecondary,
-    marginRight: 4,
-  },
-  revenueMain: {
-    fontFamily: font.bold,
-    fontSize: 40,
-    letterSpacing: -1.6,
-    color: colors.textPrimary,
-  },
-  revenueCents: { fontFamily: font.semiBold, fontSize: 20, color: colors.textSecondary },
-  trendRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
+  statusPillText: { fontFamily: font.bold, fontSize: 11.5, color: dashboardPalette.positive },
+  revenueRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 8 },
+  revenuePrefix: { fontFamily: font.bold, fontSize: 18, color: colors.textSecondary, marginRight: 4 },
+  revenueMain: { fontFamily: font.extraBold, fontSize: 42, letterSpacing: -1.8, color: colors.textPrimary },
+  revenueCents: { fontFamily: font.bold, fontSize: 20, color: colors.textSecondary },
+  trendRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
   trendChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -758,15 +678,10 @@ const styles = StyleSheet.create({
   },
   trendChipText: { fontFamily: font.bold, fontSize: 12 },
   trendHint: { fontFamily: font.medium, fontSize: 12, color: colors.textSecondary },
-  sparkRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-    marginTop: spacing.lg,
-  },
+  sparkRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: spacing.lg },
   sparkCol: { flex: 1, alignItems: 'center', gap: 6 },
   sparkBarTrack: { height: SPARK_BAR_MAX_HEIGHT, justifyContent: 'flex-end', width: '100%' },
-  sparkBar: { width: '100%', borderRadius: 6, backgroundColor: colors.surfaceContainerHighest },
+  sparkBar: { width: '100%', borderRadius: 8, backgroundColor: colors.surfaceContainerHigh },
   sparkBarToday: { backgroundColor: dashboardPalette.brand },
   sparkLabel: { fontFamily: font.medium, fontSize: 11, color: colors.textMuted },
   sparkLabelToday: { fontFamily: font.bold, color: colors.textPrimary },
@@ -779,76 +694,63 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   metricCol: { flex: 1, alignItems: 'flex-start', paddingLeft: spacing.xs },
-  metricValue: {
-    fontFamily: font.bold,
-    fontSize: 20,
-    letterSpacing: -0.6,
-    color: colors.textPrimary,
-  },
+  metricValue: { fontFamily: font.extraBold, fontSize: 20, letterSpacing: -0.7, color: colors.textPrimary },
   metricLabel: { fontFamily: font.medium, fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   metricDivider: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch', backgroundColor: colors.border },
   primaryAction: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    height: 52,
-    marginTop: spacing.sm,
-    borderRadius: 16,
+    gap: 10,
+    height: 56,
+    marginTop: 0,
+    borderRadius: 20,
     backgroundColor: dashboardPalette.brand,
     overflow: 'hidden',
+    shadowColor: dashboardPalette.brand,
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
   },
-  primaryActionText: { fontFamily: font.semiBold, fontSize: 15.5, color: colors.white, letterSpacing: -0.2 },
-  secondaryActions: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xs },
-  secondaryAction: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 44,
+  primaryActionIcon: {
+    width: 28,
+    height: 28,
     borderRadius: 14,
     backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-    paddingHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  secondaryActionLabel: { fontFamily: font.semiBold, fontSize: 12.5, color: colors.textPrimary },
-  section: { marginTop: spacing.lg + 4 },
+  primaryActionText: { fontFamily: font.extraBold, fontSize: 16, color: colors.white, letterSpacing: -0.3 },
+  section: { marginTop: spacing.xl },
   sectionHead: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.xs + 2,
+    marginBottom: spacing.sm,
     paddingHorizontal: 2,
   },
-  sectionTitle: { fontFamily: font.bold, fontSize: 17, letterSpacing: -0.4, color: colors.textPrimary },
+  sectionTitle: { fontFamily: font.extraBold, fontSize: 19, letterSpacing: -0.6, color: colors.textPrimary },
   sectionMeta: { fontFamily: font.medium, fontSize: 12.5, color: colors.textSecondary },
-  sectionLink: { fontFamily: font.semiBold, fontSize: 13, color: dashboardPalette.brand },
-  openTotalRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    backgroundColor: colors.surfaceContainerLow,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+  sectionChip: {
+    backgroundColor: colors.primaryMuted,
+    borderRadius: shape.full,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  openTotalLabel: { fontFamily: font.medium, fontSize: 13, color: colors.textSecondary },
-  openTotalValue: { fontFamily: font.bold, fontSize: 15, letterSpacing: -0.3, color: colors.textPrimary },
+  sectionChipText: { fontFamily: font.bold, fontSize: 12, color: dashboardPalette.brand },
+  tablesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm + 2 },
   emptyCard: { alignItems: 'center', paddingVertical: spacing.xl },
   emptyIll: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: colors.surfaceContainer,
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: colors.primaryMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
-  emptyTitle: { fontFamily: font.semiBold, fontSize: 15, color: colors.textPrimary, marginBottom: 4 },
+  emptyTitle: { fontFamily: font.bold, fontSize: 16, color: colors.textPrimary, marginBottom: 4 },
   emptyText: {
     fontFamily: font.regular,
     fontSize: 13,
@@ -857,56 +759,62 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 260,
   },
-  sellerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: 12,
-    paddingHorizontal: spacing.md,
+  carousel: { gap: spacing.sm + 2, paddingRight: spacing.md },
+  productCard: { width: 156 },
+  productImageWrap: {
+    width: 156,
+    height: 118,
+    borderRadius: 22,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceContainerHigh,
+    ...elevationShadow(1),
   },
-  sellerDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-  sellerThumb: { width: 44, height: 44, borderRadius: 12 },
-  sellerThumbEmpty: {
-    backgroundColor: colors.surfaceContainer,
+  productImage: { width: '100%', height: '100%' },
+  productImageEmpty: { alignItems: 'center', justifyContent: 'center' },
+  rankBadge: {
+    position: 'absolute',
+    top: 9,
+    left: 9,
+    height: 24,
+    paddingHorizontal: 9,
+    borderRadius: 12,
+    backgroundColor: dashboardPalette.ink900,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rankNumber: { fontFamily: font.bold, fontSize: 14, color: colors.textSecondary },
-  sellerBody: { flex: 1, minWidth: 0 },
-  sellerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  sellerName: { flex: 1, fontFamily: font.semiBold, fontSize: 14, color: colors.textPrimary, letterSpacing: -0.2 },
-  sellerQty: { fontFamily: font.bold, fontSize: 13, color: colors.textPrimary },
-  sellerBarRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 7 },
-  barTrack: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.surfaceContainerHigh,
-    overflow: 'hidden',
+  rankBadgeText: { fontFamily: font.extraBold, fontSize: 11.5, color: colors.white },
+  productName: {
+    fontFamily: font.bold,
+    fontSize: 14,
+    lineHeight: 18,
+    letterSpacing: -0.3,
+    color: colors.textPrimary,
+    marginTop: 9,
+    minHeight: 36,
   },
-  barFill: { height: '100%', borderRadius: 2, backgroundColor: dashboardPalette.brand },
-  sellerShare: { fontFamily: font.medium, fontSize: 11.5, color: colors.textSecondary, minWidth: 30, textAlign: 'right' },
+  productMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+  productQty: { fontFamily: font.semiBold, fontSize: 12, color: colors.textSecondary },
+  productShare: { fontFamily: font.extraBold, fontSize: 12, color: dashboardPalette.brand },
   closeDay: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     padding: spacing.md,
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     backgroundColor: colors.white,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: 20,
     overflow: 'hidden',
+    ...elevationShadow(1),
   },
   closeIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     backgroundColor: `${dashboardPalette.rose}14`,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeTitle: { fontFamily: font.semiBold, fontSize: 14, color: colors.textPrimary },
+  closeTitle: { fontFamily: font.bold, fontSize: 14.5, color: colors.textPrimary },
   closeSub: { fontFamily: font.regular, fontSize: 12, color: colors.textSecondary, marginTop: 1 },
   endDayRevenueBox: {
     width: '100%',

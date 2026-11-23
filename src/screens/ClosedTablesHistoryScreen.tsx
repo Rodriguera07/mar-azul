@@ -6,6 +6,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { EmptyState } from '../components/EmptyState';
+import { ScreenBar } from '../components/ScreenBar';
 import { useAuthStore } from '../context/useAuthStore';
 import { useClosedSalesRange } from '../hooks/useClosedSalesRange';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
@@ -59,21 +60,14 @@ export function ClosedTablesHistoryScreen({ navigation }: Props) {
   const groups = useMemo(() => groupByDay(sales), [sales]);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-      <View style={styles.header}>
-        <AnimatedPressable
-          onPress={() => {
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+      <ScreenBar
+        title="Histórico de Mesas"
+        onBack={() => {
             navigation.goBack();
             navigation.dispatch(DrawerActions.openDrawer());
           }}
-          style={styles.backBtn}
-          stateLayerColor={colors.onSurface}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
-        </AnimatedPressable>
-        <Text style={styles.title}>Histórico de Mesas</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      />
 
       <View style={styles.presetRow}>
         {PRESETS.map((p) => (

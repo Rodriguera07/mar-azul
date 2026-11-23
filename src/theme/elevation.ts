@@ -18,16 +18,14 @@ const SURFACE_BY_LEVEL: Record<ElevationLevel, string> = {
 
 const SHADOW_BY_LEVEL: Record<ElevationLevel, ViewStyle> = {
   0: {},
-  // Nível 1 = cartão "plano": borda de 1px em vez de sombra visível (padrão de
-  // dashboards de produto); a sombra só sugere profundidade.
+  // Nível 1 = cartão de delivery: branco, sem borda, com sombra larga e suave
+  // (a profundidade vem da sombra, não de uma linha de contorno).
   1: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: colors.onSurface,
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 0,
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   2: {
     shadowColor: colors.onSurface,

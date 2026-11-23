@@ -14,11 +14,12 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { FloatingField } from '../components/FloatingField';
 import { LegalDocument } from '../components/LegalDocument';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { LoginFoodMarquee } from '../components/LoginFoodMarquee';
 import { PRIVACY_POLICY, TERMS_OF_USE } from '../content/legal';
 import { useAuthStore } from '../context/useAuthStore';
 import { useMinimumVisible } from '../hooks/useMinimumVisible';
@@ -71,6 +72,7 @@ export function LoginScreen() {
   // Telas baixas e o cadastro (4 campos) compactam o espaçamento para caber
   // sem rolagem antes do teclado abrir.
   const { height: windowHeight } = useWindowDimensions();
+  const insetTop = useSafeAreaInsets().top;
   const isCompact = windowHeight < 760 || mode === 'signup';
   const fieldGap = isCompact ? 10 : 12;
 
@@ -185,169 +187,180 @@ export function LoginScreen() {
   };
 
   const copy = COPY[mode];
+  const heroHeight = isCompact ? 210 : 290;
   const enterStyle = {
     opacity: enter,
-    transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
+    transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }],
   };
   const formShake = { transform: [{ translateX: shake.interpolate({ inputRange: [-1, 1], outputRange: [-8, 8] }) }] };
 
   return (
     <View style={styles.root}>
-      <LinearGradient
-        colors={['#FFFFFF', colors.background]}
-        style={styles.topWash}
-        pointerEvents="none"
-      />
+      <View style={[styles.hero, { height: heroHeight + insetTop }]}>
+        <LoginFoodMarquee tile={isCompact ? 62 : 78} height={heroHeight + insetTop} />
+        <LinearGradient
+          colors={['rgba(28,14,9,0.35)', 'rgba(28,14,9,0.62)', dashboardPalette.brand]}
+          locations={[0, 0.55, 1]}
+          style={StyleSheet.absoluteFillObject}
+          pointerEvents="none"
+        />
+        <Animated.View style={[styles.heroContent, { paddingTop: insetTop + 14 }, enterStyle]}>
+          <View style={styles.brandRow}>
+            <Image source={require('../../assets/icon.png')} style={styles.logo} resizeMode="cover" />
+            <View>
+              <Text style={styles.brandTiny}>TRAILER</Text>
+              <Text style={styles.brandName}>MAR AZUL</Text>
+            </View>
+          </View>
+          <Text style={[styles.headline, isCompact && styles.headlineSmall]}>
+            Seu quiosque,{'\n'}
+            <Text style={styles.headlineAccent}>na palma da mão.</Text>
+          </Text>
+        </Animated.View>
+      </View>
 
       <KeyboardAvoidingView
-        style={styles.flex}
+        style={styles.sheetWrap}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <SafeAreaView style={styles.flex} edges={['top', 'left', 'right', 'bottom']}>
+        <SafeAreaView style={styles.flex} edges={['left', 'right', 'bottom']}>
           <ScrollView
-            contentContainerStyle={[styles.scroll, contentStyle]}
+            style={styles.sheet}
+            contentContainerStyle={[styles.sheetContent, contentStyle]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <Animated.View style={[styles.main, enterStyle]}>
-              <View style={styles.brandRow}>
-                <Image
-                  source={require('../../assets/icon.png')}
-                  style={styles.logo}
-                  resizeMode="cover"
-                />
-                <View>
-                  <Text style={styles.brandName}>Mar Azul</Text>
-                  <Text style={styles.brandTag}>Gestão do quiosque</Text>
-                </View>
-              </View>
+            <Animated.View style={[{ opacity: modeFade }, formShake]}>
+              <Text style={styles.title}>{copy.title}</Text>
+              <Text style={styles.subtitle}>{copy.subtitle}</Text>
 
-              <Animated.View style={{ opacity: modeFade }}>
-                <Text style={[styles.title, isCompact && styles.titleCompact]}>{copy.title}</Text>
-                <Text style={styles.subtitle}>{copy.subtitle}</Text>
-              </Animated.View>
-
-              <Animated.View style={[{ opacity: modeFade }, formShake]}>
-                <View style={[styles.fields, { gap: fieldGap }]}>
-                  {mode === 'signup' && (
-                    <>
-                      <FloatingField
-                        label="Nome do quiosque"
-                        icon="storefront-outline"
-                        accent={dashboardPalette.brand}
-                        compact={isCompact}
-                        value={orgName}
-                        onChangeText={(v) => {
-                          setOrgName(v);
-                          clearError();
-                        }}
-                        placeholder="Quiosque do Rodrigo"
-                        returnKeyType="next"
-                      />
-                      <FloatingField
-                        label="Seu nome"
-                        icon="person-outline"
-                        accent={dashboardPalette.brand}
-                        compact={isCompact}
-                        value={displayName}
-                        onChangeText={(v) => {
-                          setDisplayName(v);
-                          clearError();
-                        }}
-                        placeholder="Seu nome completo"
-                        returnKeyType="next"
-                      />
-                    </>
-                  )}
-
-                  <FloatingField
-                    label="E-mail"
-                    icon="mail-outline"
-                    accent={dashboardPalette.brand}
-                    compact={isCompact}
-                    value={email}
-                    onChangeText={(v) => {
-                      setEmail(v);
-                      clearError();
-                    }}
-                    placeholder="voce@quiosque.com"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardType="email-address"
-                    returnKeyType="next"
-                  />
-
-                  <FloatingField
-                    label="Senha"
-                    icon="lock-closed-outline"
-                    accent={dashboardPalette.brand}
-                    compact={isCompact}
-                    value={password}
-                    onChangeText={(v) => {
-                      setPassword(v);
-                      clearError();
-                    }}
-                    placeholder={mode === 'signup' ? 'Mínimo 6 caracteres' : '••••••••'}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    onSubmitEditing={handleSubmit}
-                    returnKeyType="go"
-                    accessory={
-                      <Pressable
-                        hitSlop={10}
-                        onPress={() => setShowPassword((v) => !v)}
-                        accessibilityLabel={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                      >
-                        <Ionicons
-                          name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                          size={20}
-                          color={colors.textSecondary}
-                        />
-                      </Pressable>
-                    }
-                  />
-                </View>
-
-                {mode === 'login' && (
-                  <Pressable
-                    hitSlop={8}
-                    onPress={handleForgotPassword}
-                    disabled={resettingPassword}
-                    style={styles.forgotPasswordWrap}
-                  >
-                    <Text style={styles.forgotPasswordText}>
-                      {resettingPassword ? 'Enviando…' : 'Esqueceu a senha?'}
-                    </Text>
-                  </Pressable>
+              <View style={[styles.fields, { gap: fieldGap }]}>
+                {mode === 'signup' && (
+                  <>
+                    <FloatingField
+                      label="Nome do quiosque"
+                      icon="storefront-outline"
+                      accent={dashboardPalette.brand}
+                      compact={isCompact}
+                      value={orgName}
+                      onChangeText={(v) => {
+                        setOrgName(v);
+                        clearError();
+                      }}
+                      placeholder="Quiosque do Rodrigo"
+                      returnKeyType="next"
+                    />
+                    <FloatingField
+                      label="Seu nome"
+                      icon="person-outline"
+                      accent={dashboardPalette.brand}
+                      compact={isCompact}
+                      value={displayName}
+                      onChangeText={(v) => {
+                        setDisplayName(v);
+                        clearError();
+                      }}
+                      placeholder="Seu nome completo"
+                      returnKeyType="next"
+                    />
+                  </>
                 )}
 
-                {error ? (
-                  <View style={styles.errorBox}>
-                    <Ionicons name="alert-circle" size={16} color={colors.danger} />
-                    <Text style={styles.error}>{error}</Text>
+                <FloatingField
+                  label="E-mail"
+                  icon="mail-outline"
+                  accent={dashboardPalette.brand}
+                  compact={isCompact}
+                  value={email}
+                  onChangeText={(v) => {
+                    setEmail(v);
+                    clearError();
+                  }}
+                  placeholder="voce@quiosque.com"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  returnKeyType="next"
+                />
+
+                <FloatingField
+                  label="Senha"
+                  icon="lock-closed-outline"
+                  accent={dashboardPalette.brand}
+                  compact={isCompact}
+                  value={password}
+                  onChangeText={(v) => {
+                    setPassword(v);
+                    clearError();
+                  }}
+                  placeholder={mode === 'signup' ? 'Mínimo 6 caracteres' : '••••••••'}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onSubmitEditing={handleSubmit}
+                  returnKeyType="go"
+                  accessory={
+                    <Pressable
+                      hitSlop={10}
+                      onPress={() => setShowPassword((v) => !v)}
+                      accessibilityLabel={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                    >
+                      <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color={colors.textSecondary}
+                      />
+                    </Pressable>
+                  }
+                />
+              </View>
+
+              {mode === 'login' && (
+                <Pressable
+                  hitSlop={8}
+                  onPress={handleForgotPassword}
+                  disabled={resettingPassword}
+                  style={styles.forgotPasswordWrap}
+                >
+                  <Text style={styles.forgotPasswordText}>
+                    {resettingPassword ? 'Enviando…' : 'Esqueceu a senha?'}
+                  </Text>
+                </Pressable>
+              )}
+
+              {error ? (
+                <View style={styles.errorBox}>
+                  <Ionicons name="alert-circle" size={16} color={colors.danger} />
+                  <Text style={styles.error}>{error}</Text>
+                </View>
+              ) : null}
+
+              <AnimatedPressable
+                style={[styles.cta, isCompact && styles.ctaCompact]}
+                stateLayerColor={colors.white}
+                onPress={handleSubmit}
+                disabled={loading}
+              >
+                <LinearGradient
+                  colors={[dashboardPalette.brandLight, dashboardPalette.brand, dashboardPalette.brandDark]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFillObject}
+                />
+                <Text style={styles.ctaText}>{loading ? copy.busy : copy.cta}</Text>
+                {!loading ? (
+                  <View style={styles.ctaArrow}>
+                    <Ionicons name="arrow-forward" size={18} color={dashboardPalette.brand} />
                   </View>
                 ) : null}
+              </AnimatedPressable>
 
-                <AnimatedPressable
-                  style={[styles.cta, isCompact && styles.ctaCompact]}
-                  stateLayerColor={colors.white}
-                  onPress={handleSubmit}
-                  disabled={loading}
-                >
-                  <Text style={styles.ctaText}>{loading ? copy.busy : copy.cta}</Text>
-                </AnimatedPressable>
-
-                <View style={styles.switchRow}>
-                  <Text style={styles.switchText}>{copy.switchText}</Text>
-                  <Pressable
-                    hitSlop={8}
-                    onPress={() => switchMode(mode === 'login' ? 'signup' : 'login')}
-                  >
-                    <Text style={styles.switchAction}>{copy.switchAction}</Text>
-                  </Pressable>
-                </View>
-              </Animated.View>
+              <View style={styles.switchRow}>
+                <Text style={styles.switchText}>{copy.switchText}</Text>
+                <Pressable hitSlop={8} onPress={() => switchMode(mode === 'login' ? 'signup' : 'login')}>
+                  <Text style={styles.switchAction}>{copy.switchAction}</Text>
+                </Pressable>
+              </View>
             </Animated.View>
 
             <Text style={styles.legalText}>
@@ -362,33 +375,33 @@ export function LoginScreen() {
               .
             </Text>
           </ScrollView>
-
-          <Modal
-            visible={legalDoc !== null}
-            animationType="slide"
-            onRequestClose={() => setLegalDoc(null)}
-          >
-            <SafeAreaView style={styles.modalRoot} edges={['top', 'left', 'right', 'bottom']}>
-              <View style={styles.legalModalHeader}>
-                <Text style={styles.legalModalTitle}>
-                  {legalDoc === 'privacy' ? PRIVACY_POLICY.title : TERMS_OF_USE.title}
-                </Text>
-                <AnimatedPressable
-                  onPress={() => setLegalDoc(null)}
-                  style={styles.legalCloseBtn}
-                  stateLayerColor={colors.onSurface}
-                  accessibilityLabel="Fechar"
-                >
-                  <Ionicons name="close" size={20} color={colors.textPrimary} />
-                </AnimatedPressable>
-              </View>
-              {legalDoc ? (
-                <LegalDocument doc={legalDoc === 'privacy' ? PRIVACY_POLICY : TERMS_OF_USE} />
-              ) : null}
-            </SafeAreaView>
-          </Modal>
         </SafeAreaView>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={legalDoc !== null}
+        animationType="slide"
+        onRequestClose={() => setLegalDoc(null)}
+      >
+        <SafeAreaView style={styles.modalRoot} edges={['top', 'left', 'right', 'bottom']}>
+          <View style={styles.legalModalHeader}>
+            <Text style={styles.legalModalTitle}>
+              {legalDoc === 'privacy' ? PRIVACY_POLICY.title : TERMS_OF_USE.title}
+            </Text>
+            <AnimatedPressable
+              onPress={() => setLegalDoc(null)}
+              style={styles.legalCloseBtn}
+              stateLayerColor={colors.onSurface}
+              accessibilityLabel="Fechar"
+            >
+              <Ionicons name="close" size={20} color={colors.textPrimary} />
+            </AnimatedPressable>
+          </View>
+          {legalDoc ? (
+            <LegalDocument doc={legalDoc === 'privacy' ? PRIVACY_POLICY : TERMS_OF_USE} />
+          ) : null}
+        </SafeAreaView>
+      </Modal>
 
       <Animated.View
         pointerEvents={showLoadingOverlay ? 'auto' : 'none'}
@@ -401,77 +414,86 @@ export function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, backgroundColor: dashboardPalette.brand },
   flex: { flex: 1 },
   modalRoot: { flex: 1, backgroundColor: colors.background },
-  topWash: { position: 'absolute', top: 0, left: 0, right: 0, height: 320 },
   loadingOverlay: { ...StyleSheet.absoluteFillObject },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.md,
-  },
-  main: { flex: 1, justifyContent: 'center', paddingBottom: spacing.lg },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: spacing.xxl },
+  hero: { overflow: 'hidden', backgroundColor: dashboardPalette.ink900 },
+  heroContent: { flex: 1, justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingBottom: 38 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   logo: {
-    width: 44,
-    height: 44,
-    borderRadius: 13,
-    borderWidth: 1,
-    borderColor: colors.border,
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.92)',
   },
-  brandName: { fontFamily: font.bold, fontSize: 17, letterSpacing: -0.4, color: colors.textPrimary },
-  brandTag: { fontFamily: font.medium, fontSize: 12.5, color: colors.textSecondary, marginTop: 1 },
-  title: {
-    fontFamily: font.bold,
-    fontSize: 34,
-    letterSpacing: -1.2,
-    color: colors.textPrimary,
+  brandTiny: { fontFamily: font.bold, fontSize: 10, letterSpacing: 3, color: dashboardPalette.amber },
+  brandName: { fontFamily: font.extraBold, fontSize: 20, letterSpacing: -0.4, color: colors.white },
+  headline: {
+    fontFamily: font.extraBold,
+    fontSize: 36,
+    lineHeight: 40,
+    letterSpacing: -1.4,
+    color: colors.white,
   },
-  titleCompact: { fontSize: 28, letterSpacing: -1 },
-  subtitle: {
-    fontFamily: font.regular,
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.textSecondary,
-    marginTop: 6,
+  headlineSmall: { fontSize: 28, lineHeight: 32 },
+  headlineAccent: { color: dashboardPalette.amber },
+  sheetWrap: {
+    flex: 1,
+    marginTop: -28,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    backgroundColor: colors.white,
+    overflow: 'hidden',
   },
-  fields: { marginTop: spacing.xl },
+  sheet: { flex: 1 },
+  sheetContent: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.md },
+  title: { fontFamily: font.extraBold, fontSize: 26, letterSpacing: -0.9, color: colors.textPrimary },
+  subtitle: { fontFamily: font.regular, fontSize: 14.5, lineHeight: 21, color: colors.textSecondary, marginTop: 4 },
+  fields: { marginTop: spacing.lg },
   forgotPasswordWrap: { alignSelf: 'flex-end', marginTop: spacing.sm },
-  forgotPasswordText: { fontFamily: font.semiBold, fontSize: 13, color: dashboardPalette.brand },
+  forgotPasswordText: { fontFamily: font.bold, fontSize: 13, color: dashboardPalette.brand },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     backgroundColor: colors.dangerMuted,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: spacing.sm,
     paddingVertical: 10,
     marginTop: spacing.md,
   },
   error: { fontFamily: font.medium, fontSize: 13, color: colors.danger, flexShrink: 1 },
   cta: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 54,
-    borderRadius: 14,
-    marginTop: spacing.lg,
-    backgroundColor: dashboardPalette.brand,
-    overflow: 'hidden',
-  },
-  ctaCompact: { height: 50, marginTop: spacing.md },
-  ctaText: { fontFamily: font.semiBold, fontSize: 16, letterSpacing: -0.2, color: colors.white },
-  switchRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
+    height: 58,
+    borderRadius: 20,
     marginTop: spacing.lg,
+    overflow: 'hidden',
+    shadowColor: dashboardPalette.brand,
+    shadowOpacity: 0.38,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
+  ctaCompact: { height: 52, marginTop: spacing.md },
+  ctaText: { fontFamily: font.extraBold, fontSize: 16.5, letterSpacing: -0.3, color: colors.white },
+  ctaArrow: {
+    position: 'absolute',
+    right: 9,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switchRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: spacing.lg },
   switchText: { fontFamily: font.regular, fontSize: 14, color: colors.textSecondary },
-  switchAction: { fontFamily: font.semiBold, fontSize: 14, color: colors.textPrimary },
+  switchAction: { fontFamily: font.extraBold, fontSize: 14, color: dashboardPalette.brand },
   legalText: {
     fontFamily: font.regular,
     fontSize: 12,
@@ -479,7 +501,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     paddingHorizontal: spacing.md,
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
   },
   legalLink: { fontFamily: font.semiBold, color: colors.textSecondary },
   legalModalHeader: {

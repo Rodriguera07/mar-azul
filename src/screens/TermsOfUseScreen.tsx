@@ -6,6 +6,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { LegalDocument } from '../components/LegalDocument';
+import { ScreenBar } from '../components/ScreenBar';
 import { TERMS_OF_USE } from '../content/legal';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
@@ -17,21 +18,14 @@ export function TermsOfUseScreen({ navigation }: Props) {
   const { contentStyle } = useResponsiveContent();
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-      <View style={styles.header}>
-        <AnimatedPressable
-          onPress={() => {
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+      <ScreenBar
+        title="Termo de Uso"
+        onBack={() => {
             navigation.goBack();
             navigation.dispatch(DrawerActions.openDrawer());
           }}
-          style={styles.backBtn}
-          stateLayerColor={colors.onSurface}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
-        </AnimatedPressable>
-        <Text style={styles.title}>Termo de Uso</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      />
 
       <LegalDocument doc={TERMS_OF_USE} contentStyle={contentStyle} />
     </SafeAreaView>

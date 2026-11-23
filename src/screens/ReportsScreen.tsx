@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
+import { BrandHeader } from '../components/BrandHeader';
 import { DateField } from '../components/DateField';
 import { EmptyState } from '../components/EmptyState';
 import { useAuthStore } from '../context/useAuthStore';
@@ -74,50 +75,51 @@ export function ReportsScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <View style={styles.header}>
-        <AnimatedPressable
-          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-          style={styles.backBtn}
-          stateLayerColor={colors.onSurface}
-        >
-          <Ionicons name="menu" size={22} color={colors.textPrimary} />
-        </AnimatedPressable>
-        <View style={styles.headerTitleWrap}>
-          <Text style={styles.title}>Relatórios</Text>
-          <Text style={styles.subtitle}>{formatShortRange(range.start, range.end)}</Text>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
 
-      <View style={styles.presetRow}>
-        {PRESETS.map((p) => (
-          <AnimatedPressable
-            key={p.key}
-            style={[styles.presetChip, preset === p.key && styles.presetChipActive]}
-            stateLayerColor={preset === p.key ? colors.white : colors.onSurface}
-            onPress={() => handleSelectPreset(p.key)}
-          >
-            <Text style={[styles.presetText, preset === p.key && styles.presetTextActive]}>
-              {p.label}
-            </Text>
-          </AnimatedPressable>
-        ))}
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <BrandHeader bottomSpace={64}>
+          <View style={styles.header}>
+            <AnimatedPressable
+              onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+              style={styles.backBtn}
+              stateLayerColor={colors.white}
+              accessibilityLabel="Abrir menu"
+            >
+              <Ionicons name="menu" size={21} color={colors.white} />
+            </AnimatedPressable>
+            <View style={styles.headerTitleWrap}>
+              <Text style={styles.title}>Relatórios</Text>
+              <Text style={styles.subtitle}>{formatShortRange(range.start, range.end)}</Text>
+            </View>
+          </View>
 
-      {preset === 'custom' && (
-        <View style={styles.dateRow}>
-          <DateField value={startDate} onChange={setStartDate} maximumDate={endDate} />
-          <Ionicons name="arrow-forward" size={13} color={colors.textMuted} />
-          <DateField value={endDate} onChange={setEndDate} maximumDate={new Date()} />
-        </View>
-      )}
+          <View style={styles.presetRow}>
+            {PRESETS.map((p) => (
+              <AnimatedPressable
+                key={p.key}
+                style={[styles.presetChip, preset === p.key && styles.presetChipActive]}
+                stateLayerColor={preset === p.key ? colors.white : colors.onSurface}
+                onPress={() => handleSelectPreset(p.key)}
+              >
+                <Text style={[styles.presetText, preset === p.key && styles.presetTextActive]}>
+                  {p.label}
+                </Text>
+              </AnimatedPressable>
+            ))}
+          </View>
+        </BrandHeader>
 
-      <ScrollView
-        contentContainerStyle={[styles.content, contentStyle]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.receipt}>
+        <View style={[styles.content, contentStyle]}>
+        {preset === 'custom' && (
+          <View style={styles.dateRow}>
+            <DateField value={startDate} onChange={setStartDate} maximumDate={endDate} />
+            <Ionicons name="arrow-forward" size={13} color={colors.textMuted} />
+            <DateField value={endDate} onChange={setEndDate} maximumDate={new Date()} />
+          </View>
+        )}
+
+        <View style={[styles.receipt, preset === 'custom' && { marginTop: spacing.md }]}>
           <Text style={styles.receiptLabel}>Faturamento do período</Text>
           <Text style={styles.receiptValue}>{formatCurrency(report.totalRevenue)}</Text>
           <View style={styles.receiptBadgeRow}>
@@ -188,6 +190,7 @@ export function ReportsScreen({ navigation }: Props) {
             })}
           </View>
         )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -198,80 +201,77 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
+    gap: spacing.sm,
   },
   backBtn: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.20)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitleWrap: {
-    alignItems: 'center',
+    flex: 1,
   },
   title: {
-    ...typography.h2,
-    color: colors.textPrimary,
+    fontFamily: font.extraBold,
+    fontSize: 24,
+    letterSpacing: -0.9,
+    color: colors.white,
   },
   subtitle: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontFamily: font.medium,
+    fontSize: 12.5,
+    color: 'rgba(255,255,255,0.85)',
     marginTop: 1,
   },
   presetRow: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
     gap: spacing.xs,
-    marginBottom: spacing.sm,
+    marginTop: spacing.md,
   },
   presetChip: {
     flex: 1,
-    paddingVertical: spacing.xs,
+    paddingVertical: 8,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
+    backgroundColor: 'rgba(255,255,255,0.20)',
     alignItems: 'center',
   },
   presetChipActive: {
-    backgroundColor: dashboardPalette.ink900,
-    borderColor: dashboardPalette.ink900,
+    backgroundColor: colors.white,
   },
   presetText: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontFamily: font.semiBold,
+    fontSize: 12.5,
+    color: 'rgba(255,255,255,0.92)',
   },
   presetTextActive: {
-    color: colors.textInverse,
-    fontFamily: font.bold,
+    color: dashboardPalette.brand,
+    fontFamily: font.extraBold,
   },
   dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
     gap: spacing.sm,
-    marginBottom: spacing.sm,
+    marginTop: -46,
+    padding: spacing.md,
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    ...elevationShadow(1),
   },
   content: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingBottom: spacing.xl,
   },
   receipt: {
     backgroundColor: colors.white,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: 24,
     padding: spacing.lg,
-    marginTop: spacing.xs,
+    marginTop: -42,
+    ...elevationShadow(1),
   },
   receiptLabel: {
     fontFamily: font.medium,

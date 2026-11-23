@@ -6,6 +6,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { LegalDocument } from '../components/LegalDocument';
+import { ScreenBar } from '../components/ScreenBar';
 import { PRIVACY_POLICY } from '../content/legal';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
@@ -17,21 +18,14 @@ export function PrivacyPolicyScreen({ navigation }: Props) {
   const { contentStyle } = useResponsiveContent();
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-      <View style={styles.header}>
-        <AnimatedPressable
-          onPress={() => {
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+      <ScreenBar
+        title="Política de Privacidade"
+        onBack={() => {
             navigation.goBack();
             navigation.dispatch(DrawerActions.openDrawer());
           }}
-          style={styles.backBtn}
-          stateLayerColor={colors.onSurface}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
-        </AnimatedPressable>
-        <Text style={styles.title}>Política de Privacidade</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      />
 
       <LegalDocument doc={PRIVACY_POLICY} contentStyle={contentStyle} />
     </SafeAreaView>
