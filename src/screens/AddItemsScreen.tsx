@@ -145,6 +145,7 @@ export function AddItemsScreen({ navigation, route }: Props) {
       <ScreenBar
         title="Adicionar Itens"
         subtitle={`Mesa ${table.label}`}
+        subtitleSize={20}
         onClose={() => navigation.goBack()}
       />
 

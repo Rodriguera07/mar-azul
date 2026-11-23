@@ -14,11 +14,23 @@ interface Props {
   onClose?: () => void;
   right?: ReactNode;
   bottomSpace?: number;
+  // Para telas em que o número da mesa é o assunto principal.
+  titleSize?: number;
+  subtitleSize?: number;
 }
 
 // Cabeçalho padrão das telas internas: faixa de marca em coral com botão
 // translúcido, título grande e subtítulo — a mesma linguagem do Painel.
-export function ScreenBar({ title, subtitle, onBack, onClose, right, bottomSpace = 20 }: Props) {
+export function ScreenBar({
+  title,
+  subtitle,
+  onBack,
+  onClose,
+  right,
+  bottomSpace = 20,
+  titleSize,
+  subtitleSize,
+}: Props) {
   return (
     <BrandHeader bottomSpace={bottomSpace}>
       <View style={styles.row}>
@@ -34,11 +46,17 @@ export function ScreenBar({ title, subtitle, onBack, onClose, right, bottomSpace
           </AnimatedPressable>
         )}
         <View style={styles.titleWrap}>
-          <Text style={styles.title} numberOfLines={1}>
+          <Text
+            style={[styles.title, titleSize ? { fontSize: titleSize, letterSpacing: -1 } : null]}
+            numberOfLines={1}
+          >
             {title}
           </Text>
           {subtitle ? (
-            <Text style={styles.subtitle} numberOfLines={1}>
+            <Text
+              style={[styles.subtitle, subtitleSize ? { fontSize: subtitleSize, fontFamily: font.bold } : null]}
+              numberOfLines={1}
+            >
               {subtitle}
             </Text>
           ) : null}

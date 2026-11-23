@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
+import { isAppleMobileWeb } from '../utils/platform';
 import { Animated, Easing, Image, ImageSourcePropType, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 // Fotos reais do cardápio, em três faixas inclinadas que deslizam sem parar
@@ -44,6 +45,9 @@ function Row({ images, tile, reverse, duration }: {
   const rowWidth = images.length * (tile + GAP);
 
   useEffect(() => {
+    // No iPhone a faixa fica parada: uma animação infinita dentro de uma área
+    // girada e recortada faz o WebKit repintar a tela o tempo todo (e piscar).
+    if (isAppleMobileWeb) return;
     const loop = Animated.loop(
       Animated.timing(progress, {
         toValue: 1,

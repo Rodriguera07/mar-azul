@@ -350,7 +350,7 @@ export function DashboardScreen({ navigation }: Props) {
                 </Text>
               </View>
             ) : (
-              <View style={styles.tablesGrid}>
+              <View style={[styles.tablesGrid, tableColumns === 2 && styles.tablesGridTwoCols]}>
                 {orderedTables.map((table) => (
                   <TableCard
                     key={table.id}
@@ -745,6 +745,7 @@ const styles = StyleSheet.create({
   },
   sectionChipText: { fontFamily: font.bold, fontSize: 12, color: dashboardPalette.brand },
   tablesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm + 2 },
+  tablesGridTwoCols: { justifyContent: 'space-between' },
   emptyCard: { alignItems: 'center', paddingVertical: spacing.xl },
   emptyIll: {
     width: 56,
