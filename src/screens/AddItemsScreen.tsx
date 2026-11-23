@@ -50,7 +50,9 @@ function normalize(text: string): string {
 }
 
 export function AddItemsScreen({ navigation, route }: Props) {
-  const { tableId } = route.params;
+  // `route.params` pode vir vazio (tela reaberta sem parâmetros): sem este
+  // cuidado, a desestruturação lançava erro e a tela ficava em branco.
+  const tableId = route.params?.tableId ?? '';
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [search, setSearch] = useState('');
   const { contentStyle } = useResponsiveContent();
@@ -268,7 +270,7 @@ const styles = StyleSheet.create({
     height: 48,
     gap: spacing.xs,
     marginBottom: spacing.sm,
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.06,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },

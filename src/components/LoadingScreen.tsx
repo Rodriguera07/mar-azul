@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.95)',
   },
-  brandTiny: { fontFamily: font.bold, fontSize: 11, letterSpacing: 4, color: dashboardPalette.amberSoft },
+  brandTiny: { fontFamily: font.bold, fontSize: 11, letterSpacing: 4, color: dashboardPalette.aquaSoft },
   brandName: { fontFamily: font.extraBold, fontSize: 30, letterSpacing: -0.8, color: colors.white, marginTop: 2 },
   loaderWrap: { marginTop: spacing.xxl, alignItems: 'center', gap: spacing.sm },
   track: {

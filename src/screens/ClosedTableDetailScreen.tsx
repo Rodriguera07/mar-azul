@@ -4,6 +4,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
+import { MissingTable } from '../components/MissingTable';
 import { OrderItemRow } from '../components/OrderItemRow';
 import { BarPill, ScreenBar } from '../components/ScreenBar';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
@@ -15,8 +16,18 @@ import { PAYMENT_LABELS } from '../utils/payments';
 type Props = NativeStackScreenProps<RootStackParamList, 'ClosedTableDetail'>;
 
 export function ClosedTableDetailScreen({ navigation, route }: Props) {
-  const { sale } = route.params;
+  const sale = route.params?.sale;
   const { contentStyle } = useResponsiveContent();
+
+  if (!sale) {
+    return (
+      <MissingTable
+        title="Venda não encontrada"
+        subtitle="Não foi possível abrir os detalhes desta mesa. Volte e tente de novo."
+        onBack={() => navigation.goBack()}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
@@ -153,7 +164,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xs,
     marginBottom: spacing.lg,
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },
@@ -178,7 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     overflow: 'hidden',
     marginBottom: spacing.lg,
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },
@@ -189,7 +200,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: spacing.md,
     marginBottom: spacing.lg,
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },
@@ -226,7 +237,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 22,
     paddingHorizontal: spacing.md,
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },

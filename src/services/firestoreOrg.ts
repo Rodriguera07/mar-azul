@@ -32,7 +32,14 @@ import {
   WebPushSubscription,
 } from '../types';
 import { computeNextPaymentAmount, computeTotals, isPaidInFull, round2 } from '../utils/billing';
-import { asNumber, sanitizeClosedSale, sanitizeMenuItems, sanitizeTable } from '../utils/sanitize';
+import {
+  asNumber,
+  sanitizeAuditEntry,
+  sanitizeClosedSale,
+  sanitizeMenuItems,
+  sanitizeTable,
+  sanitizeUserProfile,
+} from '../utils/sanitize';
 import { reportSyncError, reportSyncOk } from './syncStatus';
 
 const tablesCol = (orgId: string) => collection(db, 'organizations', orgId, 'tables');
@@ -72,7 +79,14 @@ export function liveSnapshot(
       (snap: QuerySnapshot<DocumentData> | DocumentSnapshot<DocumentData>) => {
         attempt = 0;
         reportSyncOk(label, options.trackCache === true && snap.metadata.fromCache);
-        onNext(snap);
+        // Um erro ao processar UM documento ruim não pode derrubar a escuta: se
+        // a função de retorno lançar dentro do callback do SDK, as próximas
+        // atualizações deixam de chegar e a tela fica parada sem aviso.
+        try {
+          onNext(snap);
+        } catch (err) {
+          console.warn(`[firestore] erro ao processar "${label}"`, err);
+        }
       },
       (err: unknown) => {
         console.warn(`[firestore] listener "${label}" falhou, religando…`, err);
@@ -368,7 +382,7 @@ export async function clearClosedTablesAndSummarize(
 }
 
 export function subscribeOrgUsers(orgId: string, cb: (users: UserProfile[]) => void): Unsubscribe {
-  return liveQuery('orgUsers', orgUsersCol(orgId), (snap) => cb(snap.docs.map((d) => d.data() as UserProfile)));
+  return liveQuery('orgUsers', orgUsersCol(orgId), (snap) => cb(snap.docs.map((d) => sanitizeUserProfile(d.id, d.data()))));
 }
 
 export function setOrgUserActive(orgId: string, uid: string, active: boolean): Promise<void> {
@@ -399,7 +413,7 @@ export async function getAdminPushTokens(orgId: string): Promise<string[]> {
   const q = query(orgUsersCol(orgId), where('role', '==', 'admin'), where('active', '==', true));
   const snap = await getDocs(q);
   return snap.docs
-    .map((d) => d.data() as UserProfile)
+    .map((d) => sanitizeUserProfile(d.id, d.data()))
     .filter((u) => !!u.expoPushToken)
     .map((u) => u.expoPushToken as string);
 }
@@ -459,5 +473,5 @@ export function subscribeAuditLog(
   cb: (entries: AuditLogEntry[]) => void
 ): Unsubscribe {
   const q = query(auditLogCol(orgId), orderBy('timestamp', 'desc'), limit(pageSize));
-  return liveQuery('auditLog', q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AuditLogEntry))));
+  return liveQuery('auditLog', q, (snap) => cb(snap.docs.map((d) => sanitizeAuditEntry(d.id, d.data()))));
 }

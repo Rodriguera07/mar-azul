@@ -58,7 +58,7 @@ export function MainTabs() {
           height: 62 + tabBarBottomPadding,
           paddingTop: 8,
           paddingBottom: tabBarBottomPadding,
-          shadowColor: '#2B1A12',
+          shadowColor: '#0B1B3B',
           shadowOpacity: 0.10,
           shadowRadius: 18,
           shadowOffset: { width: 0, height: -6 },

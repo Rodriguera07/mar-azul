@@ -43,6 +43,18 @@ export default function App() {
   });
   const authStatus = useAuthStore((s) => s.status);
 
+  // Se a restauração do login travar (armazenamento do Safari bloqueado, rede
+  // ruim), o app ficava preso na tela de carregamento. Passado o tempo limite,
+  // segue para o login — e se a sessão enfim voltar, o listener a restaura.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (useAuthStore.getState().status === 'loading') {
+        useAuthStore.setState({ status: 'unauthenticated', user: null });
+      }
+    }, 12000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Fontes e sessão costumam resolver quase instantaneamente (cache local),
   // o que fazia esse loading só "piscar" na tela. Sustenta a mesma duração
   // mínima usada depois do login, pra dar tempo do usuário apreciar o app.

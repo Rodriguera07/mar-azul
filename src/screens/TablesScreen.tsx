@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.full,
     backgroundColor: colors.white,
     overflow: 'hidden',
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.06,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },

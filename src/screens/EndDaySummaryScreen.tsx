@@ -11,13 +11,24 @@ import { dashboardPalette } from '../theme/dashboardPalette';
 import { colors, font, elevationShadow, shape, spacing, typography } from '../theme';
 import { PaymentMethod } from '../types';
 import { formatCurrency, formatDateLabel, formatTime } from '../utils/format';
+import { MissingTable } from '../components/MissingTable';
 import { PAYMENT_LABELS, describeSalePayments } from '../utils/payments';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EndDaySummary'>;
 
 export function EndDaySummaryScreen({ navigation, route }: Props) {
-  const { summary } = route.params;
+  const summary = route.params?.summary;
   const { contentStyle } = useResponsiveContent();
+
+  if (!summary) {
+    return (
+      <MissingTable
+        title="Resumo indisponível"
+        subtitle="O resumo do dia já foi gravado. Veja os valores em Relatórios."
+        onBack={() => navigation.popToTop()}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
@@ -156,7 +167,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.lg,
     gap: spacing.sm,
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },
@@ -179,7 +190,7 @@ const styles = StyleSheet.create({
   salesCard: {
     backgroundColor: colors.white,
     overflow: 'hidden',
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },

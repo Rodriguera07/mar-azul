@@ -17,6 +17,7 @@ import { usePosStore } from './usePosStore';
 import { logAuditEvent } from '../services/auditLog';
 import { countActiveAdmins, deleteOwnAccountData } from '../services/firestoreOrg';
 import { UserProfile } from '../types';
+import { sanitizeUserProfile } from '../utils/sanitize';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -72,7 +73,7 @@ async function fetchPointerWithRetry(
 
 async function fetchOrgProfile(orgId: string, uid: string): Promise<UserProfile | null> {
   const snap = await getDoc(doc(db, 'organizations', orgId, 'users', uid));
-  return snap.exists() ? (snap.data() as UserProfile) : null;
+  return snap.exists() ? sanitizeUserProfile(uid, snap.data()) : null;
 }
 
 function friendlyAuthError(code: string): string {
@@ -153,7 +154,7 @@ function watchProfile(uid: string, orgId: string) {
         useAuthStore.setState({ status: 'unauthenticated', user: null });
         return;
       }
-      const profile = snap.data() as UserProfile;
+      const profile = sanitizeUserProfile(uid, snap.data());
       if (!profile.active) {
         profileUnsubscribe?.();
         profileUnsubscribe = null;
