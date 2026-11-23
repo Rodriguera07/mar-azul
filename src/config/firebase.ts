@@ -44,8 +44,23 @@ export const auth: Auth =
     ? getAuth(app)
     : initializeAuth(app, { persistence: getReactNativePersistence(AsyncStorage) });
 
+// Todo navegador de iPhone/iPad (Safari, Chrome, app instalado na tela de
+// início) roda sobre o WebKit. Nele, o canal de streaming que o Firestore usa
+// por padrão às vezes fica "pendurado" sem dar erro — principalmente depois
+// de o app voltar do segundo plano ou trocar de Wi-Fi para 4G/5G. O sintoma é
+// tela carregando para sempre (getDoc nunca responde) ou dados que param de
+// atualizar. No iOS usamos long polling (requisições HTTP comuns), que é mais
+// lento por alguns milissegundos mas não trava. iPadOS se apresenta como Mac,
+// por isso a checagem extra de toque.
+export const isAppleMobileWeb: boolean =
+  Platform.OS === 'web' &&
+  typeof navigator !== 'undefined' &&
+  (/iPad|iPhone|iPod/i.test(navigator.userAgent || '') ||
+    (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints ?? 0) > 1));
+
 export const db: Firestore = initializeFirestore(app, {
   localCache: Platform.OS === 'web' ? memoryLocalCache() : persistentLocalCache(),
+  ...(isAppleMobileWeb ? { experimentalForceLongPolling: true } : null),
   // O app usa `campo?: string` (undefined) para "sem valor" em vários tipos
   // (ex.: Table.waiterName) — sem isso, gravar esses objetos direto lança
   // "Unsupported field value: undefined".

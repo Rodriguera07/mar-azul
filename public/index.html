@@ -57,6 +57,29 @@
     <div id="root"></div>
 
     <!--
+      iPhone: ao abrir o teclado o iOS rola a página inteira para cima (mesmo
+      com o body travado) e, ao fechar, às vezes não desfaz — fica uma faixa
+      em branco embaixo e os toques caem no lugar errado até recarregar.
+      Quando nenhum campo está mais em foco, devolve a página para o topo.
+    -->
+    <script>
+      (function () {
+        function resetScroll() {
+          setTimeout(function () {
+            var a = document.activeElement;
+            var typing = a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
+            if (!typing && (window.scrollY || document.documentElement.scrollTop || document.body.scrollTop)) {
+              window.scrollTo(0, 0);
+              document.body.scrollTop = 0;
+            }
+          }, 120);
+        }
+        document.addEventListener('focusout', resetScroll);
+        if (window.visualViewport) window.visualViewport.addEventListener('resize', resetScroll);
+      })();
+    </script>
+
+    <!--
       Rede de segurança de abertura: se o aplicativo não chegar a aparecer (ex.:
       um celular com navegador antigo que não entende alguma parte do código),
       mostra uma mensagem com o motivo e um botão para recarregar, em vez de
@@ -65,8 +88,40 @@
     <script>
       (function () {
         var errors = [];
+        // Pacote do app que não carregou (versão antiga aberta no iPhone
+        // depois de um deploy, internet que caiu no meio do download): recarrega
+        // sozinho UMA vez, pegando a versão atual. O registro com horário evita
+        // ficar recarregando em loop se o problema persistir.
+        function recoverOnce() {
+          try {
+            var last = Number(sessionStorage.getItem('boot-recover-at') || 0);
+            if (Date.now() - last < 60000) return false;
+            sessionStorage.setItem('boot-recover-at', String(Date.now()));
+          } catch (_) {
+            return false;
+          }
+          var url = window.location.pathname + '?_r=' + Date.now() + window.location.hash;
+          window.location.replace(url);
+          return true;
+        }
+        window.addEventListener(
+          'error',
+          function (e) {
+            var t = e && e.target;
+            if (t && t.tagName === 'SCRIPT' && /\/_expo\/static\//.test(t.src || '')) {
+              errors.push('Falha ao baixar o app');
+              recoverOnce();
+            }
+          },
+          true
+        );
         window.addEventListener('error', function (e) {
-          if (errors.length < 3) errors.push(String(e && e.message ? e.message : e));
+          var msg = String(e && e.message ? e.message : e);
+          if (errors.length < 3) errors.push(msg);
+          // HTML recebido no lugar do JavaScript ("Unexpected token '<'").
+          if (/Unexpected token '?<'?|expected expression, got '<'/i.test(msg) && !document.getElementById('root').childElementCount) {
+            recoverOnce();
+          }
         });
         window.addEventListener('unhandledrejection', function (e) {
           if (errors.length < 3) errors.push(String(e && e.reason && e.reason.message ? e.reason.message : e.reason));

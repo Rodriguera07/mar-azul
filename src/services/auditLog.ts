@@ -1,6 +1,7 @@
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { AuditEventType } from '../types';
+import { withTimeout } from '../utils/timeout';
 
 interface LogAuditEventInput {
   orgId: string;
@@ -13,7 +14,12 @@ interface LogAuditEventInput {
 }
 
 // Best-effort: uma falha ao registrar auditoria (ex.: sem conexão) nunca deve
-// interromper a ação principal do usuário (login, abrir mesa, etc.).
+// interromper a ação principal do usuário (login, abrir mesa, etc.). A
+// promessa do addDoc só termina quando o servidor confirma; com a conexão
+// presa (comum no iPhone ao voltar do segundo plano) ela nunca terminava e
+// quem esperava por ela (sair da conta, trocar senha) ficava girando para
+// sempre. Com o teto, a tela segue — a gravação continua na fila do SDK e é
+// enviada assim que a conexão voltar.
 export async function logAuditEvent({
   orgId,
   userId,
@@ -24,7 +30,7 @@ export async function logAuditEvent({
   detail,
 }: LogAuditEventInput): Promise<void> {
   try {
-    await addDoc(collection(db, 'organizations', orgId, 'auditLog'), {
+    await withTimeout(addDoc(collection(db, 'organizations', orgId, 'auditLog'), {
       type,
       userId,
       userName,
@@ -32,7 +38,7 @@ export async function logAuditEvent({
       tableLabel: tableLabel ?? null,
       detail: detail ?? null,
       timestamp: new Date().toISOString(),
-    });
+    }), 6000);
   } catch (err) {
     console.warn('Falha ao registrar evento de auditoria', err);
   }
