@@ -36,6 +36,16 @@ function getCoverImages(table: Table): ImageSourcePropType[] {
   return [...seen];
 }
 
+// Número da mesa bem grande para ler de longe: o tamanho da letra diminui só o
+// necessário quando o nome é comprido ("Deck 1", "Balcão").
+function badgeFontSize(label: string): number {
+  const n = String(label ?? '').trim().length;
+  if (n <= 2) return 32;
+  if (n === 3) return 26;
+  if (n <= 5) return 21;
+  return 16;
+}
+
 export function TableCard({ table, onPress, style }: Props) {
   const total = getTableCurrentTotal(table);
   const itemCount = table.items.reduce((sum, i) => sum + i.quantity, 0);
@@ -79,10 +89,12 @@ export function TableCard({ table, onPress, style }: Props) {
           pointerEvents="none"
         />
 
-        <View style={[styles.badge, { backgroundColor: tone }]}>
-          <Text style={styles.badgeText} numberOfLines={1}>
+        <View style={styles.plate}>
+          <Text style={styles.plateKicker}>MESA</Text>
+          <Text style={[styles.plateNumber, { fontSize: badgeFontSize(table.label) }]} numberOfLines={1}>
             {table.label}
           </Text>
+          <View style={[styles.plateBar, { backgroundColor: tone }]} />
         </View>
         <View style={styles.timePill}>
           <Ionicons name="time" size={11} color={tone} />
@@ -115,23 +127,37 @@ const styles = StyleSheet.create({
     ...elevationShadow(1),
   },
   flash: { ...StyleSheet.absoluteFillObject, backgroundColor: dashboardPalette.brand },
-  cover: { height: 96, backgroundColor: colors.surfaceContainerHigh },
+  cover: { height: 104, backgroundColor: colors.surfaceContainerHigh },
   coverRow: { flex: 1, flexDirection: 'row', gap: 2 },
   coverImage: { flex: 1, height: '100%' },
   coverEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  badge: {
+  // "Plaquinha" do número: ficha branca com o número grande em azul-marinho,
+  // a palavra MESA pequena em cima e uma barra com a cor do status embaixo.
+  plate: {
     position: 'absolute',
     top: 9,
     left: 9,
-    minWidth: 30,
-    maxWidth: 84,
-    height: 28,
-    paddingHorizontal: 8,
-    borderRadius: 10,
+    minWidth: 58,
+    maxWidth: 104,
+    paddingHorizontal: 11,
+    paddingTop: 5,
     alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    shadowColor: '#0B1B3B',
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
-  badgeText: { fontFamily: font.extraBold, fontSize: 13.5, color: colors.white, letterSpacing: -0.2 },
+  plateKicker: { fontFamily: font.bold, fontSize: 9, letterSpacing: 1.6, color: colors.textMuted },
+  plateNumber: {
+    fontFamily: font.extraBold,
+    color: dashboardPalette.ink900,
+    letterSpacing: -1,
+    lineHeight: 36,
+  },
+  plateBar: { width: '62%', height: 4, borderRadius: 2, marginTop: 1, marginBottom: 7 },
   timePill: {
     position: 'absolute',
     top: 9,

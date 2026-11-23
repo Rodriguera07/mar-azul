@@ -19,7 +19,11 @@ const TOASTABLE_TYPES: AuditEventType[] = [
   'table_closed',
 ];
 
-const VISIBLE_MS = 4500;
+const VISIBLE_MS = 3200;
+// Máximo de avisos na fila: se a equipe lança itens sem parar, o aviso de cima
+// ficava aparecendo em sequência o tempo todo (e animando por cima da tela). Só
+// os mais recentes interessam.
+const MAX_QUEUE = 2;
 
 export function AdminNotificationToasts() {
   const user = useAuthStore((s) => s.user);
@@ -68,6 +72,9 @@ export function AdminNotificationToasts() {
       fresh.forEach((e) => seenIdsRef.current.add(e.id));
       // `entries` vem mais-novo-primeiro; empilha na ordem em que aconteceram.
       queueRef.current.push(...fresh.reverse());
+      if (queueRef.current.length > MAX_QUEUE) {
+        queueRef.current.splice(0, queueRef.current.length - MAX_QUEUE);
+      }
       if (!timerRef.current) showNext();
     });
 
@@ -78,11 +85,11 @@ export function AdminNotificationToasts() {
   }, [user?.orgId, user?.uid, user?.role]);
 
   useEffect(() => {
-    Animated.spring(anim, {
+    // Transição curta e sem "mola": poucos quadros de animação em vez de dezenas.
+    Animated.timing(anim, {
       toValue: toast ? 1 : 0,
+      duration: 180,
       useNativeDriver: true,
-      speed: 16,
-      bounciness: 6,
     }).start();
   }, [toast, anim]);
 
@@ -97,7 +104,7 @@ export function AdminNotificationToasts() {
           {
             opacity: anim,
             transform: [
-              { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] }) },
+              { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) },
             ],
           },
         ]}
@@ -138,7 +145,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.large,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
-    ...elevationShadow(3),
+    ...elevationShadow(2),
   },
   iconWrap: {
     width: 32,

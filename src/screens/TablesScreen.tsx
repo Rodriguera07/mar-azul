@@ -123,7 +123,7 @@ export function TablesScreen({ navigation }: Props) {
             <Text style={styles.emptyText}>Nenhuma mesa aberta há mais de 1h30.</Text>
           </View>
         ) : (
-          <View style={styles.grid}>
+          <View style={[styles.grid, tableColumns === 2 && styles.gridTwoCols]}>
             {shown.map((table) => (
               <TableCard
                 key={table.id}
@@ -186,6 +186,8 @@ const styles = StyleSheet.create({
   chipTextActive: { color: colors.white },
   chipDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: dashboardPalette.rose },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm + 2 },
+  // 2 colunas: sobra de largura vai ENTRE os blocos (e o último, sozinho, fica à esquerda).
+  gridTwoCols: { justifyContent: 'space-between' },
   empty: { paddingTop: 64, paddingHorizontal: 24, alignItems: 'center' },
   emptyIll: {
     width: 64,

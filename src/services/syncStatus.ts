@@ -8,23 +8,47 @@ export type SyncState = 'live' | 'reconnecting' | 'offline';
 
 interface Snapshot {
   state: SyncState;
-  lastSyncAt: number | null;
 }
 
-let snapshot: Snapshot = { state: 'live', lastSyncAt: null };
+let snapshot: Snapshot = { state: 'live' };
 const listeners = new Set<() => void>();
 const failing = new Set<string>(); // escutas que estão em erro agora
 let browserOffline = false;
+let lastSyncAt: number | null = null;
+let pendingTimer: ReturnType<typeof setTimeout> | null = null;
 
-function recompute(lastSyncAt?: number) {
-  const state: SyncState = browserOffline ? 'offline' : failing.size > 0 ? 'reconnecting' : 'live';
-  const next = {
-    state,
-    lastSyncAt: lastSyncAt ?? snapshot.lastSyncAt,
-  };
-  if (next.state === snapshot.state && next.lastSyncAt === snapshot.lastSyncAt) return;
-  snapshot = next;
+// Quanto tempo uma instabilidade precisa durar antes de aparecer na tela.
+// No iPhone o Firestore alterna rapidamente entre "dado do cache" e "dado do
+// servidor" (long polling, troca de rede, volta do segundo plano); mostrar cada
+// oscilação fazia o selo/faixa de conexão trocar várias vezes por segundo.
+const UNSTABLE_AFTER_MS = 4000;
+
+function desired(): SyncState {
+  return browserOffline ? 'offline' : failing.size > 0 ? 'reconnecting' : 'live';
+}
+
+function apply(state: SyncState) {
+  if (state === snapshot.state) return;
+  snapshot = { state };
   listeners.forEach((l) => l());
+}
+
+function recompute() {
+  const target = desired();
+  if (target === 'live' || target === 'offline') {
+    // Voltar ao normal e "sem internet" valem na hora; só a instabilidade espera.
+    if (pendingTimer) {
+      clearTimeout(pendingTimer);
+      pendingTimer = null;
+    }
+    apply(target);
+    return;
+  }
+  if (snapshot.state === 'reconnecting' || pendingTimer) return;
+  pendingTimer = setTimeout(() => {
+    pendingTimer = null;
+    apply(desired());
+  }, UNSTABLE_AFTER_MS);
 }
 
 export function reportSyncOk(label: string, fromCache: boolean) {
@@ -34,8 +58,9 @@ export function reportSyncOk(label: string, fromCache: boolean) {
     failing.add(`${label}:cache`);
   } else {
     failing.delete(`${label}:cache`);
+    lastSyncAt = Date.now();
   }
-  recompute(fromCache ? undefined : Date.now());
+  recompute();
 }
 
 export function reportSyncError(label: string) {
@@ -46,6 +71,10 @@ export function reportSyncError(label: string) {
 export function resetSyncStatus() {
   failing.clear();
   recompute();
+}
+
+export function getLastSyncAt(): number | null {
+  return lastSyncAt;
 }
 
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -70,3 +99,7 @@ function subscribe(listener: () => void) {
 export function useSyncStatus(): Snapshot {
   return useSyncExternalStore(subscribe, () => snapshot, () => snapshot);
 }
+
+// Usado só pelos testes (scripts/test-sync-status.ts).
+export const __peek = (): SyncState => snapshot.state;
+export const __subscribe = subscribe;

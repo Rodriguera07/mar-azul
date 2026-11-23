@@ -66,6 +66,7 @@ export function TableDetailScreen({ navigation, route }: Props) {
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
       <ScreenBar
+        titleSize={32}
         title={`Mesa ${table.label}`}
         subtitle={`Aberta às ${formatTime(table.openedAt)}${table.waiterName ? ` · ${table.waiterName}` : ''}`}
         onBack={() => navigation.goBack()}
