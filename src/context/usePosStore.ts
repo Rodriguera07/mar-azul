@@ -2,12 +2,17 @@ import { create } from 'zustand';
 import { clearLiveEvents, pushLiveEvent } from '../services/liveFeed';
 import { resetSyncStatus } from '../services/syncStatus';
 import {
-  applyDefaultPrices,
+  buildCatalogMenu,
   DEFAULT_IMAGE_BY_ID,
+  DEFAULT_MENU_CATALOG,
   DEFAULT_MENU_ITEMS,
+  MENU_CATALOG_LABELS,
   normalizePortionItems,
   PRICE_TABLE_VERSION,
   sortMenuItems,
+  upgradeSavedMenu,
+  withoutRemovedItems,
+  type MenuCatalog,
 } from '../data/menu';
 import {
   clearClosedTablesAndSummarize,
@@ -74,6 +79,9 @@ interface PosState {
   // recorte, em vez de confiar só na foto local do listener.
   salesWindowStart: string | null;
   menuItems: MenuItem[];
+  // Cardápio padrão com que a casa trabalha (novo ou antigo), escolhido pelo
+  // admin na tela de Cardápio.
+  menuCatalog: MenuCatalog;
   currentDay: string;
   orgId: string | null;
   currentUser: CurrentUser | null;
@@ -85,6 +93,7 @@ interface PosState {
   ) => void;
   teardownOrgSync: () => void;
   saveMenuItems: (items: MenuItemInput[]) => Promise<boolean>;
+  selectMenuCatalog: (catalog: MenuCatalog) => Promise<boolean>;
 
   openTable: (label: string, waiterName?: string) => string;
   renameTable: (tableId: string, label: string) => void;
@@ -107,9 +116,14 @@ function stripImage(item: MenuItem): MenuItemInput {
   return rest;
 }
 
+// Itens retirados da casa (ex.: Porquinho) nunca aparecem, mesmo que o
+// cardápio salvo no servidor ainda não tenha sido atualizado.
 function hydrateMenu(items: MenuItemInput[]): MenuItem[] {
   return sortMenuItems(
-    normalizePortionItems(items).map((item) => ({ ...item, image: DEFAULT_IMAGE_BY_ID[item.id] }))
+    withoutRemovedItems(normalizePortionItems(items)).map((item) => ({
+      ...item,
+      image: DEFAULT_IMAGE_BY_ID[item.id],
+    }))
   );
 }
 
@@ -216,6 +230,7 @@ export const usePosStore = create<PosState>((set, get) => ({
   closedSalesToday: [],
   salesWindowStart: null,
   menuItems: DEFAULT_MENU_ITEMS,
+  menuCatalog: DEFAULT_MENU_CATALOG,
   currentDay: formatDateKey(),
   orgId: null,
   currentUser: null,
@@ -283,32 +298,32 @@ export const usePosStore = create<PosState>((set, get) => ({
           .catch(() => {});
       });
 
-    menuUnsubscribe = subscribeMenu(orgId, (items, version) => {
+    menuUnsubscribe = subscribeMenu(orgId, (items, version, catalog) => {
       if (!items) {
-        set({ menuItems: DEFAULT_MENU_ITEMS });
+        set({ menuItems: DEFAULT_MENU_ITEMS, menuCatalog: DEFAULT_MENU_CATALOG });
         return;
       }
       const hydrated = hydrateMenu(items);
       if (version >= PRICE_TABLE_VERSION) {
-        set({ menuItems: hydrated });
+        set({ menuItems: hydrated, menuCatalog: catalog });
         return;
       }
-      // Cardápio salvo com uma tabela de preços mais antiga: TODOS passam a ver
-      // a tabela nova na hora (sem esperar ninguém). Quem é admin também grava
-      // no servidor — uma vez só, porque a gravação sobe a versão e este ramo
+      // Cardápio salvo com uma tabela mais antiga: TODOS passam a ver a versão
+      // atualizada na hora (sem esperar ninguém). Quem é admin também grava no
+      // servidor — uma vez só, porque a gravação sobe a versão e este ramo
       // deixa de valer. Itens criados pelo admin não são alterados.
-      const { items: upgraded } = applyDefaultPrices(hydrated);
-      set({ menuItems: upgraded });
+      const upgraded = upgradeSavedMenu(hydrated, version, catalog);
+      set({ menuItems: upgraded, menuCatalog: catalog });
       if (options?.isAdmin && !upgradingMenu) {
         upgradingMenu = true;
-        saveMenu(orgId, upgraded.map(stripImage), PRICE_TABLE_VERSION)
+        saveMenu(orgId, upgraded.map(stripImage), PRICE_TABLE_VERSION, catalog)
           .then(() =>
             logAuditEvent({
               orgId,
               userId: user.uid,
               userName: user.displayName,
               type: 'menu_updated',
-              detail: 'Tabela de preços atualizada automaticamente',
+              detail: 'Cardápio atualizado automaticamente',
             })
           )
           .catch((err) => console.warn('[usePosStore] atualizar tabela de preços', err))
@@ -336,16 +351,17 @@ export const usePosStore = create<PosState>((set, get) => ({
       closedSalesToday: [],
       salesWindowStart: null,
       menuItems: DEFAULT_MENU_ITEMS,
+      menuCatalog: DEFAULT_MENU_CATALOG,
       orgId: null,
       currentUser: null,
     });
   },
 
   saveMenuItems: async (items) => {
-    const { orgId, currentUser } = get();
+    const { orgId, currentUser, menuCatalog } = get();
     if (!orgId) return false;
     try {
-      await saveMenu(orgId, items, PRICE_TABLE_VERSION);
+      await saveMenu(orgId, items, PRICE_TABLE_VERSION, menuCatalog);
       if (currentUser) {
         logAuditEvent({
           orgId,
@@ -357,6 +373,35 @@ export const usePosStore = create<PosState>((set, get) => ({
       return true;
     } catch (err) {
       console.warn('[usePosStore] salvar cardápio', err);
+      return false;
+    }
+  },
+
+  // Troca o cardápio da casa e já grava para toda a equipe: os itens padrão
+  // passam a ser os do cardápio escolhido (com os preços dele) e os itens que
+  // o admin criou continuam. Mesas abertas não mudam — o que já foi lançado
+  // mantém o preço da hora do pedido.
+  selectMenuCatalog: async (catalog) => {
+    const { orgId, currentUser, menuItems, menuCatalog: previousCatalog } = get();
+    if (!orgId) return false;
+    const items = buildCatalogMenu(menuItems, catalog);
+    const previousItems = menuItems;
+    set({ menuItems: items, menuCatalog: catalog });
+    try {
+      await saveMenu(orgId, items.map(stripImage), PRICE_TABLE_VERSION, catalog);
+      if (currentUser) {
+        logAuditEvent({
+          orgId,
+          userId: currentUser.uid,
+          userName: currentUser.displayName,
+          type: 'menu_updated',
+          detail: `Passou a usar o ${MENU_CATALOG_LABELS[catalog].toLowerCase()}`,
+        });
+      }
+      return true;
+    } catch (err) {
+      console.warn('[usePosStore] trocar cardápio', err);
+      set({ menuItems: previousItems, menuCatalog: previousCatalog });
       return false;
     }
   },
