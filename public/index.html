@@ -55,5 +55,44 @@
     </noscript>
     <!-- The root element for your Expo app. -->
     <div id="root"></div>
+
+    <!--
+      Rede de segurança de abertura: se o aplicativo não chegar a aparecer (ex.:
+      um celular com navegador antigo que não entende alguma parte do código),
+      mostra uma mensagem com o motivo e um botão para recarregar, em vez de
+      deixar a tela branca. Some sozinho assim que o app desenha algo.
+    -->
+    <script>
+      (function () {
+        var errors = [];
+        window.addEventListener('error', function (e) {
+          if (errors.length < 3) errors.push(String(e && e.message ? e.message : e));
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          if (errors.length < 3) errors.push(String(e && e.reason && e.reason.message ? e.reason.message : e.reason));
+        });
+        function appVisible() {
+          var root = document.getElementById('root');
+          return !!(root && root.childElementCount > 0 && root.innerText && root.innerText.trim().length > 0);
+        }
+        function show() {
+          if (appVisible() || document.getElementById('boot-guard')) return;
+          var box = document.createElement('div');
+          box.id = 'boot-guard';
+          box.setAttribute('style', 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;background:#F6F4F1;font-family:-apple-system,Helvetica,Arial,sans-serif;text-align:center;color:#1C1917');
+          var detail = errors.length ? errors.join(' | ').replace(/</g, '&lt;') : 'sem detalhes';
+          box.innerHTML =
+            '<div style="font-size:19px;font-weight:700;margin-bottom:8px">O aplicativo não abriu</div>' +
+            '<div style="font-size:14px;line-height:1.5;color:#78716C;max-width:300px">Toque em Recarregar. Se continuar assim, feche o app por completo e abra de novo.</div>' +
+            '<button id="boot-guard-btn" style="margin-top:20px;height:46px;padding:0 26px;border:0;border-radius:14px;background:#F0432B;color:#fff;font-size:15px;font-weight:600">Recarregar</button>' +
+            '<div style="margin-top:22px;font-size:11px;line-height:1.4;color:#A8A29E;max-width:320px;word-break:break-word">Detalhe técnico: ' + detail + '</div>';
+          document.body.appendChild(box);
+          document.getElementById('boot-guard-btn').onclick = function () { window.location.reload(); };
+        }
+        // Dá tempo de internet lenta carregar; só então verifica se o app apareceu.
+        setTimeout(show, 12000);
+        window.addEventListener('error', function () { setTimeout(show, 4000); });
+      })();
+    </script>
   </body>
 </html>

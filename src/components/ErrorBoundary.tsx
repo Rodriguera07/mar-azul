@@ -56,6 +56,11 @@ export class ErrorBoundary extends React.Component<Props, State> {
         <Pressable style={styles.button} onPress={this.retry} accessibilityRole="button">
           <Text style={styles.buttonText}>{isApp ? 'Recarregar' : 'Tentar novamente'}</Text>
         </Pressable>
+        {/* Detalhe técnico, pequeno: com um print desta tela dá para descobrir o
+            motivo mesmo em um celular que não dá para depurar. */}
+        <Text style={styles.detail} selectable>
+          {String(this.state.error?.message ?? this.state.error).slice(0, 200)}
+        </Text>
       </View>
     );
   }
@@ -96,6 +101,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: spacing.lg,
+  },
+  detail: {
+    fontFamily: font.regular,
+    fontSize: 11,
+    lineHeight: 15,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: spacing.lg,
+    maxWidth: 300,
   },
   buttonText: { fontFamily: font.semiBold, fontSize: 15, color: colors.white },
 });

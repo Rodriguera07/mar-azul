@@ -1,3 +1,6 @@
+// Precisa vir antes de qualquer outro import (ver src/polyfills.ts).
+import './src/polyfills';
+
 import { registerRootComponent } from 'expo';
 
 import App from './App';
