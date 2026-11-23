@@ -20,6 +20,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { asMenuCatalog, DEFAULT_MENU_CATALOG, type MenuCatalog } from '../data/menu';
 import {
   AuditLogEntry,
   ClosedSale,
@@ -446,23 +447,34 @@ export function deleteOwnAccountData(orgId: string, uid: string): Promise<void> 
 // cardápio" (mostra o catálogo padrão local até o primeiro salvamento).
 export function subscribeMenu(
   orgId: string,
-  cb: (items: MenuItemInput[] | null, priceTableVersion: number) => void
+  cb: (items: MenuItemInput[] | null, priceTableVersion: number, catalog: MenuCatalog) => void
 ): Unsubscribe {
   return liveDoc('menu', menuDoc(orgId), (snap) => {
     if (!snap.exists()) {
-      cb(null, 0);
+      cb(null, 0, DEFAULT_MENU_CATALOG);
       return;
     }
     const data = snap.data() ?? {};
-    // Cardápio salvo antes de existir o controle de versão = versão 0.
-    cb(sanitizeMenuItems(data.items), Math.max(0, Math.floor(asNumber(data.priceTableVersion))));
+    // Cardápio salvo antes de existir o controle de versão = versão 0; antes
+    // de existir a escolha de cardápio, era sempre o novo.
+    cb(
+      sanitizeMenuItems(data.items),
+      Math.max(0, Math.floor(asNumber(data.priceTableVersion))),
+      asMenuCatalog(data.catalog)
+    );
   });
 }
 
-export function saveMenu(orgId: string, items: MenuItemInput[], priceTableVersion: number): Promise<void> {
+export function saveMenu(
+  orgId: string,
+  items: MenuItemInput[],
+  priceTableVersion: number,
+  catalog: MenuCatalog
+): Promise<void> {
   return setDoc(menuDoc(orgId), {
     items,
     priceTableVersion,
+    catalog,
     updatedAt: new Date().toISOString(),
   });
 }

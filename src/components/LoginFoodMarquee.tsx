@@ -26,7 +26,7 @@ const ROWS: ImageSourcePropType[][] = [
     require('../../assets/menu/porcao-mandioca.jpg'),
     require('../../assets/menu/doses.jpg'),
     require('../../assets/menu/porcao-cebola.jpg'),
-    require('../../assets/menu/porcao-porquinho.jpeg'),
+    require('../../assets/menu/por-frango.jpg'),
     require('../../assets/menu/agua.jpg'),
   ],
 ];

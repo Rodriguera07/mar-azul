@@ -17,7 +17,13 @@ import { BrandHeader } from '../components/BrandHeader';
 import { BarPill } from '../components/ScreenBar';
 import { Button } from '../components/Button';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { applyDefaultPrices, CATEGORY_ICONS, CATEGORY_LABELS } from '../data/menu';
+import {
+  applyDefaultPrices,
+  CATEGORY_ICONS,
+  CATEGORY_LABELS,
+  MENU_CATALOG_LABELS,
+  type MenuCatalog,
+} from '../data/menu';
 import { usePosStore } from '../context/usePosStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { TabScreenProps } from '../navigation/types';
@@ -32,6 +38,10 @@ type CategoryFilter = MenuCategory | 'all';
 
 const CATEGORIES: MenuCategory[] = ['bebidas', 'drinks', 'doses', 'porcoes', 'pasteis'];
 const FILTERS: CategoryFilter[] = ['all', ...CATEGORIES];
+const CATALOGS: { key: MenuCatalog; label: string; hint: string }[] = [
+  { key: 'novo', label: 'Novo', hint: 'Tabela atual' },
+  { key: 'antigo', label: 'Antigo', hint: 'Tabela anterior' },
+];
 
 function stripImage(item: MenuItem) {
   const { image, ...rest } = item;
@@ -92,6 +102,9 @@ const MenuItemRow = React.memo(function MenuItemRow({
 export function MenuManagementScreen({ navigation }: Props) {
   const menuItems = usePosStore((s) => s.menuItems);
   const saveMenuItems = usePosStore((s) => s.saveMenuItems);
+  const menuCatalog = usePosStore((s) => s.menuCatalog);
+  const selectMenuCatalog = usePosStore((s) => s.selectMenuCatalog);
+  const [switchingCatalog, setSwitchingCatalog] = useState<MenuCatalog | null>(null);
   const { contentStyle } = useResponsiveContent();
 
   const [draft, setDraft] = useState<MenuItem[]>(menuItems);
@@ -137,24 +150,51 @@ export function MenuManagementScreen({ navigation }: Props) {
     setRemoveTarget(null);
   };
 
-  // Atualiza o rascunho com a tabela de preços padrão (itens da casa) — nada é
-  // gravado até o admin tocar em "Salvar Cardápio".
-  const handleApplyDefaultPrices = async () => {
+  // Troca o cardápio da casa (novo/antigo). Grava na hora para toda a equipe —
+  // os itens padrão passam a ser os do cardápio escolhido e os que o admin
+  // criou continuam. Alterações ainda não salvas no rascunho são descartadas.
+  const handleSelectCatalog = async (catalog: MenuCatalog) => {
+    if (catalog === menuCatalog || switchingCatalog) return;
+    const label = MENU_CATALOG_LABELS[catalog].toLowerCase();
     const ok = await confirmAlert(
-      'Aplicar tabela de preços nova?',
-      'Atualiza nome, descrição e preço dos itens padrão e adiciona os que faltam. Itens que você criou não mudam. Depois, toque em "Salvar Cardápio" para valer para a equipe.',
-      'Aplicar'
+      `Usar o ${label}?`,
+      `Os itens e preços passam a ser os do ${label} para toda a equipe, a partir de agora. ` +
+        'Itens que você criou continuam. Mesas já abertas mantêm os preços dos itens já lançados.' +
+        (isDirty ? '\n\nAs alterações não salvas nesta tela serão descartadas.' : ''),
+      'Usar este'
     );
     if (!ok) return;
-    const result = applyDefaultPrices(draft);
-    if (result.changed === 0 && result.added === 0) {
-      showAlert('Tudo em dia', 'O cardápio já está com a tabela de preços mais recente.');
+    setSwitchingCatalog(catalog);
+    const saved = await selectMenuCatalog(catalog);
+    setSwitchingCatalog(null);
+    if (saved) {
+      setHasEdited(false);
+      setDraft(usePosStore.getState().menuItems);
+      showAlert('Cardápio trocado', `A equipe já está usando o ${label}.`);
+    } else {
+      showAlert('Erro', 'Não foi possível trocar o cardápio. Verifique sua conexão e tente novamente.');
+    }
+  };
+
+  // Atualiza o rascunho com a tabela de preços do cardápio em uso — nada é
+  // gravado até o admin tocar em "Salvar Cardápio".
+  const handleApplyDefaultPrices = async () => {
+    const label = MENU_CATALOG_LABELS[menuCatalog].toLowerCase();
+    const ok = await confirmAlert(
+      'Restaurar preços?',
+      `Volta nome, descrição e preço dos itens padrão para os do ${label} e adiciona os que faltam. Itens que você criou não mudam. Depois, toque em "Salvar Cardápio" para valer para a equipe.`,
+      'Restaurar'
+    );
+    if (!ok) return;
+    const result = applyDefaultPrices(draft, menuCatalog);
+    if (result.changed === 0 && result.added === 0 && result.removed === 0) {
+      showAlert('Tudo em dia', `O cardápio já está com os preços do ${label}.`);
       return;
     }
     setHasEdited(true);
     setDraft(result.items);
     showAlert(
-      'Tabela aplicada',
+      'Preços restaurados',
       `${result.changed} item(ns) atualizado(s) e ${result.added} adicionado(s). Toque em "Salvar Cardápio" para confirmar.`
     );
   };
@@ -214,9 +254,45 @@ export function MenuManagementScreen({ navigation }: Props) {
               {draft.length} {draft.length === 1 ? 'item' : 'itens'} · {isDirty ? 'não salvo' : 'salvo'}
             </Text>
           </View>
-          <BarPill label="Tabela nova" icon="pricetag-outline" onPress={handleApplyDefaultPrices} />
+          <BarPill label="Restaurar" icon="pricetag-outline" onPress={handleApplyDefaultPrices} />
         </View>
       </BrandHeader>
+
+      <View style={[styles.catalogSection, contentStyle]}>
+        <Text style={styles.catalogTitle}>Cardápio em uso</Text>
+        <View style={styles.catalogRow} accessibilityRole="radiogroup">
+          {CATALOGS.map((c) => {
+            const active = menuCatalog === c.key;
+            const busy = switchingCatalog === c.key;
+            return (
+              <AnimatedPressable
+                key={c.key}
+                style={[styles.catalogOption, active && styles.catalogOptionActive]}
+                stateLayerColor={active ? colors.white : colors.onSurface}
+                onPress={() => handleSelectCatalog(c.key)}
+                disabled={switchingCatalog !== null}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: active }}
+                accessibilityLabel={MENU_CATALOG_LABELS[c.key]}
+              >
+                <Ionicons
+                  name={active ? 'checkmark-circle' : 'ellipse-outline'}
+                  size={18}
+                  color={active ? colors.white : colors.textMuted}
+                />
+                <View style={styles.catalogTextWrap}>
+                  <Text style={[styles.catalogLabel, active && styles.catalogLabelActive]} numberOfLines={1}>
+                    {busy ? 'Trocando…' : c.label}
+                  </Text>
+                  <Text style={[styles.catalogHint, active && styles.catalogHintActive]} numberOfLines={1}>
+                    {c.hint}
+                  </Text>
+                </View>
+              </AnimatedPressable>
+            );
+          })}
+        </View>
+      </View>
 
       <View style={styles.filterSection}>
         <ScrollView
@@ -349,8 +425,56 @@ const styles = StyleSheet.create({
     letterSpacing: -0.9,
     color: colors.white,
   },
-  filterSection: {
+  catalogSection: {
     marginTop: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  catalogTitle: {
+    ...typography.caption,
+    fontFamily: font.bold,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: spacing.xs,
+  },
+  catalogRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  catalogOption: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    minHeight: 52,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: shape.large,
+    overflow: 'hidden',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+  },
+  catalogOptionActive: {
+    backgroundColor: dashboardPalette.brand,
+    borderColor: dashboardPalette.brand,
+  },
+  catalogTextWrap: { flex: 1, minWidth: 0 },
+  catalogLabel: {
+    ...typography.bodySm,
+    fontFamily: font.bold,
+    color: colors.textPrimary,
+  },
+  catalogLabelActive: { color: colors.white },
+  catalogHint: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginTop: 1,
+  },
+  catalogHintActive: { color: 'rgba(255,255,255,0.85)' },
+  filterSection: {
+    marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
   filterScroll: {
