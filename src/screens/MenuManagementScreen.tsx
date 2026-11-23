@@ -16,6 +16,7 @@ import { AnimatedPressable } from '../components/AnimatedPressable';
 import { BrandHeader } from '../components/BrandHeader';
 import { BarPill } from '../components/ScreenBar';
 import { Button } from '../components/Button';
+import { CatalogSwitchModal, type CatalogSwitchStatus } from '../components/CatalogSwitchModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import {
   applyDefaultPrices,
@@ -104,7 +105,14 @@ export function MenuManagementScreen({ navigation }: Props) {
   const saveMenuItems = usePosStore((s) => s.saveMenuItems);
   const menuCatalog = usePosStore((s) => s.menuCatalog);
   const selectMenuCatalog = usePosStore((s) => s.selectMenuCatalog);
-  const [switchingCatalog, setSwitchingCatalog] = useState<MenuCatalog | null>(null);
+  // Troca de cardápio em andamento: para qual cardápio e em que etapa está
+  // (confirmação, gravando, concluída ou com erro).
+  const [catalogSwitch, setCatalogSwitch] = useState<{
+    from: MenuCatalog;
+    to: MenuCatalog;
+    status: CatalogSwitchStatus;
+  } | null>(null);
+  const switchingCatalog = catalogSwitch?.status === 'saving' ? catalogSwitch.to : null;
   const { contentStyle } = useResponsiveContent();
 
   const [draft, setDraft] = useState<MenuItem[]>(menuItems);
@@ -153,27 +161,27 @@ export function MenuManagementScreen({ navigation }: Props) {
   // Troca o cardápio da casa (novo/antigo). Grava na hora para toda a equipe —
   // os itens padrão passam a ser os do cardápio escolhido e os que o admin
   // criou continuam. Alterações ainda não salvas no rascunho são descartadas.
-  const handleSelectCatalog = async (catalog: MenuCatalog) => {
-    if (catalog === menuCatalog || switchingCatalog) return;
-    const label = MENU_CATALOG_LABELS[catalog].toLowerCase();
-    const ok = await confirmAlert(
-      `Usar o ${label}?`,
-      `Os itens e preços passam a ser os do ${label} para toda a equipe, a partir de agora. ` +
-        'Itens que você criou continuam. Mesas já abertas mantêm os preços dos itens já lançados.' +
-        (isDirty ? '\n\nAs alterações não salvas nesta tela serão descartadas.' : ''),
-      'Usar este'
-    );
-    if (!ok) return;
-    setSwitchingCatalog(catalog);
-    const saved = await selectMenuCatalog(catalog);
-    setSwitchingCatalog(null);
+  // Toda a conversa (confirmar, andamento, sucesso/erro) acontece na janela
+  // CatalogSwitchModal, no visual do app.
+  const handleSelectCatalog = (catalog: MenuCatalog) => {
+    if (catalog === menuCatalog || catalogSwitch) return;
+    setCatalogSwitch({ from: menuCatalog, to: catalog, status: 'confirm' });
+  };
+
+  const handleConfirmCatalog = async () => {
+    if (!catalogSwitch || catalogSwitch.status === 'saving') return;
+    const target = catalogSwitch.to;
+    setCatalogSwitch({ ...catalogSwitch, status: 'saving' });
+    const saved = await selectMenuCatalog(target);
     if (saved) {
       setHasEdited(false);
       setDraft(usePosStore.getState().menuItems);
-      showAlert('Cardápio trocado', `A equipe já está usando o ${label}.`);
-    } else {
-      showAlert('Erro', 'Não foi possível trocar o cardápio. Verifique sua conexão e tente novamente.');
     }
+    setCatalogSwitch((prev) => (prev ? { ...prev, status: saved ? 'done' : 'error' } : prev));
+  };
+
+  const handleCloseCatalogModal = () => {
+    setCatalogSwitch((prev) => (prev?.status === 'saving' ? prev : null));
   };
 
   // Atualiza o rascunho com a tabela de preços do cardápio em uso — nada é
@@ -384,6 +392,16 @@ export function MenuManagementScreen({ navigation }: Props) {
           />
         </View>
       </KeyboardAvoidingView>
+
+      <CatalogSwitchModal
+        visible={catalogSwitch !== null}
+        from={catalogSwitch?.from ?? menuCatalog}
+        to={catalogSwitch?.to ?? menuCatalog}
+        status={catalogSwitch?.status ?? 'confirm'}
+        hasUnsavedChanges={isDirty}
+        onConfirm={handleConfirmCatalog}
+        onClose={handleCloseCatalogModal}
+      />
 
       <ConfirmModal
         visible={removeTarget !== null}
