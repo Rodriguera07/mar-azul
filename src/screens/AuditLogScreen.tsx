@@ -6,6 +6,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { EmptyState } from '../components/EmptyState';
+import { ScreenBar } from '../components/ScreenBar';
 import { useAuthStore } from '../context/useAuthStore';
 import { RootStackParamList } from '../navigation/types';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
@@ -70,20 +71,14 @@ export function AuditLogScreen({ navigation }: Props) {
   const groups = useMemo(() => groupByDay(filtered), [filtered]);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => {
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+      <ScreenBar
+        title="Log de Auditoria"
+        onBack={() => {
             navigation.goBack();
             navigation.dispatch(DrawerActions.openDrawer());
           }}
-          style={styles.backBtn}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Log de Auditoria</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      />
 
       <ScrollView
         horizontal

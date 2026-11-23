@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { Button } from '../components/Button';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { ScreenBar } from '../components/ScreenBar';
 import { useAuthStore } from '../context/useAuthStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
@@ -66,21 +67,14 @@ export function DeleteAccountScreen({ navigation }: Props) {
   const willOrphanOrg = user?.role === 'admin' && remainingAdmins === 0;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-      <View style={styles.header}>
-        <AnimatedPressable
-          onPress={() => {
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+      <ScreenBar
+        title="Excluir Minha Conta"
+        onBack={() => {
             navigation.goBack();
             navigation.dispatch(DrawerActions.openDrawer());
           }}
-          style={styles.backBtn}
-          stateLayerColor={colors.onSurface}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
-        </AnimatedPressable>
-        <Text style={styles.title}>Excluir Minha Conta</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      />
 
       <KeyboardAvoidingView
         style={styles.flex}

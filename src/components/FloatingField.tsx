@@ -32,7 +32,7 @@ export function FloatingField({ label, icon, accent, accessory, compact, value, 
       style={[
         styles.wrap,
         { height },
-        focused && { borderColor: accent, shadowColor: accent, shadowOpacity: 0.16, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } },
+        focused && { borderColor: accent, backgroundColor: colors.white, shadowColor: accent, shadowOpacity: 0.16, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } },
       ]}
     >
       <Ionicons name={icon} size={20} color={focused ? accent : colors.textMuted} />
@@ -76,10 +76,10 @@ const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.outline,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },

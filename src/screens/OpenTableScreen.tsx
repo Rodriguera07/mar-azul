@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { Button } from '../components/Button';
+import { ScreenBar } from '../components/ScreenBar';
 import { usePosStore } from '../context/usePosStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
@@ -63,21 +64,15 @@ export function OpenTableScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Abrir Nova Mesa</Text>
-          <AnimatedPressable
-            onPress={() => navigation.goBack()}
-            style={styles.closeBtn}
-            stateLayerColor={colors.onSurface}
-          >
-            <Ionicons name="close" size={22} color={colors.textPrimary} />
-          </AnimatedPressable>
-        </View>
+      <ScreenBar
+        title="Abrir Nova Mesa"
+        onClose={() => navigation.goBack()}
+      />
 
         <ScrollView
           contentContainerStyle={[styles.content, contentStyle]}
@@ -169,6 +164,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.xl,
   },
   fieldLabel: {

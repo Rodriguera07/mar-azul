@@ -10,6 +10,7 @@ import { Button } from '../components/Button';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { EmptyState } from '../components/EmptyState';
 import { MissingTable } from '../components/MissingTable';
+import { BarPill, ScreenBar } from '../components/ScreenBar';
 import { OrderItemRow } from '../components/OrderItemRow';
 import {
   getPaidPeopleCount,
@@ -61,46 +62,19 @@ export function TableDetailScreen({ navigation, route }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-      <View style={styles.header}>
-        <AnimatedPressable
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-          stateLayerColor={colors.onSurface}
-          accessibilityLabel="Voltar"
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
-        </AnimatedPressable>
-        <View style={{ flex: 1 }}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title} numberOfLines={1}>
-              {table.label}
-            </Text>
-            {isOpen && (
-              <AnimatedPressable
-                style={styles.renameBtn}
-                scaleTo={0.92}
-                stateLayerColor={colors.onSurface}
-                onPress={openRename}
-                accessibilityLabel="Renomear ou trocar o número da mesa"
-                accessibilityRole="button"
-              >
-                <Ionicons name="create-outline" size={14} color={colors.textPrimary} />
-                <Text style={styles.renameBtnText}>Trocar mesa</Text>
-              </AnimatedPressable>
-            )}
-          </View>
-          <Text style={styles.subtitle}>
-            Aberta às {formatTime(table.openedAt)}
-            {table.waiterName ? ` · ${table.waiterName}` : ''}
-          </Text>
-        </View>
-        {!isOpen && (
-          <View style={styles.closedBadge}>
-            <Text style={styles.closedBadgeText}>Fechada</Text>
-          </View>
-        )}
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+      <ScreenBar
+        title={`Mesa ${table.label}`}
+        subtitle={`Aberta às ${formatTime(table.openedAt)}${table.waiterName ? ` · ${table.waiterName}` : ''}`}
+        onBack={() => navigation.goBack()}
+        right={
+          isOpen ? (
+            <BarPill label="Trocar mesa" icon="create-outline" onPress={openRename} />
+          ) : (
+            <BarPill label="Fechada" icon="checkmark-circle" />
+          )
+        }
+      />
 
       <ScrollView
         contentContainerStyle={[styles.content, contentStyle]}

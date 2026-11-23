@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { Button } from '../components/Button';
+import { ScreenBar } from '../components/ScreenBar';
 import { useAuthStore } from '../context/useAuthStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
@@ -64,21 +65,14 @@ export function ChangePasswordScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-      <View style={styles.header}>
-        <AnimatedPressable
-          onPress={() => {
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+      <ScreenBar
+        title="Alterar Senha"
+        onBack={() => {
             navigation.goBack();
             navigation.dispatch(DrawerActions.openDrawer());
           }}
-          style={styles.backBtn}
-          stateLayerColor={colors.onSurface}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
-        </AnimatedPressable>
-        <Text style={styles.title}>Alterar Senha</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      />
 
       <KeyboardAvoidingView
         style={styles.flex}

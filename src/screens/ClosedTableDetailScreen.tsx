@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { OrderItemRow } from '../components/OrderItemRow';
+import { BarPill, ScreenBar } from '../components/ScreenBar';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
 import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
@@ -18,23 +19,13 @@ export function ClosedTableDetailScreen({ navigation, route }: Props) {
   const { contentStyle } = useResponsiveContent();
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-      <View style={styles.header}>
-        <AnimatedPressable
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-          stateLayerColor={colors.onSurface}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
-        </AnimatedPressable>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title}>Mesa {sale.tableLabel}</Text>
-          <Text style={styles.subtitle}>{formatDateLabel(sale.closedAt)}</Text>
-        </View>
-        <View style={styles.closedBadge}>
-          <Text style={styles.closedBadgeText}>Fechada</Text>
-        </View>
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+      <ScreenBar
+        title={`Mesa ${sale.tableLabel}`}
+        subtitle={formatDateLabel(sale.closedAt)}
+        onBack={() => navigation.goBack()}
+        right={<BarPill label="Fechada" icon="checkmark-circle" />}
+      />
 
       <ScrollView
         contentContainerStyle={[styles.content, contentStyle]}
