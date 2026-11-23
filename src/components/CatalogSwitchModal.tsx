@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { catalogItems, CATEGORY_LABELS, type MenuCatalog } from '../data/menu';
+import { catalogItems, type MenuCatalog } from '../data/menu';
 import { colors, elevationShadow, font, shape, spacing } from '../theme';
 import { dashboardPalette } from '../theme/dashboardPalette';
-import { formatCurrency } from '../utils/format';
 import { Button } from './Button';
+import { PriceChangeList, pickPriceExamples } from './PriceChangeList';
 
 export type CatalogSwitchStatus = 'confirm' | 'saving' | 'done' | 'error';
 
@@ -23,34 +23,10 @@ interface Props {
 const SHORT_LABEL: Record<MenuCatalog, string> = { novo: 'Novo', antigo: 'Antigo' };
 const LONG_LABEL: Record<MenuCatalog, string> = { novo: 'cardápio novo', antigo: 'cardápio antigo' };
 
-interface PriceExample {
-  id: string;
-  name: string;
-  category: string;
-  from: number;
-  to: number;
-}
-
-// Alguns itens que mudam de preço entre os dois cardápios — um de cada
-// categoria, para o admin ter noção do que muda antes de confirmar.
-function priceExamples(from: MenuCatalog, to: MenuCatalog, max = 3): { examples: PriceExample[]; total: number } {
-  const fromById = new Map(catalogItems(from).map((i) => [i.id, i]));
-  const diffs: PriceExample[] = [];
-  for (const item of catalogItems(to)) {
-    const before = fromById.get(item.id);
-    if (before && before.price !== item.price) {
-      diffs.push({ id: item.id, name: item.name, category: item.category, from: before.price, to: item.price });
-    }
-  }
-  const examples: PriceExample[] = [];
-  const usedCategories = new Set<string>();
-  for (const d of diffs) {
-    if (examples.length >= max) break;
-    if (usedCategories.has(d.category)) continue;
-    usedCategories.add(d.category);
-    examples.push(d);
-  }
-  return { examples, total: diffs.length };
+// Alguns itens que mudam de preço entre os dois cardápios, para o admin ter
+// noção do que muda antes de confirmar.
+function priceExamples(from: MenuCatalog, to: MenuCatalog) {
+  return pickPriceExamples(catalogItems(from), catalogItems(to));
 }
 
 function InfoRow({ icon, text }: { icon: keyof typeof Ionicons.glyphMap; text: string }) {
@@ -154,33 +130,7 @@ export function CatalogSwitchModal({ visible, from, to, status, hasUnsavedChange
               <Text style={styles.title}>{`Usar o ${LONG_LABEL[to]}?`}</Text>
               <Text style={styles.subtitle}>A troca vale na hora para toda a equipe.</Text>
 
-              {examples.length > 0 && (
-                <View style={styles.priceCard}>
-                  <View style={styles.priceHead}>
-                    <Text style={styles.priceHeadTitle}>Preços que mudam</Text>
-                    <Text style={styles.priceHeadCount}>
-                      {total} {total === 1 ? 'item' : 'itens'}
-                    </Text>
-                  </View>
-                  {examples.map((ex, i) => (
-                    <View key={ex.id} style={[styles.priceRow, i > 0 && styles.priceRowDivider]}>
-                      <View style={styles.priceNameWrap}>
-                        <Text style={styles.priceName} numberOfLines={1}>
-                          {ex.name}
-                        </Text>
-                        <Text style={styles.priceCategory} numberOfLines={1}>
-                          {CATEGORY_LABELS[ex.category] ?? ex.category}
-                        </Text>
-                      </View>
-                      <Text style={styles.priceFrom}>{formatCurrency(ex.from)}</Text>
-                      <Ionicons name="arrow-forward" size={12} color={colors.textMuted} />
-                      <Text style={[styles.priceTo, { color: ex.to > ex.from ? colors.coral : colors.emerald }]}>
-                        {formatCurrency(ex.to)}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+              <PriceChangeList examples={examples} total={total} />
 
               <View style={styles.infoList}>
                 <InfoRow icon="create-outline" text="Itens que você criou continuam no cardápio." />
@@ -307,66 +257,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: colors.textSecondary,
     marginTop: 4,
-  },
-
-  priceCard: {
-    marginTop: spacing.md,
-    borderRadius: 18,
-    backgroundColor: colors.surfaceContainerLow,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  priceHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-  },
-  priceHeadTitle: {
-    fontFamily: font.bold,
-    fontSize: 11,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: colors.textSecondary,
-  },
-  priceHeadCount: {
-    fontFamily: font.semiBold,
-    fontSize: 11,
-    color: colors.textMuted,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-  },
-  priceRowDivider: {
-    borderTopWidth: 1,
-    borderTopColor: colors.outlineVariant,
-  },
-  priceNameWrap: { flex: 1, minWidth: 0 },
-  priceName: {
-    fontFamily: font.semiBold,
-    fontSize: 13.5,
-    color: colors.textPrimary,
-  },
-  priceCategory: {
-    fontFamily: font.regular,
-    fontSize: 11.5,
-    color: colors.textMuted,
-    marginTop: 1,
-  },
-  priceFrom: {
-    fontFamily: font.medium,
-    fontSize: 12.5,
-    color: colors.textMuted,
-    textDecorationLine: 'line-through',
-  },
-  priceTo: {
-    fontFamily: font.bold,
-    fontSize: 14,
   },
 
   infoList: {
