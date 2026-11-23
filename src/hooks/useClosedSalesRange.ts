@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 import { subscribeClosedSalesRange } from '../services/firestoreOrg';
 import { ClosedSale } from '../types';
+import { toIsoSafe } from '../utils/format';
 
 function startOfDayIso(date: Date): string {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
-  return d.toISOString();
+  return toIsoSafe(d);
 }
 
 function endOfDayIso(date: Date): string {
   const d = new Date(date);
   d.setHours(23, 59, 59, 999);
-  return d.toISOString();
+  return toIsoSafe(d);
 }
 
 // Assina, em tempo real, as vendas fechadas de uma organização dentro do

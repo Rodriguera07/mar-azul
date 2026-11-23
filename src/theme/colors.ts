@@ -1,20 +1,20 @@
-// Tema de produto: base neutra (stone), superfícies brancas com borda fina e
-// coral como única cor de marca — usado só em ações e estados ativos. Amarelo
-// e verde ficam para atenção e dinheiro.
+// Tema "Mar Azul": base azul-acinzentada bem clara, superfícies brancas com
+// borda fina e azul-oceano como única cor de marca (ações e estados ativos).
+// Laranja (coral/sand) e verde ficam para atenção e dinheiro.
 export const colors = {
   // Base — areia clara e neutra, tom exato do mock de referência do Dashboard
-  background: '#F6F4F1',
-  backgroundAlt: '#EFEEEC',
+  background: '#F3F6FB',
+  backgroundAlt: '#EAF0F8',
   surface: '#FFFFFF',
   surfaceElevated: '#FFFFFF',
-  surfaceHighlight: '#FAFAF9',
-  border: '#E7E5E4',
-  borderLight: '#EFEEED',
+  surfaceHighlight: '#F8FAFD',
+  border: '#E1E8F2',
+  borderLight: '#EAF0F7',
 
-  // Marca — mar / turquesa
-  primary: '#F0432B', // teal do oceano — interativo geral
-  primaryMuted: '#FFEFEA',
-  primaryGlow: 'rgba(240, 67, 43, 0.16)',
+  // Marca — azul-oceano (a cor do nome "Mar Azul")
+  primary: '#1565D8', // interativo geral
+  primaryMuted: '#E8F0FE',
+  primaryGlow: 'rgba(21, 101, 216, 0.16)',
 
   emerald: '#0EA98D', // turquesa vivo — faturamento / positivo / sucesso
   emeraldMuted: '#DFF5F0',
@@ -34,12 +34,12 @@ export const colors = {
   dangerMuted: '#FCE7EA',
   warning: '#E2603D',
   warningMuted: '#FCEAE3',
-  info: '#2A7DE1',
+  info: '#1565D8',
 
   // Texto
-  textPrimary: '#1C1917',
-  textSecondary: '#78716C',
-  textMuted: '#A8A29E',
+  textPrimary: '#0F1B33',
+  textSecondary: '#5B6B85',
+  textMuted: '#97A3B8',
   textInverse: '#FFFFFF',
 
   // Formas de pagamento (cores distintas para facilitar leitura em gráficos)
@@ -57,8 +57,8 @@ export const colors = {
   // (container/onContainer, superfícies em camadas, outline) para que os
   // componentes possam seguir o vocabulário do design system do Flutter.
   onPrimary: '#FFFFFF',
-  primaryContainer: '#FFEFEA',
-  onPrimaryContainer: '#5A1408',
+  primaryContainer: '#E8F0FE',
+  onPrimaryContainer: '#0A2A6B',
 
   onSecondary: '#FFFFFF',
   secondaryContainer: '#DFF5F0',
@@ -72,18 +72,18 @@ export const colors = {
   errorContainer: '#FCE7EA',
   onErrorContainer: '#6B1626',
 
-  onSurface: '#1C1917',
-  onSurfaceVariant: '#78716C',
-  outline: '#D6D3D1',
-  outlineVariant: '#E7E5E4',
+  onSurface: '#0F1B33',
+  onSurfaceVariant: '#5B6B85',
+  outline: '#CAD4E3',
+  outlineVariant: '#E1E8F2',
 
   // Superfícies em camadas: cada nível escurece um pouco a base quente — equivalente ao surface tint do M3, usado
   // para dar profundidade sem depender só de sombra.
   surfaceContainerLowest: '#FFFFFF',
-  surfaceContainerLow: '#FAFAF9',
-  surfaceContainer: '#F5F5F4',
-  surfaceContainerHigh: '#EFEEEC',
-  surfaceContainerHighest: '#E7E5E4',
+  surfaceContainerLow: '#F8FAFD',
+  surfaceContainer: '#F1F5FA',
+  surfaceContainerHigh: '#E9EFF7',
+  surfaceContainerHighest: '#E1E8F2',
 } as const;
 
 export type AppColors = typeof colors;

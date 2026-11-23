@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Platform, StyleSheet, Text } from 'react-native';
 import { AnimatedPressable } from './AnimatedPressable';
 import { colors, shape, spacing, typography } from '../theme';
-import { formatDateLabel } from '../utils/format';
+import { formatDateLabel, toIsoSafe } from '../utils/format';
 
 type Props = {
   value: Date;
@@ -17,7 +17,7 @@ export function DateField({ value, onChange, maximumDate }: Props) {
 
   const handleChange = (_event: unknown, selected?: Date) => {
     if (Platform.OS === 'android') setOpen(false);
-    if (selected) onChange(selected);
+    if (selected && !Number.isNaN(selected.getTime())) onChange(selected);
   };
 
   return (
@@ -28,7 +28,7 @@ export function DateField({ value, onChange, maximumDate }: Props) {
         onPress={() => setOpen(true)}
       >
         <Ionicons name="calendar-outline" size={15} color={colors.textMuted} />
-        <Text style={styles.text}>{formatDateLabel(value.toISOString())}</Text>
+        <Text style={styles.text}>{formatDateLabel(toIsoSafe(value))}</Text>
       </AnimatedPressable>
       {open && (
         <DateTimePicker

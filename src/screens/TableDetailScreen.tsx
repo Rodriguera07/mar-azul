@@ -28,7 +28,9 @@ import { formatCurrency, formatTime } from '../utils/format';
 type Props = NativeStackScreenProps<RootStackParamList, 'TableDetail'>;
 
 export function TableDetailScreen({ navigation, route }: Props) {
-  const { tableId } = route.params;
+  // `route.params` pode vir vazio (tela reaberta sem parâmetros): sem este
+  // cuidado, a desestruturação lançava erro e a tela ficava em branco.
+  const tableId = route.params?.tableId ?? '';
   const table = usePosStore((s) => s.tables.find((t) => t.id === tableId));
   const incrementItem = usePosStore((s) => s.incrementItem);
   const decrementItem = usePosStore((s) => s.decrementItem);
@@ -360,7 +362,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 22,
     overflow: 'hidden',
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },
@@ -386,7 +388,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginTop: spacing.lg,
     gap: spacing.md,
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },
@@ -463,7 +465,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: spacing.md,
     marginTop: spacing.md,
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },

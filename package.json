@@ -50,7 +50,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "build": "expo export -p web",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "test:data": "tsx scripts/test-data-safety.ts"
   },
   "private": true
 }

@@ -17,6 +17,7 @@ import { usePosStore } from './usePosStore';
 import { logAuditEvent } from '../services/auditLog';
 import { countActiveAdmins, deleteOwnAccountData } from '../services/firestoreOrg';
 import { UserProfile } from '../types';
+import { sanitizeUserProfile } from '../utils/sanitize';
 import { withTimeout } from '../utils/timeout';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
@@ -75,7 +76,7 @@ async function fetchPointerWithRetry(
 
 async function fetchOrgProfile(orgId: string, uid: string): Promise<UserProfile | null> {
   const snap = await withTimeout(getDoc(doc(db, 'organizations', orgId, 'users', uid)), READ_TIMEOUT_MS);
-  return snap.exists() ? (snap.data() as UserProfile) : null;
+  return snap.exists() ? sanitizeUserProfile(uid, snap.data()) : null;
 }
 
 function friendlyAuthError(code: string): string {
@@ -179,7 +180,7 @@ function watchProfile(uid: string, orgId: string) {
           useAuthStore.setState({ status: 'unauthenticated', user: null });
           return;
         }
-        const profile = snap.data() as UserProfile;
+        const profile = sanitizeUserProfile(uid, snap.data());
         if (!profile.active) {
           stopWatchingProfile();
           signOut(auth);
@@ -237,7 +238,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       // Entra direto com o perfil já lido, sem depender só do
       // onAuthStateChanged: se a abertura caiu no login por demora (ver
-      // BOOT_TIMEOUT_MS), o Firebase pode já considerar a mesma conta logada
+      // o teto de tempo do App.tsx), o Firebase pode já considerar a mesma conta logada
       // e não avisar de novo — e o app ficaria parado na tela de login.
       useAuthStore.setState({ status: 'authenticated', user: profile });
       watchProfile(profile.uid, profile.orgId);
@@ -397,20 +398,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 // Restaura a sessão ao abrir o app e mantém org/role sincronizados enquanto
 // o usuário estiver logado. Chamado uma única vez (ver App.tsx).
-// Se a sessão não se resolver nesse tempo (banco local do navegador travado,
-// rede presa), sai do loading e mostra o login em vez de girar para sempre. Se
-// a sessão terminar de carregar depois, o app entra sozinho.
-const BOOT_TIMEOUT_MS = 20000;
-
+// (O teto de tempo da abertura, para não ficar preso no loading, fica no
+// App.tsx.)
 export function initAuthListener(): Unsubscribe {
-  const bootTimer = setTimeout(() => {
-    if (useAuthStore.getState().status === 'loading') {
-      console.warn('[auth] sessão demorou demais para carregar; mostrando o login');
-      useAuthStore.setState({ status: 'unauthenticated', user: null });
-    }
-  }, BOOT_TIMEOUT_MS);
-
-  const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+  return onAuthStateChanged(auth, async (firebaseUser) => {
     if (!firebaseUser) {
       profileUnsubscribe?.();
       profileUnsubscribe = null;
@@ -433,9 +424,4 @@ export function initAuthListener(): Unsubscribe {
       useAuthStore.setState({ status: 'unauthenticated', user: null });
     }
   });
-
-  return () => {
-    clearTimeout(bootTimer);
-    unsubscribe();
-  };
 }

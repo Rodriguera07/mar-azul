@@ -41,7 +41,9 @@ const METHOD_META: Record<PaymentMethod, { icon: keyof typeof Ionicons.glyphMap;
 };
 
 export function CloseTableScreen({ navigation, route }: Props) {
-  const { tableId } = route.params;
+  // `route.params` pode vir vazio (tela reaberta sem parâmetros): sem este
+  // cuidado, a desestruturação lançava erro e a tela ficava em branco.
+  const tableId = route.params?.tableId ?? '';
   const table = usePosStore((s) => s.tables.find((t) => t.id === tableId));
   const recordPayment = usePosStore((s) => s.recordPayment);
   const closeTable = usePosStore((s) => s.closeTable);
@@ -294,7 +296,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: spacing.md,
     marginBottom: spacing.lg,
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },
@@ -336,7 +338,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.lg,
     gap: spacing.sm,
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },
@@ -380,7 +382,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.06,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },

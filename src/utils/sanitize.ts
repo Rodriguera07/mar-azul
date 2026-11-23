@@ -1,4 +1,15 @@
-import { ClosedSale, MenuCategory, MenuItemInput, OrderItem, PaymentMethod, SplitPayment, Table } from '../types';
+import {
+  AuditEventType,
+  AuditLogEntry,
+  ClosedSale,
+  MenuCategory,
+  MenuItemInput,
+  OrderItem,
+  PaymentMethod,
+  SplitPayment,
+  Table,
+  UserProfile,
+} from '../types';
 
 // Dados do Firestore chegam sem garantia de formato (documentos antigos,
 // editados à mão, gravados por versões anteriores do app, campos faltando).
@@ -117,4 +128,41 @@ export function sanitizeMenuItems(raw: unknown): MenuItemInput[] {
       price: Math.max(0, asNumber(item.price)),
       ...(typeof item.description === 'string' && item.description ? { description: item.description } : {}),
     }));
+}
+
+// Perfil de usuário: papel desconhecido vira "staff" (o de menos permissão) e
+// `active` só é verdadeiro se for exatamente `true` — o app desloga quem não
+// está ativo, então um valor estranho nunca pode virar acesso.
+export function sanitizeUserProfile(id: string, raw: unknown): UserProfile {
+  const data: Record<string, any> = isObject(raw) ? raw : {};
+  const now = new Date().toISOString();
+  const email = asString(data.email);
+  return {
+    ...data,
+    uid: asString(data.uid, id),
+    orgId: asString(data.orgId),
+    email,
+    displayName: asString(data.displayName).trim() || email.split('@')[0] || 'Usuário',
+    role: data.role === 'admin' ? 'admin' : 'staff',
+    active: data.active === true,
+    createdAt: asIso(data.createdAt, now),
+    createdBy: asString(data.createdBy),
+  } as UserProfile;
+}
+
+// Evento do log de auditoria: o tipo pode ser de uma versão futura/antiga do
+// app (a tela trata tipo desconhecido); aqui só garantimos os campos de texto
+// e uma data válida, para agrupar por dia sem erro.
+export function sanitizeAuditEntry(id: string, raw: unknown): AuditLogEntry {
+  const data: Record<string, any> = isObject(raw) ? raw : {};
+  return {
+    ...data,
+    id,
+    type: asString(data.type, 'unknown') as AuditEventType,
+    userId: asString(data.userId),
+    userName: asString(data.userName, 'Alguém'),
+    timestamp: asIso(data.timestamp, new Date(0).toISOString()),
+    ...(data.tableLabel != null ? { tableLabel: asString(data.tableLabel) } : {}),
+    ...(data.detail != null ? { detail: asString(data.detail) } : {}),
+  } as AuditLogEntry;
 }
