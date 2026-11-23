@@ -37,7 +37,6 @@
       body {
         overflow: hidden;
         overscroll-behavior: none;
-        -webkit-overflow-scrolling: touch;
         touch-action: manipulation;
       }
       /* These styles make the root element full-height */
@@ -64,18 +63,50 @@
     -->
     <script>
       (function () {
-        function resetScroll() {
+        // Contadores só para diagnóstico (aparecem no rodapé do menu).
+        var diag = (window.__diag = { loads: 1, resizes: 0, resets: 0 });
+        try {
+          var raw = sessionStorage.getItem('diag-loads');
+          var arr = raw ? JSON.parse(raw) : [];
+          var now = Date.now();
+          arr = arr.filter(function (t) { return now - t < 120000; });
+          arr.push(now);
+          sessionStorage.setItem('diag-loads', JSON.stringify(arr));
+          diag.loads = arr.length; // cargas da página nos últimos 2 minutos
+        } catch (_) {}
+
+        var lastFocusAt = 0;
+        var recent = [];
+        function resetScroll(fromViewport) {
+          // Só mexe na rolagem logo depois de um campo de texto ter sido usado
+          // (teclado abrindo/fechando). No app instalado do iPhone o tamanho da
+          // tela pode oscilar sozinho; reagir a cada oscilação puxando a página
+          // de volta criava um vai-e-vem que fazia a tela tremer.
+          if (fromViewport && Date.now() - lastFocusAt > 4000) return;
           setTimeout(function () {
             var a = document.activeElement;
             var typing = a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
-            if (!typing && (window.scrollY || document.documentElement.scrollTop || document.body.scrollTop)) {
-              window.scrollTo(0, 0);
-              document.body.scrollTop = 0;
-            }
+            if (typing) return;
+            var y = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop;
+            if (!y) return;
+            // No máximo 3 correções a cada 3 segundos.
+            var now = Date.now();
+            recent = recent.filter(function (t) { return now - t < 3000; });
+            if (recent.length >= 3) return;
+            recent.push(now);
+            diag.resets++;
+            window.scrollTo(0, 0);
+            document.body.scrollTop = 0;
           }, 120);
         }
-        document.addEventListener('focusout', resetScroll);
-        if (window.visualViewport) window.visualViewport.addEventListener('resize', resetScroll);
+        document.addEventListener('focusin', function () { lastFocusAt = Date.now(); });
+        document.addEventListener('focusout', function () { lastFocusAt = Date.now(); resetScroll(false); });
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', function () {
+            diag.resizes++;
+            resetScroll(true);
+          });
+        }
       })();
     </script>
 
