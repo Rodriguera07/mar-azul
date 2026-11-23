@@ -32,12 +32,17 @@
       body {
         height: 100%;
         background-color: #F3F6FB;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html {
+        overscroll-behavior: none;
       }
       /* These styles disable body scrolling if you are using <ScrollView> */
       body {
         overflow: hidden;
         overscroll-behavior: none;
-        -webkit-overflow-scrolling: touch;
         touch-action: manipulation;
       }
       /* These styles make the root element full-height */
@@ -45,6 +50,28 @@
         display: flex;
         height: 100%;
         flex: 1;
+      }
+      /*
+        iPhone com o app instalado na tela de início: o corpo da página
+        "borrachava" (rolava um pouco e voltava) e disputava o gesto com as
+        listas do app, o que dava tremedeira e toques que não pegavam. Fixar o
+        corpo na tela impede a página de rolar por baixo do app; só as listas
+        internas rolam. 100dvh acompanha a altura real visível (sem barras).
+      */
+      @media (hover: none) and (pointer: coarse) {
+        body {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          width: 100%;
+        }
+        @supports (height: 100dvh) {
+          #root {
+            height: 100dvh;
+          }
+        }
       }
     </style>
   </head>
@@ -64,8 +91,14 @@
     -->
     <script>
       (function () {
+        // Uma verificação por vez: o visualViewport dispara "resize" em rajada
+        // (teclado, barra do iOS) e cada disparo agendava um scrollTo próprio.
+        var pending = false;
         function resetScroll() {
+          if (pending) return;
+          pending = true;
           setTimeout(function () {
+            pending = false;
             var a = document.activeElement;
             var typing = a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
             if (!typing && (window.scrollY || document.documentElement.scrollTop || document.body.scrollTop)) {
