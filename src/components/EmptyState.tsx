@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, nunitoFontFamily, spacing, typography } from '../theme';
+import { colors, font, spacing, typography } from '../theme';
 
 interface Props {
   icon: keyof typeof Ionicons.glyphMap;
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h3,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textSecondary,
   },
   subtitle: {

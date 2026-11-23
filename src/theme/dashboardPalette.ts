@@ -2,8 +2,8 @@
 // marca, tinta escura (ink) para superfícies de destaque e amarelo-sol como
 // acento. `positive` é o verde de "ok / receita"; `rose` o de alerta.
 export const dashboardPalette = {
-  ink900: '#1C0E09',
-  ink800: '#2E150C',
+  ink900: '#1C1917',
+  ink800: '#292524',
   brand: '#F0432B',
   brandLight: '#FF7A45',
   positive: '#12A06B',
@@ -11,5 +11,5 @@ export const dashboardPalette = {
   amber: '#FFB020',
   amberSoft: '#FFD27A',
   rose: '#E1435C',
-  inkSoft: '#7A6B62',
+  inkSoft: '#78716C',
 } as const;

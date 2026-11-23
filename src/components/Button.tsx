@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, PressableProps, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
 type Variant = 'primary' | 'outline' | 'ghost' | 'danger';
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.h3,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     letterSpacing: 0.2,
   },
 });

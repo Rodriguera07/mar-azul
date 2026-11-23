@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { DrawerActions } from '@react-navigation/native';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -11,7 +10,7 @@ import { useAuthStore } from '../context/useAuthStore';
 import { useClosedSalesRange } from '../hooks/useClosedSalesRange';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { TabScreenProps } from '../navigation/types';
-import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { dashboardPalette } from '../theme/dashboardPalette';
 import { PaymentMethod } from '../types';
 import { formatCurrency } from '../utils/format';
@@ -88,7 +87,7 @@ export function ReportsScreen({ navigation }: Props) {
           <Text style={styles.title}>Relatórios</Text>
           <Text style={styles.subtitle}>{formatShortRange(range.start, range.end)}</Text>
         </View>
-        <View style={{ width: 44 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <View style={styles.presetRow}>
@@ -119,13 +118,7 @@ export function ReportsScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.receipt}>
-          <LinearGradient
-            colors={[dashboardPalette.brand, dashboardPalette.ink900]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
-          />
-          <Text style={styles.receiptLabel}>FATURAMENTO DO PERÍODO</Text>
+          <Text style={styles.receiptLabel}>Faturamento do período</Text>
           <Text style={styles.receiptValue}>{formatCurrency(report.totalRevenue)}</Text>
           <View style={styles.receiptBadgeRow}>
             <View style={styles.receiptChip}>
@@ -211,11 +204,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   backBtn: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: colors.primaryContainer,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -248,8 +243,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   presetChipActive: {
-    backgroundColor: dashboardPalette.brand,
-    borderColor: dashboardPalette.brand,
+    backgroundColor: dashboardPalette.ink900,
+    borderColor: dashboardPalette.ink900,
   },
   presetText: {
     ...typography.caption,
@@ -257,7 +252,7 @@ const styles = StyleSheet.create({
   },
   presetTextActive: {
     color: colors.textInverse,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   dateRow: {
     flexDirection: 'row',
@@ -271,23 +266,24 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   receipt: {
-    overflow: 'hidden',
-    backgroundColor: dashboardPalette.ink900,
-    borderRadius: 28,
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.lg,
     marginTop: spacing.xs,
   },
   receiptLabel: {
-    ...typography.label,
-    letterSpacing: 2,
-    color: 'rgba(255,255,255,0.7)',
+    fontFamily: font.medium,
+    fontSize: 13,
+    color: colors.textSecondary,
   },
   receiptValue: {
-    fontFamily: nunitoFontFamily.extraBold,
+    fontFamily: font.bold,
     fontSize: 38,
-    letterSpacing: -0.8,
-    color: colors.white,
-    marginTop: spacing.xs,
+    letterSpacing: -1.4,
+    color: colors.textPrimary,
+    marginTop: 6,
   },
   receiptBadgeRow: {
     flexDirection: 'row',
@@ -297,19 +293,19 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   receiptBadgeText: {
-    ...typography.caption,
-    fontFamily: nunitoFontFamily.bold,
-    color: colors.white,
+    fontFamily: font.semiBold,
+    fontSize: 12,
+    color: colors.textPrimary,
   },
   receiptChip: {
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: colors.surfaceContainer,
     borderRadius: shape.full,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
   sectionTitle: {
     ...typography.h3,
-    fontFamily: nunitoFontFamily.extraBold,
+    fontFamily: font.extraBold,
     color: colors.textPrimary,
     marginTop: spacing.xl,
     marginBottom: spacing.sm,
@@ -348,14 +344,14 @@ const styles = StyleSheet.create({
   },
   paymentPct: {
     ...typography.caption,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textMuted,
     width: 40,
     textAlign: 'right',
   },
   paymentValue: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.extraBold,
+    fontFamily: font.extraBold,
     color: colors.textPrimary,
     minWidth: 92,
     textAlign: 'right',
@@ -371,18 +367,18 @@ const styles = StyleSheet.create({
   },
   topItemRank: {
     ...typography.caption,
-    fontFamily: nunitoFontFamily.extraBold,
+    fontFamily: font.extraBold,
     color: dashboardPalette.brand,
   },
   topItemName: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textPrimary,
     flex: 1,
   },
   topItemRevenue: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.extraBold,
+    fontFamily: font.extraBold,
     color: colors.textPrimary,
   },
   topItemBarTrack: {

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LoginFoodMarquee } from './LoginFoodMarquee';
-import { colors, nunitoFontFamily, spacing, typography } from '../theme';
+import { colors, font, spacing, typography } from '../theme';
 
 interface Props {
   message?: string;
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   },
   message: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.semiBold,
+    fontFamily: font.semiBold,
     color: 'rgba(255,255,255,0.75)',
     marginTop: spacing.xs,
   },

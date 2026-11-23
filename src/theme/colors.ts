@@ -1,18 +1,19 @@
-// Tema "delivery": base off-white quente, coral como cor de marca e amarelo-sol
-// como acento (mesma linguagem da tela de login).
+// Tema de produto: base neutra (stone), superfícies brancas com borda fina e
+// coral como única cor de marca — usado só em ações e estados ativos. Amarelo
+// e verde ficam para atenção e dinheiro.
 export const colors = {
   // Base — areia clara e neutra, tom exato do mock de referência do Dashboard
-  background: '#FAF7F3',
-  backgroundAlt: '#F3EDE6',
+  background: '#F5F5F4',
+  backgroundAlt: '#EFEEEC',
   surface: '#FFFFFF',
   surfaceElevated: '#FFFFFF',
-  surfaceHighlight: '#FFF3EC',
-  border: '#EDE6DF',
-  borderLight: '#E6DDD4',
+  surfaceHighlight: '#FAFAF9',
+  border: '#E7E5E4',
+  borderLight: '#EFEEED',
 
   // Marca — mar / turquesa
   primary: '#F0432B', // teal do oceano — interativo geral
-  primaryMuted: '#FDEBE6',
+  primaryMuted: '#FFEFEA',
   primaryGlow: 'rgba(240, 67, 43, 0.16)',
 
   emerald: '#0EA98D', // turquesa vivo — faturamento / positivo / sucesso
@@ -36,9 +37,9 @@ export const colors = {
   info: '#2A7DE1',
 
   // Texto
-  textPrimary: '#1C0E09',
-  textSecondary: '#7A6B62',
-  textMuted: '#B3A69D',
+  textPrimary: '#1C1917',
+  textSecondary: '#78716C',
+  textMuted: '#A8A29E',
   textInverse: '#FFFFFF',
 
   // Formas de pagamento (cores distintas para facilitar leitura em gráficos)
@@ -56,7 +57,7 @@ export const colors = {
   // (container/onContainer, superfícies em camadas, outline) para que os
   // componentes possam seguir o vocabulário do design system do Flutter.
   onPrimary: '#FFFFFF',
-  primaryContainer: '#FDEBE6',
+  primaryContainer: '#FFEFEA',
   onPrimaryContainer: '#5A1408',
 
   onSecondary: '#FFFFFF',
@@ -71,18 +72,18 @@ export const colors = {
   errorContainer: '#FCE7EA',
   onErrorContainer: '#6B1626',
 
-  onSurface: '#1C0E09',
-  onSurfaceVariant: '#7A6B62',
-  outline: '#CFC3BA',
-  outlineVariant: '#E6DDD4',
+  onSurface: '#1C1917',
+  onSurfaceVariant: '#78716C',
+  outline: '#D6D3D1',
+  outlineVariant: '#E7E5E4',
 
   // Superfícies em camadas: cada nível escurece um pouco a base quente — equivalente ao surface tint do M3, usado
   // para dar profundidade sem depender só de sombra.
   surfaceContainerLowest: '#FFFFFF',
-  surfaceContainerLow: '#FCF9F6',
-  surfaceContainer: '#F6F1EC',
-  surfaceContainerHigh: '#F0E9E3',
-  surfaceContainerHighest: '#EAE1DA',
+  surfaceContainerLow: '#FAFAF9',
+  surfaceContainer: '#F5F5F4',
+  surfaceContainerHigh: '#EFEEEC',
+  surfaceContainerHighest: '#E7E5E4',
 } as const;
 
 export type AppColors = typeof colors;

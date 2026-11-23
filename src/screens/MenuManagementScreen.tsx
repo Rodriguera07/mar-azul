@@ -20,7 +20,7 @@ import { usePosStore } from '../context/usePosStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { TabScreenProps } from '../navigation/types';
 import { dashboardPalette } from '../theme/dashboardPalette';
-import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { MenuCategory, MenuItem } from '../types';
 import { confirmAlert, showAlert } from '../utils/alert';
 import { generateId } from '../utils/id';
@@ -184,7 +184,7 @@ export function MenuManagementScreen({ navigation }: Props) {
           <Ionicons name="menu" size={22} color={colors.textPrimary} />
         </AnimatedPressable>
         <Text style={styles.title}>Cardápio</Text>
-        <View style={{ width: 44 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <View style={styles.filterSection}>
@@ -305,11 +305,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   backBtn: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: colors.primaryContainer,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -347,17 +349,17 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   filterChipActive: {
-    backgroundColor: dashboardPalette.brand,
-    borderColor: dashboardPalette.brand,
+    backgroundColor: dashboardPalette.ink900,
+    borderColor: dashboardPalette.ink900,
   },
   filterChipText: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.semiBold,
+    fontFamily: font.semiBold,
     color: colors.textPrimary,
   },
   filterChipTextActive: {
     color: colors.white,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   content: {
     paddingHorizontal: spacing.lg,
@@ -382,13 +384,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h3,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textPrimary,
     flex: 1,
   },
   sectionCount: {
     ...typography.caption,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textMuted,
   },
   card: {
@@ -422,8 +424,9 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     backgroundColor: colors.surfaceContainerLow,
     borderRadius: shape.medium,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: 10,
     height: 44,
+    fontSize: 14,
   },
   priceWrap: {
     flexDirection: 'row',
@@ -433,24 +436,24 @@ const styles = StyleSheet.create({
     borderRadius: shape.medium,
     paddingHorizontal: spacing.xs,
     height: 44,
-    width: 68,
+    width: 62,
     gap: 2,
   },
   priceCurrency: {
     ...typography.caption,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textMuted,
   },
   priceInput: {
     flex: 1,
     ...typography.body,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textPrimary,
     height: '100%',
   },
   removeBtn: {
-    width: 32,
-    height: 32,
+    width: 30,
+    height: 30,
     flexShrink: 0,
     borderRadius: shape.full,
     overflow: 'hidden',
@@ -479,7 +482,7 @@ const styles = StyleSheet.create({
   },
   addRowText: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.primary,
   },
   footer: {

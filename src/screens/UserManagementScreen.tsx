@@ -23,7 +23,7 @@ import { RootStackParamList } from '../navigation/types';
 import { createOrgUser, sendPasswordReset } from '../services/adminApi';
 import { logAuditEvent } from '../services/auditLog';
 import { setOrgUserActive, subscribeOrgUsers } from '../services/firestoreOrg';
-import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { Role, UserProfile } from '../types';
 import { confirmAlert, showAlert } from '../utils/alert';
 
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   },
   roleChipTextActive: {
     color: colors.textInverse,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   error: {
     ...typography.bodySm,
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   },
   rowName: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textPrimary,
   },
   rowEmail: {
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   },
   roleBadgeText: {
     ...typography.caption,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textSecondary,
   },
   roleBadgeTextAdmin: {

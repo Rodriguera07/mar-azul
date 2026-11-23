@@ -10,7 +10,7 @@ import { useAuthStore } from '../context/useAuthStore';
 import { useClosedSalesRange } from '../hooks/useClosedSalesRange';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
-import { colors, elevationShadow, monoFontFamily, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, monoFontFamily, font, shape, spacing, typography } from '../theme';
 import { ClosedSale } from '../types';
 import { formatCurrency, formatDateLabel, formatTime } from '../utils/format';
 import { describeSalePayments } from '../utils/payments';
@@ -178,8 +178,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   presetChipActive: {
-    backgroundColor: colors.sand,
-    borderColor: colors.sand,
+    backgroundColor: colors.textPrimary,
+    borderColor: colors.textPrimary,
   },
   presetText: {
     ...typography.caption,
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   },
   presetTextActive: {
     color: colors.textInverse,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   content: {
     paddingHorizontal: spacing.lg,
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textPrimary,
   },
   rowSub: {

@@ -20,7 +20,7 @@ import { CATEGORY_ICONS, CATEGORY_LABELS } from '../data/menu';
 import { usePosStore } from '../context/usePosStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
-import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { MenuCategory, MenuItem } from '../types';
 import { formatCurrency } from '../utils/format';
 
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   },
   categoryChipText: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.semiBold,
+    fontFamily: font.semiBold,
     color: colors.textPrimary,
   },
   categoryChipTextActive: {
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textPrimary,
     marginTop: 4,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   addBtn: {
     width: 36,

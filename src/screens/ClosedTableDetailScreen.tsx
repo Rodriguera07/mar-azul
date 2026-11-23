@@ -7,7 +7,7 @@ import { AnimatedPressable } from '../components/AnimatedPressable';
 import { OrderItemRow } from '../components/OrderItemRow';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
-import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { formatCurrency, formatDateLabel, formatTime } from '../utils/format';
 import { PAYMENT_LABELS } from '../utils/payments';
 
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   paymentLabel: {
     ...typography.bodySm,
     color: colors.textPrimary,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   paymentTime: {
     ...typography.caption,
@@ -244,6 +244,6 @@ const styles = StyleSheet.create({
   paymentValue: {
     ...typography.body,
     color: colors.emerald,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
 });

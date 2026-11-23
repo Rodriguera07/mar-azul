@@ -1,14 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../context/useAuthStore';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { MenuManagementScreen } from '../screens/MenuManagementScreen';
 import { ReportsScreen } from '../screens/ReportsScreen';
 import { TablesScreen } from '../screens/TablesScreen';
-import { colors, nunitoFontFamily } from '../theme';
+import { colors, font } from '../theme';
 import { dashboardPalette } from '../theme/dashboardPalette';
 import { TabParamList } from './types';
 
@@ -24,17 +24,9 @@ const TAB_ICON: Record<
   Relatorios: { on: 'stats-chart', off: 'stats-chart-outline' },
 };
 
-function TabIcon({ name, focused }: { name: keyof TabParamList; focused: boolean }) {
+function TabIcon({ name, focused, color }: { name: keyof TabParamList; focused: boolean; color: string }) {
   const icon = TAB_ICON[name];
-  return (
-    <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <Ionicons
-        name={focused ? icon.on : icon.off}
-        size={20}
-        color={focused ? colors.white : 'rgba(255,255,255,0.55)'}
-      />
-    </View>
-  );
+  return <Ionicons name={focused ? icon.on : icon.off} size={22} color={color} />;
 }
 
 // Barra de abas fixa (Painel / Mesas / Produtos / Relatórios) — navegação
@@ -47,33 +39,26 @@ export function MainTabs() {
   // telas com esse inset maior. `insets.bottom` cresce a barra na medida
   // exata que cada aparelho precisa.
   const insets = useSafeAreaInsets();
-  const tabBarBottomMargin = Math.max(10, insets.bottom);
+  const tabBarBottomPadding = Math.max(8, insets.bottom);
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.white,
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.55)',
+        tabBarActiveTintColor: dashboardPalette.brand,
+        tabBarInactiveTintColor: colors.textMuted,
         sceneStyle: { backgroundColor: colors.background },
-        // Barra flutuante escura (padrão de apps de delivery): destacada das
-        // bordas da tela, com a aba ativa em coral.
         tabBarStyle: {
-          backgroundColor: dashboardPalette.ink900,
-          borderTopWidth: 0,
-          marginHorizontal: 14,
-          marginBottom: tabBarBottomMargin,
-          height: 66,
+          backgroundColor: colors.white,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          height: 62 + tabBarBottomPadding,
           paddingTop: 8,
-          paddingBottom: 8,
-          borderRadius: 30,
-          shadowColor: '#000',
-          shadowOpacity: 0.28,
-          shadowRadius: 18,
-          shadowOffset: { width: 0, height: 8 },
-          elevation: 12,
+          paddingBottom: tabBarBottomPadding,
         },
-        tabBarIcon: ({ focused }) => <TabIcon name={route.name as keyof TabParamList} focused={focused} />,
+        tabBarIcon: ({ focused, color }) => (
+          <TabIcon name={route.name as keyof TabParamList} focused={focused} color={color} />
+        ),
         // Em telas estreitas (~320-360px), 4 abas deixam pouco espaço por
         // label — sem limitar a 1 linha, "Relatórios" quebrava e ficava
         // cortado pela altura fixa da barra.
@@ -104,20 +89,10 @@ export function MainTabs() {
 }
 
 const styles = StyleSheet.create({
-  iconWrap: {
-    width: 46,
-    height: 30,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 2,
-  },
-  iconWrapActive: {
-    backgroundColor: dashboardPalette.brand,
-  },
   label: {
-    fontFamily: nunitoFontFamily.bold,
-    fontSize: 10,
+    fontFamily: font.semiBold,
+    fontSize: 10.5,
     textAlign: 'center',
+    marginTop: 2,
   },
 });

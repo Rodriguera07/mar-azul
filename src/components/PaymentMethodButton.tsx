@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { coloredShadow, colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { coloredShadow, colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface Props {
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.h3,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textPrimary,
   },
 });
