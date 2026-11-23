@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     height: 48,
     gap: spacing.xs,
     marginBottom: spacing.sm,
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.06,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },

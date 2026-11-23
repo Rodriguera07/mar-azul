@@ -21,7 +21,7 @@ const SHADOW_BY_LEVEL: Record<ElevationLevel, ViewStyle> = {
   // Nível 1 = cartão de delivery: branco, sem borda, com sombra larga e suave
   // (a profundidade vem da sombra, não de uma linha de contorno).
   1: {
-    shadowColor: '#2B1A12',
+    shadowColor: '#0B1B3B',
     shadowOpacity: 0.07,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },

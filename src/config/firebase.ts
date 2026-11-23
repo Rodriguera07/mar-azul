@@ -1,5 +1,13 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { initializeAuth, getAuth, type Auth, type Persistence } from 'firebase/auth';
+import {
+  browserLocalPersistence,
+  getAuth,
+  inMemoryPersistence,
+  indexedDBLocalPersistence,
+  initializeAuth,
+  type Auth,
+  type Persistence,
+} from 'firebase/auth';
 import {
   initializeFirestore,
   persistentLocalCache,
@@ -39,9 +47,26 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 // todo o resto (incluindo o firebase/auth) a resolução por plataforma segue
 // o padrão do Metro, então o web usa o build de browser do SDK e o nativo
 // usa o build de React Native (que exige a persistência via AsyncStorage).
+// No navegador (inclusive o app instalado no iPhone) o login é guardado no
+// IndexedDB — e o Safari tem um histórico de falhas ali (banco travado ao voltar
+// do segundo plano, armazenamento bloqueado). Sem alternativa, o login ficava
+// preso ou nem abria. Com a lista de opções, o Firebase tenta uma por vez:
+// IndexedDB, depois localStorage e, por último, a memória (a sessão vale até
+// fechar o app, mas o app abre).
+function createWebAuth(): Auth {
+  try {
+    return initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence, inMemoryPersistence],
+    });
+  } catch {
+    // Já inicializado (ex.: recarga a quente) — reaproveita a instância.
+    return getAuth(app);
+  }
+}
+
 export const auth: Auth =
   Platform.OS === 'web'
-    ? getAuth(app)
+    ? createWebAuth()
     : initializeAuth(app, { persistence: getReactNativePersistence(AsyncStorage) });
 
 export const db: Firestore = initializeFirestore(app, {
@@ -50,6 +75,11 @@ export const db: Firestore = initializeFirestore(app, {
   // (ex.: Table.waiterName) — sem isso, gravar esses objetos direto lança
   // "Unsupported field value: undefined".
   ignoreUndefinedProperties: true,
+  // Safari/iPhone, redes com bloqueador de conteúdo, VPN ou Relay Privado do
+  // iCloud costumam barrar o canal em tempo real (WebChannel) do Firestore, e
+  // o app ficava sem receber dados. Com isto o SDK testa a conexão e, se o
+  // canal normal falhar, muda sozinho para o modo compatível (long polling).
+  ...(Platform.OS === 'web' ? { experimentalAutoDetectLongPolling: true } : {}),
 });
 
 export { app, firebaseConfig };

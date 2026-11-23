@@ -11,7 +11,7 @@
 
     <!-- PWA (theme-color e favicon vêm de app.json > web, injetados automaticamente pelo Expo) -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="background-color" content="#F6F4F1" />
+    <meta name="background-color" content="#F3F6FB" />
 
     <!-- iOS: permite abrir em tela cheia a partir da tela de início -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -31,7 +31,7 @@
       html,
       body {
         height: 100%;
-        background-color: #F6F4F1;
+        background-color: #F3F6FB;
       }
       /* These styles disable body scrolling if you are using <ScrollView> */
       body {
@@ -79,13 +79,13 @@
           if (appVisible() || document.getElementById('boot-guard')) return;
           var box = document.createElement('div');
           box.id = 'boot-guard';
-          box.setAttribute('style', 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;background:#F6F4F1;font-family:-apple-system,Helvetica,Arial,sans-serif;text-align:center;color:#1C1917');
+          box.setAttribute('style', 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;background:#F3F6FB;font-family:-apple-system,Helvetica,Arial,sans-serif;text-align:center;color:#0F1B33');
           var detail = errors.length ? errors.join(' | ').replace(/</g, '&lt;') : 'sem detalhes';
           box.innerHTML =
             '<div style="font-size:19px;font-weight:700;margin-bottom:8px">O aplicativo não abriu</div>' +
-            '<div style="font-size:14px;line-height:1.5;color:#78716C;max-width:300px">Toque em Recarregar. Se continuar assim, feche o app por completo e abra de novo.</div>' +
-            '<button id="boot-guard-btn" style="margin-top:20px;height:46px;padding:0 26px;border:0;border-radius:14px;background:#F0432B;color:#fff;font-size:15px;font-weight:600">Recarregar</button>' +
-            '<div style="margin-top:22px;font-size:11px;line-height:1.4;color:#A8A29E;max-width:320px;word-break:break-word">Detalhe técnico: ' + detail + '</div>';
+            '<div style="font-size:14px;line-height:1.5;color:#5B6B85;max-width:300px">Toque em Recarregar. Se continuar assim, feche o app por completo e abra de novo.</div>' +
+            '<button id="boot-guard-btn" style="margin-top:20px;height:46px;padding:0 26px;border:0;border-radius:14px;background:#1565D8;color:#fff;font-size:15px;font-weight:600">Recarregar</button>' +
+            '<div style="margin-top:22px;font-size:11px;line-height:1.4;color:#97A3B8;max-width:320px;word-break:break-word">Detalhe técnico: ' + detail + '</div>';
           document.body.appendChild(box);
           document.getElementById('boot-guard-btn').onclick = function () { window.location.reload(); };
         }

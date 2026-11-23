@@ -199,7 +199,7 @@ export function LoginScreen() {
       <View style={[styles.hero, { height: heroHeight + insetTop }]}>
         <LoginFoodMarquee tile={isCompact ? 62 : 78} height={heroHeight + insetTop} />
         <LinearGradient
-          colors={['rgba(28,14,9,0.35)', 'rgba(28,14,9,0.62)', dashboardPalette.brand]}
+          colors={['rgba(8,18,45,0.35)', 'rgba(8,18,45,0.66)', dashboardPalette.brand]}
           locations={[0, 0.55, 1]}
           style={StyleSheet.absoluteFillObject}
           pointerEvents="none"
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.92)',
   },
-  brandTiny: { fontFamily: font.bold, fontSize: 10, letterSpacing: 3, color: dashboardPalette.amber },
+  brandTiny: { fontFamily: font.bold, fontSize: 10, letterSpacing: 3, color: dashboardPalette.aqua },
   brandName: { fontFamily: font.extraBold, fontSize: 20, letterSpacing: -0.4, color: colors.white },
   headline: {
     fontFamily: font.extraBold,
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   headlineSmall: { fontSize: 28, lineHeight: 32 },
-  headlineAccent: { color: dashboardPalette.amber },
+  headlineAccent: { color: dashboardPalette.aquaSoft },
   sheetWrap: {
     flex: 1,
     marginTop: -28,
