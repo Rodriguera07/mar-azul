@@ -14,9 +14,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { BrandHeader } from '../components/BrandHeader';
+import { BarPill } from '../components/ScreenBar';
 import { Button } from '../components/Button';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { CATEGORY_ICONS, CATEGORY_LABELS } from '../data/menu';
+import { applyDefaultPrices, CATEGORY_ICONS, CATEGORY_LABELS } from '../data/menu';
 import { usePosStore } from '../context/usePosStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { TabScreenProps } from '../navigation/types';
@@ -136,6 +137,28 @@ export function MenuManagementScreen({ navigation }: Props) {
     setRemoveTarget(null);
   };
 
+  // Atualiza o rascunho com a tabela de preços padrão (itens da casa) — nada é
+  // gravado até o admin tocar em "Salvar Cardápio".
+  const handleApplyDefaultPrices = async () => {
+    const ok = await confirmAlert(
+      'Aplicar tabela de preços nova?',
+      'Atualiza nome, descrição e preço dos itens padrão e adiciona os que faltam. Itens que você criou não mudam. Depois, toque em "Salvar Cardápio" para valer para a equipe.',
+      'Aplicar'
+    );
+    if (!ok) return;
+    const result = applyDefaultPrices(draft);
+    if (result.changed === 0 && result.added === 0) {
+      showAlert('Tudo em dia', 'O cardápio já está com a tabela de preços mais recente.');
+      return;
+    }
+    setHasEdited(true);
+    setDraft(result.items);
+    showAlert(
+      'Tabela aplicada',
+      `${result.changed} item(ns) atualizado(s) e ${result.added} adicionado(s). Toque em "Salvar Cardápio" para confirmar.`
+    );
+  };
+
   const handleBack = () => {
     navigation.dispatch(DrawerActions.openDrawer());
   };
@@ -188,9 +211,10 @@ export function MenuManagementScreen({ navigation }: Props) {
           <View style={styles.titleWrap}>
             <Text style={styles.title}>Cardápio</Text>
             <Text style={styles.subtitle}>
-              {draft.length} {draft.length === 1 ? 'item' : 'itens'} · {isDirty ? 'alterações não salvas' : 'tudo salvo'}
+              {draft.length} {draft.length === 1 ? 'item' : 'itens'} · {isDirty ? 'não salvo' : 'salvo'}
             </Text>
           </View>
+          <BarPill label="Tabela nova" icon="pricetag-outline" onPress={handleApplyDefaultPrices} />
         </View>
       </BrandHeader>
 
