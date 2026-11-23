@@ -86,6 +86,12 @@ export function CloseTableScreen({ navigation, route }: Props) {
         navigation.popToTop();
         return;
       }
+      if (result === 'not-open' || result === 'not-found') {
+        // Outra pessoa fechou (ou removeu) a mesa nesse meio-tempo.
+        showAlert('Mesa já fechada', 'Esta mesa foi fechada em outro aparelho.');
+        navigation.popToTop();
+        return;
+      }
       showAlert('Não foi possível fechar a mesa', 'Tente novamente em instantes.');
       setConfirming(false);
       return;
@@ -101,6 +107,11 @@ export function CloseTableScreen({ navigation, route }: Props) {
     setConfirming(false);
     setShowNoConsumptionConfirm(false);
     if (result === 'ok') {
+      navigation.popToTop();
+      return;
+    }
+    if (result === 'not-open' || result === 'not-found') {
+      showAlert('Mesa já fechada', 'Esta mesa foi fechada em outro aparelho.');
       navigation.popToTop();
       return;
     }

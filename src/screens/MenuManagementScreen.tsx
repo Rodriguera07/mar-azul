@@ -438,9 +438,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   thumb: {
-    width: 40,
-    height: 40,
-    borderRadius: shape.small,
+    width: 46,
+    height: 46,
+    borderRadius: shape.small + 2,
     flexShrink: 0,
   },
   thumbEmpty: {
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceContainerLow,
     borderRadius: shape.medium,
     paddingHorizontal: 10,
-    height: 44,
+    height: 46,
     fontSize: 14,
   },
   priceWrap: {
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceContainerLow,
     borderRadius: shape.medium,
     paddingHorizontal: spacing.xs,
-    height: 44,
+    height: 46,
     width: 62,
     gap: 2,
   },

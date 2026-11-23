@@ -31,7 +31,7 @@ import {
   UserProfile,
   WebPushSubscription,
 } from '../types';
-import { computeNextPaymentAmount, computeTotals, isPaidInFull } from '../utils/billing';
+import { computeNextPaymentAmount, computeTotals, isPaidInFull, round2 } from '../utils/billing';
 import { asNumber, sanitizeClosedSale, sanitizeMenuItems, sanitizeTable } from '../utils/sanitize';
 import { reportSyncError, reportSyncOk } from './syncStatus';
 
@@ -345,10 +345,25 @@ export async function clearClosedTablesAndSummarize(
   orgId: string,
   rollup: DaySummaryRollup
 ): Promise<void> {
+  // Dois encerramentos no mesmo dia (dois turnos) somam no mesmo resumo em vez
+  // de o segundo sobrescrever o primeiro.
+  const existing = await getDaySummary(orgId, rollup.date);
+  const merged: DaySummaryRollup = existing
+    ? {
+        ...rollup,
+        totalRevenue: round2(existing.totalRevenue + rollup.totalRevenue),
+        paymentBreakdown: {
+          pix: round2(existing.paymentBreakdown.pix + rollup.paymentBreakdown.pix),
+          dinheiro: round2(existing.paymentBreakdown.dinheiro + rollup.paymentBreakdown.dinheiro),
+          debito: round2(existing.paymentBreakdown.debito + rollup.paymentBreakdown.debito),
+          credito: round2(existing.paymentBreakdown.credito + rollup.paymentBreakdown.credito),
+        },
+      }
+    : rollup;
   const closedSnap = await getDocs(query(tablesCol(orgId), where('status', '==', 'closed')));
   const batch = writeBatch(db);
   closedSnap.docs.forEach((d) => batch.delete(d.ref));
-  batch.set(daySummaryDoc(orgId, rollup.date), rollup);
+  batch.set(daySummaryDoc(orgId, rollup.date), merged);
   await batch.commit();
 }
 
