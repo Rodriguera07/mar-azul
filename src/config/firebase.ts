@@ -35,7 +35,25 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Endereço oficial do app na web (o projeto da Vercel com as chaves do
+// Firebase configuradas).
+const PRIMARY_WEB_HOST = 'trailer-mar-azul.vercel.app';
+
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  // Um segundo projeto na Vercel (quioque-app.vercel.app) publica o mesmo
+  // código mas sem as chaves — quem abria por ele (inclusive o ícone salvo na
+  // tela de início do iPhone) via o app quebrar na abertura. Em vez da tela de
+  // erro, leva a pessoa para o endereço oficial, na mesma tela em que estava.
+  if (
+    Platform.OS === 'web' &&
+    typeof window !== 'undefined' &&
+    window.location.hostname.endsWith('.vercel.app') &&
+    window.location.hostname !== PRIMARY_WEB_HOST
+  ) {
+    window.location.replace(
+      `https://${PRIMARY_WEB_HOST}${window.location.pathname}${window.location.search}${window.location.hash}`
+    );
+  }
   throw new Error(
     'Configuração do Firebase ausente. Copie .env.example para .env e preencha as chaves EXPO_PUBLIC_FIREBASE_*.'
   );
