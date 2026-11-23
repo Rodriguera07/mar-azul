@@ -21,8 +21,12 @@ export function useResponsiveContent(maxWidth: number = DEFAULT_MAX_CONTENT_WIDT
   return { isTablet, contentStyle, tableColumns, paymentColumns };
 }
 
+// Larguras pensadas para SEMPRE caberem com o espaço entre os blocos (14 px):
+// com 2 colunas, 48% + 48% + 14 px passava de 100% em telas de até 375 px e os
+// blocos ficavam um por linha (metade da tela vazia). 47% cabe a partir de
+// 233 px de largura útil.
 const COLUMN_WIDTH: Record<number, `${number}%`> = {
-  2: '48%',
+  2: '47%',
   3: '31%',
   4: '23%',
 };
