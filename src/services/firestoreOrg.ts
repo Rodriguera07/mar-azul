@@ -432,13 +432,25 @@ export function deleteOwnAccountData(orgId: string, uid: string): Promise<void> 
 // cardápio" (mostra o catálogo padrão local até o primeiro salvamento).
 export function subscribeMenu(
   orgId: string,
-  cb: (items: MenuItemInput[] | null) => void
+  cb: (items: MenuItemInput[] | null, priceTableVersion: number) => void
 ): Unsubscribe {
-  return liveDoc('menu', menuDoc(orgId), (snap) => cb(snap.exists() ? sanitizeMenuItems(snap.data().items) : null));
+  return liveDoc('menu', menuDoc(orgId), (snap) => {
+    if (!snap.exists()) {
+      cb(null, 0);
+      return;
+    }
+    const data = snap.data() ?? {};
+    // Cardápio salvo antes de existir o controle de versão = versão 0.
+    cb(sanitizeMenuItems(data.items), Math.max(0, Math.floor(asNumber(data.priceTableVersion))));
+  });
 }
 
-export function saveMenu(orgId: string, items: MenuItemInput[]): Promise<void> {
-  return setDoc(menuDoc(orgId), { items, updatedAt: new Date().toISOString() });
+export function saveMenu(orgId: string, items: MenuItemInput[], priceTableVersion: number): Promise<void> {
+  return setDoc(menuDoc(orgId), {
+    items,
+    priceTableVersion,
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 export function subscribeAuditLog(
