@@ -16,7 +16,9 @@ import { AnimatedPressable } from '../components/AnimatedPressable';
 import { BrandHeader } from '../components/BrandHeader';
 import { BarPill } from '../components/ScreenBar';
 import { Button } from '../components/Button';
+import { AppDialog } from '../components/AppDialog';
 import { CatalogSwitchModal, type CatalogSwitchStatus } from '../components/CatalogSwitchModal';
+import { PriceChangeList, pickPriceExamples, type PriceExample } from '../components/PriceChangeList';
 import { ConfirmModal } from '../components/ConfirmModal';
 import {
   applyDefaultPrices,
@@ -31,7 +33,6 @@ import { TabScreenProps } from '../navigation/types';
 import { dashboardPalette } from '../theme/dashboardPalette';
 import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { MenuCategory, MenuItem } from '../types';
-import { confirmAlert, showAlert } from '../utils/alert';
 import { generateId } from '../utils/id';
 
 type Props = TabScreenProps<'Produtos'>;
@@ -43,6 +44,21 @@ const CATALOGS: { key: MenuCatalog; label: string; hint: string }[] = [
   { key: 'novo', label: 'Novo', hint: 'Tabela atual' },
   { key: 'antigo', label: 'Antigo', hint: 'Tabela anterior' },
 ];
+
+// Janelas de aviso da tela (no visual do app, no lugar dos alertas do
+// navegador). Só uma aparece por vez.
+type MenuDialog =
+  | { kind: 'restore-confirm'; items: MenuItem[]; changed: number; added: number; removed: number; examples: PriceExample[]; total: number }
+  | { kind: 'restore-uptodate' }
+  | { kind: 'restore-done'; changed: number; added: number; removed: number }
+  | { kind: 'discard' }
+  | { kind: 'invalid'; count: number }
+  | { kind: 'saved' }
+  | { kind: 'save-error' };
+
+function plural(n: number, one: string, many: string) {
+  return `${n} ${n === 1 ? one : many}`;
+}
 
 function stripImage(item: MenuItem) {
   const { image, ...rest } = item;
@@ -113,6 +129,8 @@ export function MenuManagementScreen({ navigation }: Props) {
     status: CatalogSwitchStatus;
   } | null>(null);
   const switchingCatalog = catalogSwitch?.status === 'saving' ? catalogSwitch.to : null;
+  const [dialog, setDialog] = useState<MenuDialog | null>(null);
+  const closeDialog = () => setDialog(null);
   const { contentStyle } = useResponsiveContent();
 
   const [draft, setDraft] = useState<MenuItem[]>(menuItems);
@@ -184,63 +202,173 @@ export function MenuManagementScreen({ navigation }: Props) {
     setCatalogSwitch((prev) => (prev?.status === 'saving' ? prev : null));
   };
 
-  // Atualiza o rascunho com a tabela de preços do cardápio em uso — nada é
-  // gravado até o admin tocar em "Salvar Cardápio".
-  const handleApplyDefaultPrices = async () => {
-    const label = MENU_CATALOG_LABELS[menuCatalog].toLowerCase();
-    const ok = await confirmAlert(
-      'Restaurar preços?',
-      `Volta nome, descrição e preço dos itens padrão para os do ${label} e adiciona os que faltam. Itens que você criou não mudam. Depois, toque em "Salvar Cardápio" para valer para a equipe.`,
-      'Restaurar'
-    );
-    if (!ok) return;
+  // Restaurar: volta os itens padrão para a tabela do cardápio em uso. Antes
+  // de confirmar, a janela mostra quantos itens mudam e exemplos de preços.
+  // Nada é gravado até o admin tocar em "Salvar Cardápio".
+  const handleApplyDefaultPrices = () => {
     const result = applyDefaultPrices(draft, menuCatalog);
     if (result.changed === 0 && result.added === 0 && result.removed === 0) {
-      showAlert('Tudo em dia', `O cardápio já está com os preços do ${label}.`);
+      setDialog({ kind: 'restore-uptodate' });
       return;
     }
+    const { examples, total } = pickPriceExamples(draft, result.items);
+    setDialog({ kind: 'restore-confirm', ...result, examples, total });
+  };
+
+  const confirmRestore = () => {
+    if (dialog?.kind !== 'restore-confirm') return;
     setHasEdited(true);
-    setDraft(result.items);
-    showAlert(
-      'Preços restaurados',
-      `${result.changed} item(ns) atualizado(s) e ${result.added} adicionado(s). Toque em "Salvar Cardápio" para confirmar.`
-    );
+    setDraft(dialog.items);
+    setDialog({ kind: 'restore-done', changed: dialog.changed, added: dialog.added, removed: dialog.removed });
   };
 
   const handleBack = () => {
     navigation.dispatch(DrawerActions.openDrawer());
   };
 
-  const handleGoBackPress = async () => {
+  const handleGoBackPress = () => {
     if (!isDirty) {
       handleBack();
       return;
     }
-    const discard = await confirmAlert(
-      'Descartar alterações?',
-      'Você tem mudanças no cardápio que ainda não foram salvas.',
-      'Descartar'
-    );
-    if (discard) handleBack();
+    setDialog({ kind: 'discard' });
   };
 
   const handleSave = async () => {
-    const invalid = draft.find((i) => !i.name.trim() || i.price <= 0);
-    if (invalid) {
-      showAlert(
-        'Revise o cardápio',
-        'Todo item precisa de um nome e um valor maior que zero antes de salvar.'
-      );
+    const invalidCount = draft.filter((i) => !i.name.trim() || i.price <= 0).length;
+    if (invalidCount > 0) {
+      setDialog({ kind: 'invalid', count: invalidCount });
       return;
     }
+    setDialog(null);
     setSaving(true);
     const ok = await saveMenuItems(draft.map(stripImage));
     setSaving(false);
-    if (ok) {
-      setHasEdited(false);
-      showAlert('Cardápio salvo', 'As alterações já estão disponíveis para toda a equipe.');
-    } else {
-      showAlert('Erro', 'Não foi possível salvar o cardápio. Verifique sua conexão e tente novamente.');
+    if (ok) setHasEdited(false);
+    setDialog({ kind: ok ? 'saved' : 'save-error' });
+  };
+
+  const catalogLabel = MENU_CATALOG_LABELS[menuCatalog].toLowerCase();
+
+  const renderDialog = () => {
+    if (!dialog) return null;
+    switch (dialog.kind) {
+      case 'restore-confirm':
+        return (
+          <AppDialog
+            visible
+            tone="info"
+            icon="pricetag-outline"
+            title="Restaurar preços?"
+            message={`Os itens padrão voltam para a tabela do ${catalogLabel}. Itens que você criou não mudam.`}
+            primaryLabel="Restaurar"
+            onPrimary={confirmRestore}
+            secondaryLabel="Cancelar"
+            onSecondary={closeDialog}
+          >
+            <View style={styles.dialogChips}>
+              {dialog.changed > 0 && (
+                <View style={styles.dialogChip}>
+                  <Text style={styles.dialogChipText}>{plural(dialog.changed, 'atualizado', 'atualizados')}</Text>
+                </View>
+              )}
+              {dialog.added > 0 && (
+                <View style={styles.dialogChip}>
+                  <Text style={styles.dialogChipText}>{plural(dialog.added, 'adicionado', 'adicionados')}</Text>
+                </View>
+              )}
+              {dialog.removed > 0 && (
+                <View style={styles.dialogChip}>
+                  <Text style={styles.dialogChipText}>{plural(dialog.removed, 'retirado', 'retirados')}</Text>
+                </View>
+              )}
+            </View>
+            <PriceChangeList examples={dialog.examples} total={dialog.total} />
+            <Text style={styles.dialogNote}>
+              Depois, toque em "Salvar Cardápio" para valer para a equipe.
+            </Text>
+          </AppDialog>
+        );
+      case 'restore-uptodate':
+        return (
+          <AppDialog
+            visible
+            tone="success"
+            title="Tudo em dia"
+            message={`O cardápio já está com os preços do ${catalogLabel}.`}
+            primaryLabel="Entendi"
+            onPrimary={closeDialog}
+          />
+        );
+      case 'restore-done':
+        return (
+          <AppDialog
+            visible
+            tone="success"
+            icon="pricetag"
+            title="Preços restaurados"
+            message="Falta salvar para a equipe passar a ver os preços restaurados."
+            primaryLabel="Salvar agora"
+            onPrimary={handleSave}
+            secondaryLabel="Depois"
+            onSecondary={closeDialog}
+          />
+        );
+      case 'discard':
+        return (
+          <AppDialog
+            visible
+            tone="warning"
+            title="Descartar alterações?"
+            message="Você tem mudanças no cardápio que ainda não foram salvas. Se sair agora, elas serão perdidas."
+            primaryLabel="Descartar"
+            primaryVariant="danger"
+            onPrimary={() => {
+              setDialog(null);
+              setHasEdited(false);
+              setDraft(menuItems);
+              handleBack();
+            }}
+            secondaryLabel="Continuar editando"
+            onSecondary={closeDialog}
+          />
+        );
+      case 'invalid':
+        return (
+          <AppDialog
+            visible
+            tone="warning"
+            title="Revise o cardápio"
+            message={`${plural(dialog.count, 'item está', 'itens estão')} sem nome ou com valor zerado. Todo item precisa de nome e de um valor maior que zero.`}
+            primaryLabel="Revisar"
+            onPrimary={closeDialog}
+          />
+        );
+      case 'saved':
+        return (
+          <AppDialog
+            visible
+            tone="success"
+            title="Cardápio salvo"
+            message="As alterações já estão disponíveis para toda a equipe."
+            primaryLabel="Entendi"
+            onPrimary={closeDialog}
+          />
+        );
+      case 'save-error':
+        return (
+          <AppDialog
+            visible
+            tone="danger"
+            icon="cloud-offline-outline"
+            title="Não foi possível salvar"
+            message="Verifique a conexão com a internet e tente de novo. Suas alterações continuam na tela."
+            primaryLabel="Tentar de novo"
+            onPrimary={handleSave}
+            secondaryLabel="Fechar"
+            onSecondary={closeDialog}
+          />
+        );
     }
   };
 
@@ -393,6 +521,8 @@ export function MenuManagementScreen({ navigation }: Props) {
         </View>
       </KeyboardAvoidingView>
 
+      {renderDialog()}
+
       <CatalogSwitchModal
         visible={catalogSwitch !== null}
         from={catalogSwitch?.from ?? menuCatalog}
@@ -442,6 +572,32 @@ const styles = StyleSheet.create({
     fontSize: 24,
     letterSpacing: -0.9,
     color: colors.white,
+  },
+  dialogChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: spacing.sm,
+  },
+  dialogChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: shape.full,
+    backgroundColor: colors.primaryMuted,
+  },
+  dialogChipText: {
+    fontFamily: font.semiBold,
+    fontSize: 12,
+    color: colors.onPrimaryContainer,
+  },
+  dialogNote: {
+    fontFamily: font.medium,
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: spacing.md,
   },
   catalogSection: {
     marginTop: spacing.md,
