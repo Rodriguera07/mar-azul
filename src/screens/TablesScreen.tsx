@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { BrandHeader } from '../components/BrandHeader';
+import { LiveBadge } from '../components/LiveStatus';
 import { TableCard } from '../components/TableCard';
 import { getOpenTables, getTableCurrentTotal, usePosStore } from '../context/usePosStore';
 import { useTick } from '../hooks/useTick';
@@ -55,6 +56,9 @@ export function TablesScreen({ navigation }: Props) {
             <Text style={styles.subtitle}>
               {openTables.length} {openTables.length === 1 ? 'aberta' : 'abertas'} · {formatCurrency(openTablesTotal)}
             </Text>
+            <View style={styles.liveRow}>
+              <LiveBadge />
+            </View>
           </View>
           <AnimatedPressable
             style={styles.addButton}
@@ -148,6 +152,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   titleWrap: { flex: 1 },
+  liveRow: { marginTop: 5 },
   title: { fontFamily: font.extraBold, fontSize: 24, letterSpacing: -0.9, color: colors.white },
   subtitle: { fontFamily: font.medium, fontSize: 12.5, color: 'rgba(255,255,255,0.85)', marginTop: 1 },
   addButton: {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
+import { dashboardPalette } from '../theme/dashboardPalette';
 import { LegalDoc } from '../content/legal';
 
 interface Props {
@@ -14,7 +15,7 @@ export function LegalDocument({ doc, contentStyle }: Props) {
       contentContainerStyle={[styles.content, contentStyle]}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.updatedAt}>ATUALIZADO EM {doc.updatedAt.toUpperCase()}</Text>
+      <Text style={styles.updatedAt}>Atualizado em {doc.updatedAt}</Text>
       <Text style={styles.intro}>{doc.intro}</Text>
 
       <View style={styles.card}>
@@ -34,15 +35,21 @@ export function LegalDocument({ doc, contentStyle }: Props) {
 
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
   },
   updatedAt: {
-    ...typography.label,
-    fontSize: 11,
-    letterSpacing: 1.2,
-    color: colors.textMuted,
-    marginBottom: spacing.xs,
+    alignSelf: 'flex-start',
+    fontFamily: font.bold,
+    fontSize: 11.5,
+    color: dashboardPalette.brand,
+    backgroundColor: colors.primaryMuted,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: shape.full,
+    overflow: 'hidden',
+    marginBottom: spacing.sm,
   },
   intro: {
     ...typography.body,
@@ -51,19 +58,24 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   card: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.large,
-    padding: spacing.md,
-    ...elevationShadow(1),
+    backgroundColor: colors.white,
+    borderRadius: 22,
+    padding: spacing.lg,
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   section: {
     marginBottom: spacing.lg,
   },
   sectionTitle: {
-    ...typography.h3,
-    fontFamily: font.bold,
+    fontFamily: font.extraBold,
+    fontSize: 16,
+    letterSpacing: -0.4,
     color: colors.textPrimary,
-    marginBottom: spacing.xxs,
+    marginBottom: 6,
   },
   sectionBody: {
     ...typography.bodySm,

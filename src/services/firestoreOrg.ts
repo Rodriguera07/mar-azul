@@ -5,6 +5,11 @@ import {
   getDocs,
   limit,
   onSnapshot,
+  type DocumentData,
+  type DocumentReference,
+  type DocumentSnapshot,
+  type Query,
+  type QuerySnapshot,
   orderBy,
   query,
   runTransaction,
@@ -19,6 +24,7 @@ import {
   AuditLogEntry,
   ClosedSale,
   MenuItemInput,
+  OrderItem,
   PaymentMethod,
   SplitPayment,
   Table,
@@ -27,6 +33,7 @@ import {
 } from '../types';
 import { computeNextPaymentAmount, computeTotals, isPaidInFull } from '../utils/billing';
 import { asNumber, sanitizeClosedSale, sanitizeMenuItems, sanitizeTable } from '../utils/sanitize';
+import { reportSyncError, reportSyncOk } from './syncStatus';
 
 const tablesCol = (orgId: string) => collection(db, 'organizations', orgId, 'tables');
 const closedSalesCol = (orgId: string) => collection(db, 'organizations', orgId, 'closedSales');
@@ -36,11 +43,95 @@ const daySummaryDoc = (orgId: string, date: string) =>
   doc(db, 'organizations', orgId, 'daySummaries', date);
 const menuDoc = (orgId: string) => doc(db, 'organizations', orgId, 'config', 'menu');
 
-// Sem isso, um listener que cai (permissão revogada, doc apagado, conexão
-// instável) simplesmente para de atualizar a tela sem nenhum aviso — o app
-// fica com dado desatualizado e ninguém percebe o motivo.
-function logSnapshotError(label: string) {
-  return (err: unknown) => console.warn(`[firestore] listener "${label}" falhou`, err);
+// Um listener do Firestore que dá erro (rede instável, token renovando,
+// permissão momentânea) é ENCERRADO pelo SDK — sem religar, a tela para de
+// receber atualizações e só volta recarregando o app. Este wrapper religa a
+// escuta sozinho, com espera crescente (1s, 2s, 4s… até 15s), e informa o
+// estado da conexão para o app mostrar "Reconectando…" em vez de ficar parado
+// sem avisar.
+type Target = Query<DocumentData> | DocumentReference<DocumentData>;
+
+export function liveSnapshot(
+  label: string,
+  target: Target,
+  onNext: (snap: any) => void,
+  options: { trackCache?: boolean } = {}
+): Unsubscribe {
+  let unsubscribe: Unsubscribe | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let attempt = 0;
+  let cancelled = false;
+
+  const start = () => {
+    if (cancelled) return;
+    unsubscribe = onSnapshot(
+      target as any,
+      // Metadados só na escuta que alimenta o indicador de conexão: ela avisa
+      // quando o dado passa a vir do servidor de novo (fromCache -> false).
+      { includeMetadataChanges: options.trackCache === true },
+      (snap: QuerySnapshot<DocumentData> | DocumentSnapshot<DocumentData>) => {
+        attempt = 0;
+        reportSyncOk(label, options.trackCache === true && snap.metadata.fromCache);
+        onNext(snap);
+      },
+      (err: unknown) => {
+        console.warn(`[firestore] listener "${label}" falhou, religando…`, err);
+        reportSyncError(label);
+        unsubscribe?.();
+        unsubscribe = null;
+        const delay = Math.min(15000, 1000 * 2 ** attempt);
+        attempt += 1;
+        timer = setTimeout(start, delay);
+      }
+    );
+  };
+
+  start();
+  return () => {
+    cancelled = true;
+    if (timer) clearTimeout(timer);
+    unsubscribe?.();
+  };
+}
+
+function liveQuery(
+  label: string,
+  query: Query<DocumentData>,
+  onNext: (snap: QuerySnapshot<DocumentData>) => void,
+  options?: { trackCache?: boolean }
+): Unsubscribe {
+  return liveSnapshot(label, query, onNext, options);
+}
+
+function liveDoc(
+  label: string,
+  ref: DocumentReference<DocumentData>,
+  onNext: (snap: DocumentSnapshot<DocumentData>) => void
+): Unsubscribe {
+  return liveSnapshot(label, ref, onNext);
+}
+
+export type MutateItemsResult = 'ok' | 'not-found' | 'not-open';
+
+// Altera os itens de uma mesa DENTRO de uma transação: lê a versão mais nova
+// do documento, aplica a mudança sobre ela e grava. Antes, cada aparelho
+// gravava a lista de itens inteira calculada a partir do que tinha em tela —
+// dois garçons lançando itens na mesma mesa ao mesmo tempo se sobrescreviam e
+// um dos pedidos sumia. Com a transação, as duas mudanças se somam.
+export function mutateTableItems(
+  orgId: string,
+  tableId: string,
+  mutate: (items: OrderItem[]) => OrderItem[]
+): Promise<MutateItemsResult> {
+  const ref = doc(tablesCol(orgId), tableId);
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return 'not-found' as const;
+    const table = sanitizeTable(snap.id, snap.data());
+    if (table.status !== 'open') return 'not-open' as const;
+    tx.update(ref, { items: mutate(table.items) });
+    return 'ok' as const;
+  });
 }
 
 export function newTableId(orgId: string): string {
@@ -99,18 +190,25 @@ export function subscribeTables(orgId: string, cb: (tables: Table[]) => void): U
   // re-renderizavam toda vez que QUALQUER outra mesa da organização mudava,
   // porque o Zustand via um valor "novo" por comparação referencial.
   let byId = new Map<string, Table>();
-  return onSnapshot(
+  let first = true;
+  return liveQuery(
+    'tables',
     tablesCol(orgId),
     (snap) => {
+      const changes = snap.docChanges();
+      // Snapshot só de metadados (ex.: cache -> servidor) não muda nenhuma mesa:
+      // só atualiza o indicador de conexão, sem re-renderizar as telas.
+      if (!first && changes.length === 0) return;
+      first = false;
       const next = new Map(byId);
-      for (const change of snap.docChanges()) {
+      for (const change of changes) {
         if (change.type === 'removed') next.delete(change.doc.id);
         else next.set(change.doc.id, sanitizeTable(change.doc.id, change.doc.data()));
       }
       byId = next;
       cb(snap.docs.map((d) => next.get(d.id) ?? sanitizeTable(d.id, d.data())));
     },
-    logSnapshotError('tables')
+    { trackCache: true }
   );
 }
 
@@ -124,11 +222,7 @@ export function subscribeClosedSalesSince(
     where('closedAt', '>=', sinceIso),
     orderBy('closedAt', 'desc')
   );
-  return onSnapshot(
-    q,
-    (snap) => cb(snap.docs.map((d) => sanitizeClosedSale(d.id, d.data()))),
-    logSnapshotError('closedSalesSince')
-  );
+  return liveQuery('closedSalesSince', q, (snap) => cb(snap.docs.map((d) => sanitizeClosedSale(d.id, d.data()))));
 }
 
 // Leitura única e direta do servidor (sem depender do listener local, que
@@ -153,11 +247,7 @@ export function subscribeClosedSalesRange(
     where('closedAt', '<=', toIso),
     orderBy('closedAt', 'desc')
   );
-  return onSnapshot(
-    q,
-    (snap) => cb(snap.docs.map((d) => sanitizeClosedSale(d.id, d.data()))),
-    logSnapshotError('closedSalesRange')
-  );
+  return liveQuery('closedSalesRange', q, (snap) => cb(snap.docs.map((d) => sanitizeClosedSale(d.id, d.data()))));
 }
 
 export type CloseTableResult = 'ok' | 'not-open' | 'not-found' | 'unpaid';
@@ -263,11 +353,7 @@ export async function clearClosedTablesAndSummarize(
 }
 
 export function subscribeOrgUsers(orgId: string, cb: (users: UserProfile[]) => void): Unsubscribe {
-  return onSnapshot(
-    orgUsersCol(orgId),
-    (snap) => cb(snap.docs.map((d) => d.data() as UserProfile)),
-    logSnapshotError('orgUsers')
-  );
+  return liveQuery('orgUsers', orgUsersCol(orgId), (snap) => cb(snap.docs.map((d) => d.data() as UserProfile)));
 }
 
 export function setOrgUserActive(orgId: string, uid: string, active: boolean): Promise<void> {
@@ -333,11 +419,7 @@ export function subscribeMenu(
   orgId: string,
   cb: (items: MenuItemInput[] | null) => void
 ): Unsubscribe {
-  return onSnapshot(
-    menuDoc(orgId),
-    (snap) => cb(snap.exists() ? sanitizeMenuItems(snap.data().items) : null),
-    logSnapshotError('menu')
-  );
+  return liveDoc('menu', menuDoc(orgId), (snap) => cb(snap.exists() ? sanitizeMenuItems(snap.data().items) : null));
 }
 
 export function saveMenu(orgId: string, items: MenuItemInput[]): Promise<void> {
@@ -350,9 +432,5 @@ export function subscribeAuditLog(
   cb: (entries: AuditLogEntry[]) => void
 ): Unsubscribe {
   const q = query(auditLogCol(orgId), orderBy('timestamp', 'desc'), limit(pageSize));
-  return onSnapshot(
-    q,
-    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AuditLogEntry))),
-    logSnapshotError('auditLog')
-  );
+  return liveQuery('auditLog', q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AuditLogEntry))));
 }

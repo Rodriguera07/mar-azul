@@ -7,7 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
-import { colors, elevationShadow, shape, spacing, typography } from '../theme';
+import { dashboardPalette } from '../theme/dashboardPalette';
+import { colors, font, elevationShadow, shape, spacing, typography } from '../theme';
 import { PaymentMethod } from '../types';
 import { formatCurrency, formatDateLabel, formatTime } from '../utils/format';
 import { PAYMENT_LABELS, describeSalePayments } from '../utils/payments';
@@ -25,7 +26,7 @@ export function EndDaySummaryScreen({ navigation, route }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.iconWrap}>
-          <Ionicons name="checkmark-circle" size={40} color={colors.emerald} />
+          <Ionicons name="checkmark-circle" size={44} color={dashboardPalette.positive} />
         </View>
         <Text style={styles.title}>Dia encerrado</Text>
         <Text style={styles.subtitle}>
@@ -33,7 +34,7 @@ export function EndDaySummaryScreen({ navigation, route }: Props) {
         </Text>
 
         <LinearGradient
-          colors={[colors.emeraldMuted, colors.surface]}
+          colors={[dashboardPalette.brandLight, dashboardPalette.brand, dashboardPalette.brandDark]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.revenueCard}
@@ -100,7 +101,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   title: {
-    ...typography.h1,
+    fontFamily: font.extraBold,
+    fontSize: 26,
+    letterSpacing: -0.9,
     color: colors.textPrimary,
     textAlign: 'center',
   },
@@ -112,42 +115,52 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   revenueCard: {
-    borderRadius: shape.large,
-    borderWidth: 1,
-    borderColor: colors.emeraldGlow,
-    padding: spacing.lg,
+    borderRadius: 26,
+    overflow: 'hidden',
+    padding: spacing.lg + 4,
     alignItems: 'center',
     marginBottom: spacing.lg,
+    shadowColor: dashboardPalette.brand,
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
   },
   revenueLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontFamily: font.semiBold,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
   },
   revenueValue: {
-    ...typography.display,
-    color: colors.emerald,
+    fontFamily: font.extraBold,
+    fontSize: 40,
+    letterSpacing: -1.6,
+    color: colors.white,
     marginTop: spacing.xxs,
-    textShadowColor: colors.emeraldGlow,
-    textShadowRadius: 14,
-    textShadowOffset: { width: 0, height: 0 },
   },
   revenueSub: {
-    ...typography.bodySm,
-    color: colors.textMuted,
+    fontFamily: font.medium,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
     marginTop: 2,
   },
   sectionTitle: {
-    ...typography.h3,
+    fontFamily: font.extraBold,
+    fontSize: 17,
+    letterSpacing: -0.4,
     color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
   paymentCard: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.large,
+    backgroundColor: colors.white,
     padding: spacing.md,
     marginBottom: spacing.lg,
     gap: spacing.sm,
-    ...elevationShadow(1),
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   paymentRow: {
     flexDirection: 'row',
@@ -164,10 +177,13 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   salesCard: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.large,
+    backgroundColor: colors.white,
     overflow: 'hidden',
-    ...elevationShadow(1),
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   saleRow: {
     flexDirection: 'row',

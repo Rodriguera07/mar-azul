@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { LiveBadge } from '../components/LiveStatus';
 import { PulseDot } from '../components/PulseDot';
 import { SubscriptionReminderBanner } from '../components/SubscriptionReminderBanner';
 import { BrandHeader } from '../components/BrandHeader';
@@ -194,6 +195,9 @@ export function DashboardScreen({ navigation }: Props) {
               <Text style={styles.date} numberOfLines={1}>
                 {capitalize(dateLabel)}
               </Text>
+              <View style={styles.liveRow}>
+                <LiveBadge />
+              </View>
             </View>
             <View style={styles.headerActions}>
               <AnimatedPressable
@@ -537,6 +541,7 @@ const styles = StyleSheet.create({
   headerTextWrap: { flex: 1, minWidth: 0 },
   greeting: { fontFamily: font.extraBold, fontSize: 19, letterSpacing: -0.6, color: colors.white },
   date: { fontFamily: font.medium, fontSize: 12.5, color: 'rgba(255,255,255,0.82)', marginTop: 1 },
+  liveRow: { marginTop: 5 },
   headerActions: { flexDirection: 'row', gap: 8 },
   iconButton: {
     width: 40,

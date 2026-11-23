@@ -114,9 +114,7 @@ export function DeleteAccountScreen({ navigation }: Props) {
             </View>
           )}
 
-          <Text style={[styles.fieldLabel, { marginTop: spacing.lg }]}>
-            CONFIRME SUA SENHA PARA CONTINUAR
-          </Text>
+          <Text style={[styles.fieldLabel, { marginTop: spacing.lg }]}>Confirme sua senha para continuar</Text>
           <View style={styles.inputWrap}>
             <TextInput
               value={password}
@@ -211,7 +209,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   content: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
   },
   warnIconWrap: {
@@ -266,17 +265,18 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   fieldLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    marginBottom: spacing.xxs,
+    fontFamily: font.semiBold,
+    fontSize: 13,
+    color: colors.textPrimary,
+    marginBottom: 6,
   },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: shape.medium,
-    paddingHorizontal: spacing.sm,
-    height: 46,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    height: 52,
     gap: spacing.xs,
   },
   input: {
