@@ -79,7 +79,7 @@ export function EndDaySummaryScreen({ navigation, route }: Props) {
         <Button
           label="Concluir e voltar ao painel"
           size="lg"
-          variant="emerald"
+          variant="primary"
           onPress={() => navigation.popToTop()}
         />
       </View>

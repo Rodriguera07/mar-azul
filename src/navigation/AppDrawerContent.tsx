@@ -36,8 +36,8 @@ const NAV_ITEMS: DrawerItem[] = [
     key: 'ClosedTablesHistory',
     label: 'Histórico de Mesas Fechadas',
     icon: 'time-outline',
-    color: dashboardPalette.teal500,
-    muted: `${dashboardPalette.teal500}1F`,
+    color: dashboardPalette.positive,
+    muted: `${dashboardPalette.positive}1F`,
   },
   {
     key: 'UserManagement',
@@ -59,8 +59,8 @@ const NAV_ITEMS: DrawerItem[] = [
     key: 'ChangePassword',
     label: 'Alterar Senha',
     icon: 'key-outline',
-    color: dashboardPalette.teal700,
-    muted: `${dashboardPalette.teal700}1F`,
+    color: dashboardPalette.brand,
+    muted: `${dashboardPalette.brand}1F`,
     settingsSection: true,
   },
   {
@@ -201,7 +201,7 @@ export function AppDrawerContent({ navigation, state }: DrawerContentComponentPr
     <View style={styles.outer}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
         <LinearGradient
-          colors={[dashboardPalette.teal700, dashboardPalette.teal900]}
+          colors={[dashboardPalette.brand, dashboardPalette.ink900]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.header}

@@ -18,7 +18,7 @@ interface Props {
 function getStatusColor(minutes: number) {
   if (minutes >= 180) return dashboardPalette.rose;
   if (minutes >= 90) return dashboardPalette.amber;
-  return dashboardPalette.teal500;
+  return dashboardPalette.positive;
 }
 
 function getElapsedMinutes(iso: string) {
@@ -33,7 +33,7 @@ export function TableCard({ table, onPress, style }: Props) {
 
   return (
     <AnimatedPressable
-      style={[styles.card, { backgroundColor: `${accent}0F`, borderColor: `${accent}4D` }, style]}
+      style={[styles.card, { borderColor: `${accent}40` }, style]}
       stateLayerColor={accent}
       onPress={onPress}
     >
@@ -58,12 +58,18 @@ export function TableCard({ table, onPress, style }: Props) {
 const styles = StyleSheet.create({
   card: {
     width: '48%',
-    borderRadius: shape.medium,
-    borderWidth: 1,
+    backgroundColor: colors.white,
+    borderRadius: shape.large,
+    borderWidth: 1.5,
     overflow: 'hidden',
-    padding: spacing.sm,
-    minHeight: 96,
+    padding: spacing.sm + 2,
+    minHeight: 112,
     justifyContent: 'space-between',
+    shadowColor: '#1C0E09',
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   topRow: {
     flexDirection: 'row',
@@ -73,8 +79,8 @@ const styles = StyleSheet.create({
   numBadge: {
     minWidth: 30,
     maxWidth: 90,
-    height: 30,
-    borderRadius: 10,
+    height: 32,
+    borderRadius: 11,
     paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
@@ -98,7 +104,7 @@ const styles = StyleSheet.create({
   },
   total: {
     fontFamily: nunitoFontFamily.extraBold,
-    fontSize: 16,
+    fontSize: 18,
     color: colors.textPrimary,
     marginTop: spacing.sm,
   },

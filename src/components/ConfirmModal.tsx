@@ -61,7 +61,7 @@ export function ConfirmModal({
             )}
             <Button
               label={confirmLabel}
-              variant={destructive ? 'danger' : 'emerald'}
+              variant={destructive ? 'danger' : 'primary'}
               loading={loading}
               onPress={onConfirm ?? onCancel}
               style={styles.actionBtn}

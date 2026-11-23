@@ -2,9 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
+import { AppSwitch } from '../components/AppSwitch';
 import { Button } from '../components/Button';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { EmptyState } from '../components/EmptyState';
@@ -151,13 +152,11 @@ export function TableDetailScreen({ navigation, route }: Props) {
             <Text style={styles.feeTitle}>Taxa de serviço (10%)</Text>
             <Text style={styles.feeSub}>Aplicada sobre o subtotal da mesa</Text>
           </View>
-          <Switch
+          <AppSwitch
             accessibilityLabel="Taxa de serviço 10%"
             value={table.serviceFeeEnabled}
             onValueChange={() => toggleServiceFee(tableId)}
             disabled={!isOpen}
-            trackColor={{ false: colors.surfaceHighlight, true: colors.emeraldMuted }}
-            thumbColor={table.serviceFeeEnabled ? colors.emerald : colors.textMuted}
           />
         </View>
 
@@ -171,13 +170,11 @@ export function TableDetailScreen({ navigation, route }: Props) {
                   : 'Divide o total igualmente entre as pessoas'}
               </Text>
             </View>
-            <Switch
+            <AppSwitch
               accessibilityLabel="Dividir conta"
               value={table.splitEnabled}
               onValueChange={() => toggleSplit(tableId)}
               disabled={!isOpen || splitLocked}
-              trackColor={{ false: colors.surfaceHighlight, true: colors.primaryMuted }}
-              thumbColor={table.splitEnabled ? colors.primary : colors.textMuted}
             />
           </View>
 
@@ -252,7 +249,7 @@ export function TableDetailScreen({ navigation, route }: Props) {
           <Button
             label={splitLocked ? 'Continuar Pagamento' : 'Fechar Mesa'}
             size="lg"
-            variant="emerald"
+            variant="primary"
             onPress={() => navigation.navigate('CloseTable', { tableId })}
           />
         </View>

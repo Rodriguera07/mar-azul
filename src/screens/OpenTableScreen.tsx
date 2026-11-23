@@ -136,7 +136,7 @@ export function OpenTableScreen({ navigation }: Props) {
         </ScrollView>
 
         <View style={[styles.footer, contentStyle]}>
-          <Button label="Abrir Mesa" size="lg" variant="emerald" onPress={handleConfirm} />
+          <Button label="Abrir Mesa" size="lg" variant="primary" onPress={handleConfirm} />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

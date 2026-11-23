@@ -3,7 +3,7 @@ import { ActivityIndicator, PressableProps, StyleSheet, Text, View, ViewStyle } 
 import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
-type Variant = 'primary' | 'emerald' | 'outline' | 'ghost' | 'danger';
+type Variant = 'primary' | 'outline' | 'ghost' | 'danger';
 type Size = 'md' | 'lg';
 
 interface Props extends Omit<PressableProps, 'style'> {
@@ -19,7 +19,7 @@ interface Props extends Omit<PressableProps, 'style'> {
 // Botões no padrão Material 3: forma "full" (pílula) por padrão, cor sólida
 // em vez de gradiente, e camada de estado (ripple/fade) ao toque em vez de
 // só a escala. `variant` mapeia para os papéis do M3 — Filled (primary /
-// emerald / danger), Outlined e Filled tonal (ghost).
+// danger), Outlined e Filled tonal (ghost).
 export function Button({
   label,
   variant = 'primary',
@@ -74,12 +74,6 @@ const variantStyles: Record<Variant, VariantStyle> = {
     shadow: elevationShadow(1),
     text: { color: colors.onPrimary },
     stateLayer: colors.onPrimary,
-  },
-  emerald: {
-    container: { backgroundColor: colors.emerald },
-    shadow: elevationShadow(1),
-    text: { color: colors.onSecondary },
-    stateLayer: colors.onSecondary,
   },
   danger: {
     container: { backgroundColor: colors.danger },

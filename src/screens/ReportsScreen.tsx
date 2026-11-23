@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { DrawerActions } from '@react-navigation/native';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -6,12 +7,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { DateField } from '../components/DateField';
 import { EmptyState } from '../components/EmptyState';
-import { ReceiptTornEdge } from '../components/ReceiptTornEdge';
 import { useAuthStore } from '../context/useAuthStore';
 import { useClosedSalesRange } from '../hooks/useClosedSalesRange';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { TabScreenProps } from '../navigation/types';
-import { colors, elevationShadow, monoFontFamily, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { dashboardPalette } from '../theme/dashboardPalette';
 import { PaymentMethod } from '../types';
 import { formatCurrency } from '../utils/format';
 import { getPeriodReport } from '../utils/reports';
@@ -87,7 +88,7 @@ export function ReportsScreen({ navigation }: Props) {
           <Text style={styles.title}>Relatórios</Text>
           <Text style={styles.subtitle}>{formatShortRange(range.start, range.end)}</Text>
         </View>
-        <View style={{ width: 36 }} />
+        <View style={{ width: 44 }} />
       </View>
 
       <View style={styles.presetRow}>
@@ -118,15 +119,23 @@ export function ReportsScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.receipt}>
+          <LinearGradient
+            colors={[dashboardPalette.brand, dashboardPalette.ink900]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
           <Text style={styles.receiptLabel}>FATURAMENTO DO PERÍODO</Text>
           <Text style={styles.receiptValue}>{formatCurrency(report.totalRevenue)}</Text>
           <View style={styles.receiptBadgeRow}>
-            <Text style={styles.receiptBadgeText}>{report.salesCount} mesas fechadas</Text>
-            <Text style={styles.receiptBadgeDot}>·</Text>
-            <Text style={styles.receiptBadgeText}>{formatCurrency(avgPerSale)} por mesa</Text>
+            <View style={styles.receiptChip}>
+              <Text style={styles.receiptBadgeText}>{report.salesCount} mesas fechadas</Text>
+            </View>
+            <View style={styles.receiptChip}>
+              <Text style={styles.receiptBadgeText}>{formatCurrency(avgPerSale)} por mesa</Text>
+            </View>
           </View>
         </View>
-        <ReceiptTornEdge />
 
         <Text style={styles.sectionTitle}>Como o caixa entrou</Text>
         <View style={styles.stackedBar}>
@@ -202,11 +211,11 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   backBtn: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceContainerHigh,
+    backgroundColor: colors.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -219,8 +228,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...typography.caption,
-    fontFamily: monoFontFamily,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     marginTop: 1,
   },
   presetRow: {
@@ -234,14 +242,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: 'transparent',
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.outlineVariant,
     alignItems: 'center',
   },
   presetChipActive: {
-    backgroundColor: colors.sand,
-    borderColor: colors.sand,
+    backgroundColor: dashboardPalette.brand,
+    borderColor: dashboardPalette.brand,
   },
   presetText: {
     ...typography.caption,
@@ -263,44 +271,46 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   receipt: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.extraLarge,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
+    overflow: 'hidden',
+    backgroundColor: dashboardPalette.ink900,
+    borderRadius: 28,
     padding: spacing.lg,
-    ...elevationShadow(1),
+    marginTop: spacing.xs,
   },
   receiptLabel: {
-    ...typography.caption,
-    fontFamily: monoFontFamily,
-    letterSpacing: 1.5,
-    color: colors.textMuted,
+    ...typography.label,
+    letterSpacing: 2,
+    color: 'rgba(255,255,255,0.7)',
   },
   receiptValue: {
-    ...typography.display,
-    fontFamily: monoFontFamily,
-    fontSize: 36,
-    color: colors.emerald,
-    marginTop: spacing.sm,
+    fontFamily: nunitoFontFamily.extraBold,
+    fontSize: 38,
+    letterSpacing: -0.8,
+    color: colors.white,
+    marginTop: spacing.xs,
   },
   receiptBadgeRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: spacing.xs,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
   receiptBadgeText: {
-    ...typography.bodySm,
-    color: colors.textSecondary,
+    ...typography.caption,
+    fontFamily: nunitoFontFamily.bold,
+    color: colors.white,
   },
-  receiptBadgeDot: {
-    color: colors.textMuted,
+  receiptChip: {
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderRadius: shape.full,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
   sectionTitle: {
-    ...typography.label,
-    fontSize: 12,
-    letterSpacing: 1.4,
-    color: colors.textMuted,
+    ...typography.h3,
+    fontFamily: nunitoFontFamily.extraBold,
+    color: colors.textPrimary,
     marginTop: spacing.xl,
     marginBottom: spacing.sm,
   },
@@ -312,7 +322,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   paymentCard: {
-    backgroundColor: colors.surfaceContainerLow,
+    backgroundColor: colors.white,
     borderRadius: shape.large,
     paddingHorizontal: spacing.sm,
     marginTop: spacing.sm,
@@ -338,14 +348,14 @@ const styles = StyleSheet.create({
   },
   paymentPct: {
     ...typography.caption,
-    fontFamily: monoFontFamily,
+    fontFamily: nunitoFontFamily.bold,
     color: colors.textMuted,
-    width: 34,
+    width: 40,
     textAlign: 'right',
   },
   paymentValue: {
     ...typography.bodySm,
-    fontFamily: monoFontFamily,
+    fontFamily: nunitoFontFamily.extraBold,
     color: colors.textPrimary,
     minWidth: 92,
     textAlign: 'right',
@@ -361,8 +371,8 @@ const styles = StyleSheet.create({
   },
   topItemRank: {
     ...typography.caption,
-    fontFamily: monoFontFamily,
-    color: colors.sand,
+    fontFamily: nunitoFontFamily.extraBold,
+    color: dashboardPalette.brand,
   },
   topItemName: {
     ...typography.bodySm,
@@ -372,19 +382,19 @@ const styles = StyleSheet.create({
   },
   topItemRevenue: {
     ...typography.bodySm,
-    fontFamily: monoFontFamily,
-    color: colors.emerald,
+    fontFamily: nunitoFontFamily.extraBold,
+    color: colors.textPrimary,
   },
   topItemBarTrack: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.primaryMuted,
+    backgroundColor: colors.surfaceContainerHigh,
     overflow: 'hidden',
   },
   topItemBarFill: {
     height: '100%',
     borderRadius: 3,
-    backgroundColor: colors.sand,
+    backgroundColor: dashboardPalette.brand,
   },
   topItemUnits: {
     ...typography.caption,

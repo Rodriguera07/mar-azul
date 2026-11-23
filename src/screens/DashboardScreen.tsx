@@ -34,12 +34,12 @@ type EndDayDialog = 'blocked-open' | 'blocked-empty' | 'confirm' | null;
 const TOP_ITEMS_COUNT = 3;
 const SPARK_BAR_MAX_HEIGHT = 30;
 
-const RANK_COLORS = [dashboardPalette.amber, dashboardPalette.teal500, dashboardPalette.inkSoft];
+const RANK_COLORS = [dashboardPalette.amber, dashboardPalette.positive, dashboardPalette.inkSoft];
 
 const QUICK_ACTIONS = [
-  { key: 'abrir', icon: 'add' as const, label: 'Abrir mesa', color: dashboardPalette.teal700 },
+  { key: 'abrir', icon: 'add' as const, label: 'Abrir mesa', color: dashboardPalette.brand },
   { key: 'pedido', icon: 'receipt-outline' as const, label: 'Novo pedido', color: dashboardPalette.amber },
-  { key: 'receber', icon: 'cash-outline' as const, label: 'Receber', color: dashboardPalette.teal500 },
+  { key: 'receber', icon: 'cash-outline' as const, label: 'Receber', color: dashboardPalette.positive },
   { key: 'relatorios', icon: 'bar-chart-outline' as const, label: 'Relatórios', color: dashboardPalette.inkSoft },
 ];
 
@@ -224,7 +224,7 @@ export function DashboardScreen({ navigation }: Props) {
             accessibilityLabel="Notificações"
             onPress={() => setNotifOpen(true)}
           >
-            <Ionicons name="notifications-outline" size={19} color={dashboardPalette.teal900} />
+            <Ionicons name="notifications-outline" size={19} color={dashboardPalette.ink900} />
             {newTableNotifications.length > 0 && <View style={styles.notifDot} />}
           </AnimatedPressable>
           <AnimatedPressable
@@ -233,7 +233,7 @@ export function DashboardScreen({ navigation }: Props) {
             accessibilityLabel="Sair"
             onPress={logout}
           >
-            <Ionicons name="log-out-outline" size={18} color={dashboardPalette.teal900} />
+            <Ionicons name="log-out-outline" size={18} color={dashboardPalette.ink900} />
           </AnimatedPressable>
         </View>
       </View>
@@ -242,7 +242,7 @@ export function DashboardScreen({ navigation }: Props) {
 
       <View style={styles.heroCard}>
         <LinearGradient
-          colors={[dashboardPalette.teal700, dashboardPalette.teal900]}
+          colors={[dashboardPalette.brand, dashboardPalette.ink900]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFillObject}
@@ -422,12 +422,12 @@ export function DashboardScreen({ navigation }: Props) {
           {openTables.length === 0 ? (
             <View style={styles.empty}>
               <LinearGradient
-                colors={['#EAF6F3', '#DCEEEA']}
+                colors={['#FFF1EA', '#FFE0D2']}
                 start={{ x: 0.2, y: 0 }}
                 end={{ x: 0.8, y: 1 }}
                 style={styles.emptyIll}
               >
-                <BeachUmbrellaIcon size={28} color={dashboardPalette.teal500} />
+                <BeachUmbrellaIcon size={28} color={dashboardPalette.positive} />
               </LinearGradient>
               <Text style={styles.emptyTitle}>Nenhuma mesa aberta</Text>
               <Text style={styles.emptyText}>
@@ -545,7 +545,7 @@ export function DashboardScreen({ navigation }: Props) {
                   }}
                 >
                   <View style={styles.notifRowIcon}>
-                    <Ionicons name="restaurant-outline" size={16} color={dashboardPalette.teal700} />
+                    <Ionicons name="restaurant-outline" size={16} color={dashboardPalette.brand} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.notifRowTitle}>Mesa {table.label} aberta</Text>
@@ -674,14 +674,14 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     paddingHorizontal: spacing.xxs,
-    backgroundColor: '#E4F1EF',
+    backgroundColor: '#FDEBE6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   notifHeaderBadgeText: {
     fontFamily: nunitoFontFamily.bold,
     fontSize: 12,
-    color: dashboardPalette.teal700,
+    color: dashboardPalette.brand,
   },
   notifEmpty: {
     flexDirection: 'row',
@@ -707,7 +707,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#E4F1EF',
+    backgroundColor: '#FDEBE6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1064,7 +1064,7 @@ const styles = StyleSheet.create({
   openTotalValue: {
     fontFamily: nunitoFontFamily.extraBold,
     fontSize: 17,
-    color: dashboardPalette.teal500,
+    color: dashboardPalette.positive,
   },
   closeDay: {
     flexDirection: 'row',

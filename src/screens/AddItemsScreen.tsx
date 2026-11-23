@@ -222,7 +222,7 @@ export function AddItemsScreen({ navigation, route }: Props) {
         <Button
           label={`Concluir${totalItemsInCart > 0 ? ` (${totalItemsInCart} itens)` : ''}`}
           size="lg"
-          variant="emerald"
+          variant="primary"
           onPress={() => navigation.goBack()}
         />
       </View>
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     ...typography.body,
-    color: colors.emerald,
+    color: colors.textPrimary,
     marginTop: 4,
     fontFamily: nunitoFontFamily.bold,
   },
@@ -371,10 +371,10 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: colors.emerald,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.emerald,
+    shadowColor: colors.primary,
     shadowOpacity: 0.4,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },

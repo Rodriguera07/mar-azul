@@ -11,7 +11,7 @@ import { getOpenTables, getTableCurrentTotal, usePosStore } from '../context/use
 import { useTick } from '../hooks/useTick';
 import { useResponsiveContent, widthForColumns } from '../hooks/useResponsiveContent';
 import { TabScreenProps } from '../navigation/types';
-import { colors, elevationShadow, nunitoFontFamily, shape, spacing } from '../theme';
+import { colors, nunitoFontFamily, shape, spacing } from '../theme';
 import { dashboardPalette } from '../theme/dashboardPalette';
 
 type Props = TabScreenProps<'Mesas'>;
@@ -56,12 +56,12 @@ export function TablesScreen({ navigation }: Props) {
         {openTables.length === 0 ? (
           <View style={styles.empty}>
             <LinearGradient
-              colors={['#EAF6F3', '#DCEEEA']}
+              colors={['#FFF1EA', '#FFE0D2']}
               start={{ x: 0.2, y: 0 }}
               end={{ x: 0.8, y: 1 }}
               style={styles.emptyIll}
             >
-              <BeachUmbrellaIcon size={30} color={dashboardPalette.teal500} />
+              <BeachUmbrellaIcon size={30} color={dashboardPalette.positive} />
             </LinearGradient>
             <Text style={styles.emptyTitle}>Nenhuma mesa aberta</Text>
             <Text style={styles.emptyText}>
@@ -71,7 +71,22 @@ export function TablesScreen({ navigation }: Props) {
         ) : (
           <>
             <View style={styles.totalCard}>
-              <Text style={styles.totalLabel}>Valor em aberto</Text>
+              <LinearGradient
+                colors={[dashboardPalette.ink800, dashboardPalette.ink900]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+              />
+              <View style={styles.totalGlow} pointerEvents="none" />
+              <View style={styles.totalTop}>
+                <Text style={styles.totalLabel}>Valor em aberto</Text>
+                <View style={styles.countPill}>
+                  <View style={styles.countDot} />
+                  <Text style={styles.countText}>
+                    {openTables.length} {openTables.length === 1 ? 'mesa' : 'mesas'}
+                  </Text>
+                </View>
+              </View>
               <Text style={styles.totalValue}>
                 R$ {openTablesTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </Text>
@@ -125,7 +140,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: shape.full,
-    backgroundColor: dashboardPalette.teal700,
+    backgroundColor: dashboardPalette.brand,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -135,25 +150,58 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxxl,
   },
   totalCard: {
+    overflow: 'hidden',
+    backgroundColor: dashboardPalette.ink900,
+    borderRadius: 24,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  totalGlow: {
+    position: 'absolute',
+    top: -60,
+    right: -40,
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    backgroundColor: dashboardPalette.brand,
+    opacity: 0.35,
+  },
+  totalTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.large,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.md,
-    ...elevationShadow(1),
   },
   totalLabel: {
-    fontFamily: nunitoFontFamily.medium,
-    fontSize: 12.5,
-    color: colors.textSecondary,
+    fontFamily: nunitoFontFamily.bold,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  countPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderRadius: shape.full,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  countDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: dashboardPalette.amber,
+  },
+  countText: {
+    fontFamily: nunitoFontFamily.extraBold,
+    fontSize: 12,
+    color: colors.white,
   },
   totalValue: {
     fontFamily: nunitoFontFamily.extraBold,
-    fontSize: 17,
-    color: dashboardPalette.teal500,
+    fontSize: 32,
+    letterSpacing: -0.5,
+    color: colors.white,
+    marginTop: spacing.xs,
   },
   tablesGrid: {
     flexDirection: 'row',

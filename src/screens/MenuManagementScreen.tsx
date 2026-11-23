@@ -19,6 +19,7 @@ import { CATEGORY_ICONS, CATEGORY_LABELS } from '../data/menu';
 import { usePosStore } from '../context/usePosStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { TabScreenProps } from '../navigation/types';
+import { dashboardPalette } from '../theme/dashboardPalette';
 import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
 import { MenuCategory, MenuItem } from '../types';
 import { confirmAlert, showAlert } from '../utils/alert';
@@ -49,6 +50,13 @@ const MenuItemRow = React.memo(function MenuItemRow({
 }) {
   return (
     <View style={styles.itemRow}>
+      {item.image ? (
+        <Image source={item.image} style={styles.thumb} resizeMode="cover" />
+      ) : (
+        <View style={[styles.thumb, styles.thumbEmpty]}>
+          <Ionicons name="fast-food-outline" size={18} color={colors.textMuted} />
+        </View>
+      )}
       <TextInput
         value={item.name}
         onChangeText={(v) => onUpdate(item.id, { name: v })}
@@ -166,11 +174,6 @@ export function MenuManagementScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <Image
-        source={require('../../assets/icon.png')}
-        style={styles.backgroundLogo}
-        resizeMode="contain"
-      />
       <View style={styles.header}>
         <AnimatedPressable
           onPress={handleGoBackPress}
@@ -181,7 +184,7 @@ export function MenuManagementScreen({ navigation }: Props) {
           <Ionicons name="menu" size={22} color={colors.textPrimary} />
         </AnimatedPressable>
         <Text style={styles.title}>Cardápio</Text>
-        <View style={{ width: 36 }} />
+        <View style={{ width: 44 }} />
       </View>
 
       <View style={styles.filterSection}>
@@ -198,14 +201,14 @@ export function MenuManagementScreen({ navigation }: Props) {
               <AnimatedPressable
                 key={f}
                 style={[styles.filterChip, active && styles.filterChipActive]}
-                stateLayerColor={active ? colors.primary : colors.onSurface}
+                stateLayerColor={active ? colors.white : colors.onSurface}
                 onPress={() => setActiveFilter(f)}
               >
                 {f !== 'all' && (
                   <Ionicons
                     name={CATEGORY_ICONS[f]}
                     size={14}
-                    color={active ? colors.primary : colors.textSecondary}
+                    color={active ? colors.white : colors.textSecondary}
                   />
                 )}
                 <Text style={[styles.filterChipText, active && styles.filterChipTextActive]} numberOfLines={1}>
@@ -266,7 +269,7 @@ export function MenuManagementScreen({ navigation }: Props) {
         <View style={[styles.footer, contentStyle]}>
           <Button
             label={saving ? 'Salvando…' : 'Salvar Cardápio'}
-            variant="emerald"
+            variant="primary"
             size="lg"
             loading={saving}
             disabled={!isDirty}
@@ -293,17 +296,6 @@ export function MenuManagementScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  backgroundLogo: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
-    opacity: 0.05,
-    pointerEvents: 'none',
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -313,11 +305,11 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   backBtn: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceContainerHigh,
+    backgroundColor: colors.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -326,9 +318,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   filterSection: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outlineVariant,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   filterScroll: {
     flexGrow: 0,
@@ -349,7 +339,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceContainerLow,
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.outlineVariant,
     alignItems: 'center',
@@ -357,13 +347,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   filterChipActive: {
-    backgroundColor: colors.primaryMuted,
-    borderColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    backgroundColor: dashboardPalette.brand,
+    borderColor: dashboardPalette.brand,
   },
   filterChipText: {
     ...typography.bodySm,
@@ -371,7 +356,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   filterChipTextActive: {
-    color: colors.primary,
+    color: colors.white,
+    fontFamily: nunitoFontFamily.bold,
   },
   content: {
     paddingHorizontal: spacing.lg,
@@ -406,7 +392,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   card: {
-    backgroundColor: colors.surfaceContainerLow,
+    backgroundColor: colors.white,
     borderRadius: shape.large,
     padding: spacing.xs,
     ...elevationShadow(1),
@@ -414,29 +400,40 @@ const styles = StyleSheet.create({
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    gap: 6,
+    paddingHorizontal: spacing.xs,
     paddingVertical: spacing.xs,
+  },
+  thumb: {
+    width: 40,
+    height: 40,
+    borderRadius: shape.small,
+    flexShrink: 0,
+  },
+  thumbEmpty: {
+    backgroundColor: colors.surfaceContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nameInput: {
     flex: 1,
     minWidth: 0,
     ...typography.body,
     color: colors.textPrimary,
-    backgroundColor: colors.surfaceContainerHigh,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: shape.medium,
     paddingHorizontal: spacing.sm,
-    height: 42,
+    height: 44,
   },
   priceWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     flexShrink: 0,
-    backgroundColor: colors.surfaceContainerHigh,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: shape.medium,
     paddingHorizontal: spacing.xs,
-    height: 42,
-    width: 84,
+    height: 44,
+    width: 68,
     gap: 2,
   },
   priceCurrency: {
@@ -448,12 +445,12 @@ const styles = StyleSheet.create({
     flex: 1,
     ...typography.body,
     fontFamily: nunitoFontFamily.bold,
-    color: colors.emerald,
+    color: colors.textPrimary,
     height: '100%',
   },
   removeBtn: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     flexShrink: 0,
     borderRadius: shape.full,
     overflow: 'hidden',
@@ -478,7 +475,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colors.primary,
+    borderColor: `${dashboardPalette.brand}66`,
   },
   addRowText: {
     ...typography.bodySm,
@@ -487,7 +484,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.outlineVariant,
+    paddingBottom: spacing.sm,
   },
 });

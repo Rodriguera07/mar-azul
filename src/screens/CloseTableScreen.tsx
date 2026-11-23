@@ -215,7 +215,7 @@ export function CloseTableScreen({ navigation, route }: Props) {
       <View style={[styles.footer, contentStyle]}>
         {hasConsumption ? (
           <Button
-            variant="emerald"
+            variant="primary"
             size="lg"
             disabled={!selected || confirming}
             loading={confirming}
@@ -229,7 +229,7 @@ export function CloseTableScreen({ navigation, route }: Props) {
           />
         ) : (
           <Button
-            variant="emerald"
+            variant="primary"
             size="lg"
             disabled={confirming}
             icon={<Ionicons name="checkmark-circle-outline" size={20} color={colors.onSecondary} />}

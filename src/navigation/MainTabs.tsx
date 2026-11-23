@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -13,19 +14,25 @@ import { TabParamList } from './types';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
-// Emojis simples, sem tingimento por cor — igual ao mock de referência, em
-// vez de um ícone sólido tingido por aba (ficava "colorido" demais).
-const TAB_EMOJI: Record<keyof TabParamList, string> = {
-  Painel: '▦',
-  Mesas: '🍽',
-  Produtos: '📖',
-  Relatorios: '📈',
+const TAB_ICON: Record<
+  keyof TabParamList,
+  { on: keyof typeof Ionicons.glyphMap; off: keyof typeof Ionicons.glyphMap }
+> = {
+  Painel: { on: 'grid', off: 'grid-outline' },
+  Mesas: { on: 'restaurant', off: 'restaurant-outline' },
+  Produtos: { on: 'book', off: 'book-outline' },
+  Relatorios: { on: 'stats-chart', off: 'stats-chart-outline' },
 };
 
 function TabIcon({ name, focused }: { name: keyof TabParamList; focused: boolean }) {
+  const icon = TAB_ICON[name];
   return (
     <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <Text style={styles.iconEmoji}>{TAB_EMOJI[name]}</Text>
+      <Ionicons
+        name={focused ? icon.on : icon.off}
+        size={20}
+        color={focused ? colors.white : 'rgba(255,255,255,0.55)'}
+      />
     </View>
   );
 }
@@ -40,22 +47,31 @@ export function MainTabs() {
   // telas com esse inset maior. `insets.bottom` cresce a barra na medida
   // exata que cada aparelho precisa.
   const insets = useSafeAreaInsets();
-  const tabBarBottomPadding = Math.max(8, insets.bottom);
+  const tabBarBottomMargin = Math.max(10, insets.bottom);
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: dashboardPalette.teal700,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveTintColor: colors.white,
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.55)',
         sceneStyle: { backgroundColor: colors.background },
+        // Barra flutuante escura (padrão de apps de delivery): destacada das
+        // bordas da tela, com a aba ativa em coral.
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: colors.borderLight,
-          height: 56 + tabBarBottomPadding,
-          paddingTop: 6,
-          paddingBottom: tabBarBottomPadding,
+          backgroundColor: dashboardPalette.ink900,
+          borderTopWidth: 0,
+          marginHorizontal: 14,
+          marginBottom: tabBarBottomMargin,
+          height: 66,
+          paddingTop: 8,
+          paddingBottom: 8,
+          borderRadius: 30,
+          shadowColor: '#000',
+          shadowOpacity: 0.28,
+          shadowRadius: 18,
+          shadowOffset: { width: 0, height: 8 },
+          elevation: 12,
         },
         tabBarIcon: ({ focused }) => <TabIcon name={route.name as keyof TabParamList} focused={focused} />,
         // Em telas estreitas (~320-360px), 4 abas deixam pouco espaço por
@@ -89,20 +105,18 @@ export function MainTabs() {
 
 const styles = StyleSheet.create({
   iconWrap: {
-    paddingHorizontal: 14,
-    paddingVertical: 1,
+    width: 46,
+    height: 30,
     borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 2,
   },
   iconWrapActive: {
-    backgroundColor: `${dashboardPalette.teal700}1F`,
-  },
-  iconEmoji: {
-    fontSize: 19,
-    lineHeight: 22,
+    backgroundColor: dashboardPalette.brand,
   },
   label: {
-    fontFamily: nunitoFontFamily.semiBold,
+    fontFamily: nunitoFontFamily.bold,
     fontSize: 10,
     textAlign: 'center',
   },

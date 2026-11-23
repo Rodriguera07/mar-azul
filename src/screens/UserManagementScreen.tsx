@@ -8,13 +8,13 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
+import { AppSwitch } from '../components/AppSwitch';
 import { Button } from '../components/Button';
 import { EmptyState } from '../components/EmptyState';
 import { useAuthStore } from '../context/useAuthStore';
@@ -284,13 +284,11 @@ export function UserManagementScreen({ navigation }: Props) {
                       )}
                     </AnimatedPressable>
                   )}
-                  <Switch
+                  <AppSwitch
                     accessibilityLabel={user.active ? 'Desativar usuário' : 'Ativar usuário'}
                     value={user.active}
                     onValueChange={() => handleToggleActive(user)}
                     disabled={user.uid === currentUid}
-                    trackColor={{ false: colors.surfaceHighlight, true: colors.emeraldMuted }}
-                    thumbColor={user.active ? colors.emerald : colors.textMuted}
                   />
                 </View>
               ))}
