@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { Button } from '../components/Button';
+import { MissingTable } from '../components/MissingTable';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { PaymentMethodButton } from '../components/PaymentMethodButton';
 import { useResponsiveContent, widthForColumns } from '../hooks/useResponsiveContent';
@@ -49,7 +50,7 @@ export function CloseTableScreen({ navigation, route }: Props) {
   const { contentStyle, paymentColumns } = useResponsiveContent();
   const paymentButtonWidth = widthForColumns(paymentColumns);
 
-  if (!table) return null;
+  if (!table) return <MissingTable onBack={() => navigation.goBack()} />;
 
   const hasConsumption = table.items.length > 0;
   const { subtotal, serviceFeeAmount, total } = computeTotals(table.items, table.serviceFeeEnabled);

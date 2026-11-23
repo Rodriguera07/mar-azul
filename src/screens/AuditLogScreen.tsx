@@ -9,7 +9,7 @@ import { EmptyState } from '../components/EmptyState';
 import { useAuthStore } from '../context/useAuthStore';
 import { RootStackParamList } from '../navigation/types';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
-import { AUDIT_EVENT_META } from '../data/auditEvents';
+import { getAuditEventMeta } from '../data/auditEvents';
 import { subscribeAuditLog } from '../services/firestoreOrg';
 import { colors, monoFontFamily, font, radius, spacing, typography } from '../theme';
 import { AuditEventType, AuditLogEntry } from '../types';
@@ -119,7 +119,7 @@ export function AuditLogScreen({ navigation }: Props) {
               <Text style={styles.groupLabel}>{group.label}</Text>
               <View style={styles.card}>
                 {group.entries.map((entry, index) => {
-                  const meta = AUDIT_EVENT_META[entry.type];
+                  const meta = getAuditEventMeta(entry.type);
                   return (
                     <View
                       key={entry.id}

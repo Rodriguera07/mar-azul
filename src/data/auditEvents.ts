@@ -63,3 +63,16 @@ export const AUDIT_EVENT_META: Record<
     muted: colors.sandMuted,
   },
 };
+
+const UNKNOWN_EVENT_META = {
+  label: 'Evento',
+  icon: 'ellipse-outline' as keyof typeof Ionicons.glyphMap,
+  color: colors.textMuted,
+  muted: colors.surfaceHighlight,
+};
+
+// Eventos gravados por outra versão do app podem ter um tipo que esta versão
+// não conhece — sem um valor padrão, ler `meta.muted` quebraria a tela toda.
+export function getAuditEventMeta(type: string) {
+  return AUDIT_EVENT_META[type as AuditEventType] ?? UNKNOWN_EVENT_META;
+}

@@ -9,6 +9,7 @@ import { AppSwitch } from '../components/AppSwitch';
 import { Button } from '../components/Button';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { EmptyState } from '../components/EmptyState';
+import { MissingTable } from '../components/MissingTable';
 import { OrderItemRow } from '../components/OrderItemRow';
 import {
   getPaidPeopleCount,
@@ -40,13 +41,7 @@ export function TableDetailScreen({ navigation, route }: Props) {
   const [renameVisible, setRenameVisible] = useState(false);
   const [renameValue, setRenameValue] = useState('');
 
-  if (!table) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <EmptyState icon="alert-circle-outline" title="Mesa não encontrada" />
-      </SafeAreaView>
-    );
-  }
+  if (!table) return <MissingTable onBack={() => navigation.goBack()} />;
 
   const isOpen = table.status === 'open';
   const { subtotal, serviceFeeAmount, total } = computeTotals(table.items, table.serviceFeeEnabled);

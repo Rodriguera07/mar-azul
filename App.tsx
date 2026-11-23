@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { LoadingScreen } from './src/components/LoadingScreen';
 import { initAuthListener, useAuthStore } from './src/context/useAuthStore';
 import { useMinimumVisible } from './src/hooks/useMinimumVisible';
@@ -32,7 +33,7 @@ const navigationTheme = {
 export default function App() {
   useEffect(() => initAuthListener(), []);
 
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
@@ -44,7 +45,9 @@ export default function App() {
   // Fontes e sessão costumam resolver quase instantaneamente (cache local),
   // o que fazia esse loading só "piscar" na tela. Sustenta a mesma duração
   // mínima usada depois do login, pra dar tempo do usuário apreciar o app.
-  const bootReady = fontsLoaded && authStatus !== 'loading';
+  // Se a fonte falhar ao carregar (rede ruim, bloqueio), segue com a fonte do
+  // sistema em vez de ficar preso na tela de loading para sempre.
+  const bootReady = (fontsLoaded || fontError != null) && authStatus !== 'loading';
   const showBootLoading = useMinimumVisible(!bootReady);
 
   if (showBootLoading) {
@@ -55,9 +58,11 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar style="dark" />
-        <NavigationContainer theme={navigationTheme}>
-          <RootNavigator />
-        </NavigationContainer>
+        <ErrorBoundary scope="app">
+          <NavigationContainer theme={navigationTheme}>
+            <RootNavigator />
+          </NavigationContainer>
+        </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
