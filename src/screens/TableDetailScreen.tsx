@@ -321,7 +321,8 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   content: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
   },
   sectionHeader: {
@@ -356,10 +357,14 @@ const styles = StyleSheet.create({
     fontFamily: font.bold,
   },
   itemsCard: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.large,
+    backgroundColor: colors.white,
+    borderRadius: 22,
     overflow: 'hidden',
-    ...elevationShadow(1),
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   feeRow: {
     flexDirection: 'row',
@@ -376,12 +381,16 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   splitCard: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.large,
+    backgroundColor: colors.white,
+    borderRadius: 22,
     padding: spacing.md,
     marginTop: spacing.lg,
     gap: spacing.md,
-    ...elevationShadow(1),
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   stepperRow: {
     flexDirection: 'row',
@@ -450,11 +459,15 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
   },
   summaryCard: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.large,
+    backgroundColor: colors.white,
+    borderRadius: 22,
     padding: spacing.md,
     marginTop: spacing.md,
-    ...elevationShadow(1),
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -484,8 +497,8 @@ const styles = StyleSheet.create({
     color: colors.emerald,
   },
   footer: {
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.outlineVariant,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
 });

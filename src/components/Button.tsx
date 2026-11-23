@@ -71,7 +71,13 @@ interface VariantStyle {
 const variantStyles: Record<Variant, VariantStyle> = {
   primary: {
     container: { backgroundColor: colors.primary },
-    shadow: elevationShadow(1),
+    shadow: {
+      shadowColor: colors.primary,
+      shadowOpacity: 0.3,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 4,
+    },
     text: { color: colors.onPrimary },
     stateLayer: colors.onPrimary,
   },
@@ -104,7 +110,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: shape.full,
+    borderRadius: 18,
     overflow: 'hidden',
   },
   content: {

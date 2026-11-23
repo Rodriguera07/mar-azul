@@ -78,7 +78,7 @@ export function OpenTableScreen({ navigation }: Props) {
           contentContainerStyle={[styles.content, contentStyle]}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.fieldLabel}>MESA / NÚMERO</Text>
+          <Text style={styles.fieldLabel}>Mesa / número</Text>
           <TextInput
             value={label}
             onChangeText={applyLabel}
@@ -118,9 +118,7 @@ export function OpenTableScreen({ navigation }: Props) {
             })}
           </View>
 
-          <Text style={[styles.fieldLabel, { marginTop: spacing.lg }]}>
-            GARÇOM RESPONSÁVEL (OPCIONAL)
-          </Text>
+          <Text style={[styles.fieldLabel, { marginTop: spacing.lg }]}>Garçom responsável (opcional)</Text>
           <TextInput
             value={waiterName}
             onChangeText={setWaiterName}
@@ -163,21 +161,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
   },
   fieldLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    marginBottom: spacing.xs,
+    fontFamily: font.semiBold,
+    fontSize: 13,
+    color: colors.textPrimary,
+    marginBottom: 6,
   },
   input: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.medium,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 16,
+    paddingHorizontal: 14,
     height: 52,
     ...typography.bodyLg,
     color: colors.textPrimary,
@@ -206,25 +203,24 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceContainerLow,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
+    backgroundColor: colors.white,
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   chipActive: {
-    backgroundColor: colors.primaryMuted,
-    borderColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    backgroundColor: colors.textPrimary,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   chipText: {
     ...typography.bodySm,
     color: colors.textSecondary,
   },
   chipTextActive: {
-    color: colors.primary,
+    color: colors.white,
     fontFamily: font.bold,
   },
   chipDuplicate: {
@@ -240,8 +236,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   footer: {
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.outlineVariant,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
 });

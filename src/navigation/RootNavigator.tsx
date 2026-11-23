@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect } from 'react';
 import { AdminNotificationToasts } from '../components/AdminNotificationToasts';
+import { ConnectionBanner, LiveToasts } from '../components/LiveStatus';
 import { useAuthStore } from '../context/useAuthStore';
 import { usePosStore } from '../context/usePosStore';
 import { LoginScreen } from '../screens/LoginScreen';
@@ -20,15 +21,16 @@ export function RootNavigator() {
   const uid = useAuthStore((s) => s.user?.uid);
   const orgId = useAuthStore((s) => s.user?.orgId);
   const displayName = useAuthStore((s) => s.user?.displayName);
+  const role = useAuthStore((s) => s.user?.role);
 
   useEffect(() => {
     if (uid && orgId && displayName) {
-      usePosStore.getState().initOrgSync(orgId, { uid, displayName });
+      usePosStore.getState().initOrgSync(orgId, { uid, displayName }, { liveToasts: role !== 'admin' });
       registerForPushNotificationsAsync(orgId, uid);
     } else {
       usePosStore.getState().teardownOrgSync();
     }
-  }, [uid, orgId, displayName]);
+  }, [uid, orgId, displayName, role]);
 
   return (
     <>
@@ -45,6 +47,8 @@ export function RootNavigator() {
         )}
       </Stack.Navigator>
       {status === 'authenticated' && <AdminNotificationToasts />}
+      {status === 'authenticated' && <LiveToasts />}
+      {status === 'authenticated' && <ConnectionBanner />}
     </>
   );
 }

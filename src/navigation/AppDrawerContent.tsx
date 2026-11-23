@@ -8,7 +8,7 @@ import ReanimatedAnimated, {
   interpolate,
   useAnimatedStyle,
 } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { useAuthStore } from '../context/useAuthStore';
 import { colors, elevationShadow, font, radius, shape, spacing, typography } from '../theme';
@@ -34,7 +34,7 @@ interface DrawerItem {
 const NAV_ITEMS: DrawerItem[] = [
   {
     key: 'ClosedTablesHistory',
-    label: 'Histórico de Mesas Fechadas',
+    label: 'Histórico de Mesas',
     icon: 'time-outline',
     color: dashboardPalette.positive,
     muted: `${dashboardPalette.positive}1F`,
@@ -130,56 +130,90 @@ function DrawerNavRow({
   index,
   total,
   active,
+  last,
   onPress,
 }: {
   item: DrawerItem;
   index: number;
   total: number;
   active: boolean;
+  last: boolean;
   onPress: () => void;
 }) {
   const staggerStyle = useStaggerStyle(index, total);
+  const danger = item.key === 'DeleteAccount';
+  const tone = danger ? dashboardPalette.rose : dashboardPalette.brand;
+  const toneBg = danger ? `${dashboardPalette.rose}14` : colors.primaryMuted;
 
   return (
     <ReanimatedAnimated.View style={staggerStyle}>
       <AnimatedPressable
-        scaleTo={0.97}
-        stateLayerColor={active ? item.color : colors.onSurface}
+        scaleTo={0.99}
+        stateLayerColor={tone}
         accessibilityRole="button"
         accessibilityLabel={item.label}
-        style={[styles.item, active && [styles.itemActive, { backgroundColor: item.muted }]]}
+        style={[styles.item, active && { backgroundColor: toneBg }]}
         onPress={onPress}
       >
-        {active && <View style={[styles.itemAccent, { backgroundColor: item.color }]} />}
-        <View
-          style={[
-            styles.itemIconWrap,
-            { backgroundColor: active ? colors.surfaceContainerLowest : item.muted },
-            active && styles.itemIconWrapActive,
-          ]}
-        >
-          <Ionicons name={item.icon} size={19} color={item.color} />
+        <View style={[styles.itemIconWrap, { backgroundColor: toneBg }]}>
+          <Ionicons name={item.icon} size={19} color={tone} />
         </View>
         <Text
-          style={[styles.itemLabel, active && { color: item.color, fontFamily: font.bold }]}
+          style={[
+            styles.itemLabel,
+            danger && { color: dashboardPalette.rose },
+            active && { color: tone, fontFamily: font.bold },
+          ]}
           numberOfLines={1}
         >
           {item.label}
         </Text>
-        <Ionicons
-          name="chevron-forward"
-          size={16}
-          color={active ? item.color : colors.textMuted}
-          style={{ opacity: active ? 1 : 0.4 }}
-        />
+        <Ionicons name="chevron-forward" size={16} color={active ? tone : colors.textMuted} />
       </AnimatedPressable>
+      {!last && <View style={styles.rowDivider} />}
     </ReanimatedAnimated.View>
+  );
+}
+
+function Section({
+  label,
+  items,
+  startIndex,
+  total,
+  activeRouteName,
+  onNavigate,
+}: {
+  label: string;
+  items: DrawerItem[];
+  startIndex: number;
+  total: number;
+  activeRouteName?: string;
+  onNavigate: (key: NoParamRoute) => void;
+}) {
+  return (
+    <View style={styles.section}>
+      <SectionLabel label={label} index={startIndex} total={total} />
+      <View style={styles.sectionCard}>
+        {items.map((item, i) => (
+          <DrawerNavRow
+            key={item.key}
+            item={item}
+            index={startIndex + 1 + i}
+            total={total}
+            active={activeRouteName === item.key}
+            last={i === items.length - 1}
+            onPress={() => onNavigate(item.key)}
+          />
+        ))}
+      </View>
+    </View>
   );
 }
 
 export function AppDrawerContent({ navigation, state }: DrawerContentComponentProps) {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const insets = useSafeAreaInsets();
 
   const activeRouteName = getActiveInnerRouteName(state);
   const initial = (user?.displayName ?? 'U').charAt(0).toUpperCase();
@@ -189,7 +223,7 @@ export function AppDrawerContent({ navigation, state }: DrawerContentComponentPr
   // privacidade e dados, e aparece para qualquer papel.
   const adminItems = NAV_ITEMS.filter((item) => item.adminOnly && user?.role === 'admin');
   const settingsItems = NAV_ITEMS.filter((item) => item.settingsSection);
-  const totalStagger = mainItems.length + adminItems.length + settingsItems.length + 1;
+  const totalStagger = mainItems.length + adminItems.length + settingsItems.length + 4;
   const headerStyle = useStaggerStyle(-1, totalStagger);
 
   const navigateTo = (key: NoParamRoute) => {
@@ -199,25 +233,19 @@ export function AppDrawerContent({ navigation, state }: DrawerContentComponentPr
 
   return (
     <View style={styles.outer}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-        <LinearGradient
-          colors={[dashboardPalette.brand, dashboardPalette.ink900]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
-          <View style={styles.headerTexture} pointerEvents="none">
-            <View style={[styles.textureBubble, styles.textureBubbleLg]} />
-            <View style={[styles.textureBubble, styles.textureBubbleSm]} />
-            <View style={[styles.textureBubble, styles.textureBubbleXs]} />
+      <LinearGradient
+        colors={[dashboardPalette.brandLight, dashboardPalette.brand, dashboardPalette.brandDark]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + 22 }]}
+      >
+        <View style={[styles.bubble, styles.bubbleLg]} pointerEvents="none" />
+        <View style={[styles.bubble, styles.bubbleSm]} pointerEvents="none" />
+        <ReanimatedAnimated.View style={[styles.headerContent, headerStyle]}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initial}</Text>
           </View>
-
-          <ReanimatedAnimated.View style={[styles.headerContent, headerStyle]}>
-            <View style={styles.avatarRing}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{initial}</Text>
-              </View>
-            </View>
+          <View style={styles.headerText}>
             <Text style={styles.name} numberOfLines={1}>
               {user?.displayName ?? 'Usuário'}
             </Text>
@@ -228,96 +256,63 @@ export function AppDrawerContent({ navigation, state }: DrawerContentComponentPr
             ) : null}
             {user ? (
               <View style={styles.roleBadge}>
-                <Ionicons name={ROLE_ICON[user.role]} size={11} color={colors.textInverse} />
+                <Ionicons name={ROLE_ICON[user.role]} size={11} color={colors.white} />
                 <Text style={styles.roleBadgeText}>{ROLE_LABEL[user.role]}</Text>
               </View>
             ) : null}
-          </ReanimatedAnimated.View>
-        </LinearGradient>
-
-        <ScrollView
-          style={styles.itemsList}
-          contentContainerStyle={styles.itemsListContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <SectionLabel label="Menu" index={0} total={totalStagger} />
-          <View style={{ gap: spacing.xxs, marginTop: spacing.xxs }}>
-            {mainItems.map((item, index) => (
-              <DrawerNavRow
-                key={item.key}
-                item={item}
-                index={index + 1}
-                total={totalStagger}
-                active={activeRouteName === item.key}
-                onPress={() => navigateTo(item.key)}
-              />
-            ))}
           </View>
+        </ReanimatedAnimated.View>
+      </LinearGradient>
 
-          {adminItems.length > 0 && (
-            <>
-              <View style={styles.divider} />
-              <SectionLabel
-                label="Administração"
-                index={mainItems.length + 1}
-                total={totalStagger}
-              />
-              <View style={{ gap: spacing.xxs, marginTop: spacing.xxs }}>
-                {adminItems.map((item, index) => (
-                  <DrawerNavRow
-                    key={item.key}
-                    item={item}
-                    index={mainItems.length + index + 2}
-                    total={totalStagger}
-                    active={activeRouteName === item.key}
-                    onPress={() => navigateTo(item.key)}
-                  />
-                ))}
-              </View>
-            </>
-          )}
+      <ScrollView
+        style={styles.itemsList}
+        contentContainerStyle={styles.itemsListContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Section
+          label="Menu"
+          items={mainItems}
+          startIndex={0}
+          total={totalStagger}
+          activeRouteName={activeRouteName}
+          onNavigate={navigateTo}
+        />
+        {adminItems.length > 0 && (
+          <Section
+            label="Administração"
+            items={adminItems}
+            startIndex={mainItems.length + 1}
+            total={totalStagger}
+            activeRouteName={activeRouteName}
+            onNavigate={navigateTo}
+          />
+        )}
+        {settingsItems.length > 0 && (
+          <Section
+            label="Configurações"
+            items={settingsItems}
+            startIndex={mainItems.length + adminItems.length + 2}
+            total={totalStagger}
+            activeRouteName={activeRouteName}
+            onNavigate={navigateTo}
+          />
+        )}
+      </ScrollView>
 
-          {settingsItems.length > 0 && (
-            <>
-              <View style={styles.divider} />
-              <SectionLabel
-                label="Configurações"
-                index={mainItems.length + adminItems.length + 1}
-                total={totalStagger}
-              />
-              <View style={{ gap: spacing.xxs, marginTop: spacing.xxs }}>
-                {settingsItems.map((item, index) => (
-                  <DrawerNavRow
-                    key={item.key}
-                    item={item}
-                    index={mainItems.length + adminItems.length + index + 2}
-                    total={totalStagger}
-                    active={activeRouteName === item.key}
-                    onPress={() => navigateTo(item.key)}
-                  />
-                ))}
-              </View>
-            </>
-          )}
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <AnimatedPressable
-            scaleTo={0.97}
-            stateLayerColor={colors.white}
-            accessibilityRole="button"
-            accessibilityLabel="Sair"
-            style={styles.logoutBtn}
-            onPress={logout}
-          >
-            <View style={styles.logoutIconWrap}>
-              <Ionicons name="log-out-outline" size={17} color={colors.textInverse} />
-            </View>
-            <Text style={styles.logoutText}>Sair</Text>
-          </AnimatedPressable>
-          <Text style={styles.version}>Trailer Mar Azul</Text>
-        </View>
-      </SafeAreaView>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 14) }]}>
+        <AnimatedPressable
+          scaleTo={0.98}
+          stateLayerColor={dashboardPalette.rose}
+          accessibilityRole="button"
+          accessibilityLabel="Sair"
+          style={styles.logoutBtn}
+          onPress={logout}
+        >
+          <Ionicons name="log-out-outline" size={19} color={dashboardPalette.rose} />
+          <Text style={styles.logoutText}>Sair da conta</Text>
+        </AnimatedPressable>
+        <Text style={styles.version}>Trailer Mar Azul</Text>
+      </View>
     </View>
   );
 }
@@ -332,208 +327,89 @@ function getActiveInnerRouteName(state: DrawerContentComponentProps['state']): s
 }
 
 const styles = StyleSheet.create({
-  // Container externo sem recorte: carrega a sombra flutuante do painel.
-  // O recorte de cantos arredondados (para o gradiente do header não
-  // vazar quadrado) acontece só no SafeAreaView interno.
-  outer: {
-    flex: 1,
-    borderTopRightRadius: shape.extraLarge,
-    borderBottomRightRadius: shape.extraLarge,
-  },
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.surfaceContainerLowest,
-    borderTopRightRadius: shape.extraLarge,
-    borderBottomRightRadius: shape.extraLarge,
-    overflow: 'hidden',
-  },
+  outer: { flex: 1, backgroundColor: colors.background, borderTopRightRadius: 28, borderBottomRightRadius: 28, overflow: 'hidden' },
   header: {
-    alignItems: 'center',
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.xl,
-    paddingHorizontal: spacing.lg,
     overflow: 'hidden',
-    borderBottomLeftRadius: shape.extraLarge,
-    borderBottomRightRadius: shape.extraLarge,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg + 4,
+    borderBottomRightRadius: 30,
   },
-  headerTexture: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  textureBubble: {
-    position: 'absolute',
-    borderRadius: 999,
-    backgroundColor: colors.white,
-    opacity: 0.1,
-  },
-  textureBubbleLg: {
-    width: 150,
-    height: 150,
-    top: -70,
-    right: -50,
-  },
-  textureBubbleSm: {
-    width: 80,
-    height: 80,
-    bottom: -25,
-    left: -25,
-  },
-  textureBubbleXs: {
-    width: 36,
-    height: 36,
-    top: 20,
-    left: 10,
-    opacity: 0.14,
-  },
-  headerContent: {
-    alignItems: 'center',
-  },
-  avatarRing: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.55)',
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 4,
-  },
+  bubble: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.10)' },
+  bubbleLg: { width: 190, height: 190, top: -70, right: -60 },
+  bubbleSm: { width: 120, height: 120, bottom: -50, left: -30, backgroundColor: 'rgba(255,255,255,0.07)' },
+  headerContent: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   avatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.28)',
   },
-  avatarText: {
-    ...typography.h1,
-    color: colors.textInverse,
-  },
-  name: {
-    ...typography.h3,
-    color: colors.textInverse,
-    textAlign: 'center',
-  },
-  email: {
-    ...typography.caption,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 1,
-    maxWidth: '100%',
-  },
+  avatarText: { fontFamily: font.extraBold, fontSize: 24, color: dashboardPalette.brand },
+  headerText: { flex: 1, minWidth: 0 },
+  name: { fontFamily: font.extraBold, fontSize: 19, letterSpacing: -0.6, color: colors.white },
+  email: { fontFamily: font.medium, fontSize: 12.5, color: 'rgba(255,255,255,0.85)', marginTop: 1 },
   roleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'flex-start',
     gap: 5,
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.sm,
+    marginTop: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: radius.full,
+    borderRadius: shape.full,
     backgroundColor: 'rgba(255,255,255,0.22)',
   },
-  roleBadgeText: {
-    ...typography.caption,
-    fontFamily: font.bold,
-    color: colors.textInverse,
-  },
-  itemsList: {
-    flex: 1,
-  },
-  itemsListContent: {
-    paddingTop: spacing.lg,
-    paddingHorizontal: spacing.sm,
-    paddingBottom: spacing.md,
-  },
+  roleBadgeText: { fontFamily: font.bold, fontSize: 11.5, color: colors.white },
+  itemsList: { flex: 1 },
+  itemsListContent: { padding: spacing.md, paddingTop: spacing.lg, gap: spacing.md },
+  section: { gap: 8 },
   sectionLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    paddingHorizontal: spacing.sm,
+    fontFamily: font.bold,
+    fontSize: 11.5,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colors.textSecondary,
+    paddingHorizontal: 6,
   },
-  divider: {
-    height: 1,
-    backgroundColor: colors.outlineVariant,
-    marginVertical: spacing.md,
-    marginHorizontal: spacing.xs,
+  sectionCard: {
+    backgroundColor: colors.white,
+    borderRadius: 22,
+    overflow: 'hidden',
+    ...elevationShadow(1),
   },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderRadius: shape.large,
-    overflow: 'hidden',
-  },
-  itemActive: {
-    ...elevationShadow(1),
-  },
-  itemAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 8,
-    bottom: 8,
-    width: 4,
-    borderRadius: 3,
+    gap: spacing.sm + 2,
+    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
   },
   itemIconWrap: {
     width: 38,
     height: 38,
-    borderRadius: shape.large,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  itemIconWrapActive: {
-    ...elevationShadow(1),
+  itemLabel: { flex: 1, fontFamily: font.semiBold, fontSize: 15, letterSpacing: -0.2, color: colors.textPrimary },
+  rowDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginLeft: spacing.md + 38 + spacing.sm + 2,
   },
-  itemLabel: {
-    ...typography.body,
-    color: colors.textSecondary,
-    flex: 1,
-  },
-  footer: {
-    padding: spacing.md,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.outlineVariant,
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
+  footer: { paddingHorizontal: spacing.md, paddingTop: spacing.sm, gap: spacing.xs },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'stretch',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: shape.full,
+    gap: 8,
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: `${dashboardPalette.rose}14`,
     overflow: 'hidden',
-    backgroundColor: dashboardPalette.rose,
-    shadowColor: dashboardPalette.rose,
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
   },
-  logoutIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: shape.medium,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoutText: {
-    ...typography.body,
-    color: colors.textInverse,
-    fontFamily: font.bold,
-  },
-  version: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
+  logoutText: { fontFamily: font.bold, fontSize: 15, color: dashboardPalette.rose },
+  version: { fontFamily: font.medium, fontSize: 11.5, color: colors.textMuted, textAlign: 'center' },
 });

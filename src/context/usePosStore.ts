@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { clearLiveEvents, pushLiveEvent } from '../services/liveFeed';
+import { resetSyncStatus } from '../services/syncStatus';
 import { DEFAULT_IMAGE_BY_ID, DEFAULT_MENU_ITEMS, normalizePortionItems, sortMenuItems } from '../data/menu';
 import {
   clearClosedTablesAndSummarize,
@@ -14,6 +16,7 @@ import {
   updateTable,
   setTable,
   type CloseTableResult,
+  mutateTableItems,
 } from '../services/firestoreOrg';
 import { logAuditEvent } from '../services/auditLog';
 import { notifyAdmins } from '../services/notifications';
@@ -67,7 +70,7 @@ interface PosState {
   orgId: string | null;
   currentUser: CurrentUser | null;
 
-  initOrgSync: (orgId: string, user: CurrentUser) => void;
+  initOrgSync: (orgId: string, user: CurrentUser, options?: { liveToasts?: boolean }) => void;
   teardownOrgSync: () => void;
   saveMenuItems: (items: MenuItemInput[]) => Promise<boolean>;
 
@@ -102,6 +105,87 @@ function withItems(tables: Table[], tableId: string, items: OrderItem[]): Table[
   return tables.map((t) => (t.id === tableId ? { ...t, items } : t));
 }
 
+// Mesas com gravação de itens em andamento: enquanto houver, a versão local
+// dos itens vale (o servidor responde depois do toque, e aplicar a resposta
+// "atrasada" faria a quantidade piscar para trás entre dois toques rápidos).
+const pendingOps = new Map<string, number>();
+let lastRemote: Table[] = [];
+
+function mergeRemote(remote: Table[], local: Table[]): Table[] {
+  return remote.map((t) => {
+    if ((pendingOps.get(t.id) ?? 0) === 0) return t;
+    const localTable = local.find((l) => l.id === t.id);
+    return localTable ? { ...t, items: localTable.items } : t;
+  });
+}
+
+function itemsSignature(table: Table): string {
+  return table.items.map((i) => `${i.id}:${i.quantity}`).join('|');
+}
+
+// Compara o que chegou do servidor com o que já está em tela e avisa sobre o
+// que OUTRA pessoa fez (mesa aberta, fechada ou com pedido alterado). Mudanças
+// feitas neste aparelho já estão no estado local e por isso não aparecem aqui.
+function announceRemoteChanges(prev: Table[], next: Table[], myUid: string) {
+  const prevById = new Map(prev.map((t) => [t.id, t]));
+  for (const table of next) {
+    const before = prevById.get(table.id);
+    if (!before) {
+      if (table.status === 'open' && table.openedByUserId !== myUid) {
+        pushLiveEvent({
+          icon: 'add-circle',
+          text: `${table.openedByUserName ?? 'Alguém'} abriu a mesa ${table.label}`,
+        });
+      }
+      continue;
+    }
+    if (before.status === 'open' && table.status === 'closed') {
+      pushLiveEvent({ icon: 'checkmark-circle', text: `Mesa ${table.label} foi fechada` });
+    } else if (table.status === 'open' && itemsSignature(before) !== itemsSignature(table)) {
+      pushLiveEvent({ icon: 'sync', text: `Pedido da mesa ${table.label} foi atualizado` });
+    }
+  }
+}
+
+// Grava a mudança de itens no servidor somando-a à versão mais recente da mesa
+// (transação). Se a transação não puder rodar por falta de conexão, cai para a
+// gravação direta da lista já calculada localmente (que o Firestore enfileira
+// e envia ao reconectar) — o mesmo comportamento de antes, só que sem perder
+// pedidos de outro aparelho quando há rede.
+function commitItems(
+  orgId: string,
+  tableId: string,
+  mutate: (items: OrderItem[]) => OrderItem[],
+  optimistic: OrderItem[],
+  failMessage: string
+) {
+  pendingOps.set(tableId, (pendingOps.get(tableId) ?? 0) + 1);
+  mutateTableItems(orgId, tableId, mutate)
+    .catch((err: any) => {
+      if (err?.code === 'unavailable') {
+        updateTable(orgId, tableId, { items: optimistic }).catch(
+          warnAndAlert('atualizar itens', failMessage)
+        );
+        return;
+      }
+      warnAndAlert('atualizar itens', failMessage)(err);
+    })
+    .finally(() => {
+      const left = (pendingOps.get(tableId) ?? 1) - 1;
+      if (left > 0) {
+        pendingOps.set(tableId, left);
+        return;
+      }
+      pendingOps.delete(tableId);
+      // Última gravação da mesa terminou: assume a versão do servidor, que já
+      // inclui o que outras pessoas lançaram no meio tempo.
+      const state = usePosStore.getState();
+      if (lastRemote.some((t) => t.id === tableId)) {
+        usePosStore.setState({ tables: mergeRemote(lastRemote, state.tables) });
+      }
+    });
+}
+
 let tablesUnsubscribe: Unsubscribe | null = null;
 let closedSalesUnsubscribe: Unsubscribe | null = null;
 let menuUnsubscribe: Unsubscribe | null = null;
@@ -115,14 +199,25 @@ export const usePosStore = create<PosState>((set, get) => ({
   orgId: null,
   currentUser: null,
 
-  initOrgSync: (orgId, user) => {
+  initOrgSync: (orgId, user, options) => {
     tablesUnsubscribe?.();
     closedSalesUnsubscribe?.();
     menuUnsubscribe?.();
 
     set({ orgId, currentUser: user, currentDay: formatDateKey() });
 
-    tablesUnsubscribe = subscribeTables(orgId, (tables) => set({ tables }));
+    lastRemote = [];
+    pendingOps.clear();
+    let firstTablesSnapshot = true;
+    tablesUnsubscribe = subscribeTables(orgId, (remote) => {
+      lastRemote = remote;
+      const local = get().tables;
+      const merged = mergeRemote(remote, local);
+      // A primeira leitura é o estado atual (histórico), não novidade.
+      if (!firstTablesSnapshot && options?.liveToasts) announceRemoteChanges(local, merged, user.uid);
+      firstTablesSnapshot = false;
+      set({ tables: merged });
+    });
 
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
@@ -153,6 +248,10 @@ export const usePosStore = create<PosState>((set, get) => ({
   },
 
   teardownOrgSync: () => {
+    lastRemote = [];
+    pendingOps.clear();
+    clearLiveEvents();
+    resetSyncStatus();
     tablesUnsubscribe?.();
     closedSalesUnsubscribe?.();
     menuUnsubscribe?.();
@@ -260,29 +359,34 @@ export const usePosStore = create<PosState>((set, get) => ({
     const table = tables.find((t) => t.id === tableId);
     if (!table) return;
 
+    // Id da linha gerado uma vez, fora da transação (que pode rodar de novo):
+    // assim a mesma linha não é criada duas vezes numa nova tentativa.
+    const newLine: OrderItem = {
+      id: generateId('item'),
+      menuItemId: menuItem.id,
+      name: menuItem.name,
+      category: menuItem.category,
+      unitPrice: menuItem.price,
+      quantity,
+    };
     const existing = table.items.find((i) => i.menuItemId === menuItem.id);
-    let items: OrderItem[];
-    if (existing) {
-      items = table.items.map((i) =>
-        i.id === existing.id ? { ...i, quantity: i.quantity + quantity } : i
-      );
-    } else {
-      items = [
-        ...table.items,
-        {
-          id: generateId('item'),
-          menuItemId: menuItem.id,
-          name: menuItem.name,
-          category: menuItem.category,
-          unitPrice: menuItem.price,
-          quantity,
-        },
-      ];
-    }
+    const items: OrderItem[] = existing
+      ? table.items.map((i) => (i.id === existing.id ? { ...i, quantity: i.quantity + quantity } : i))
+      : [...table.items, newLine];
 
     set({ tables: withItems(tables, tableId, items) });
-    updateTable(orgId, tableId, { items }).catch(
-      warnAndAlert('adicionar item', 'Não foi possível adicionar o item')
+    commitItems(
+      orgId,
+      tableId,
+      (current) => {
+        const found = current.find((i) => i.menuItemId === menuItem.id);
+        if (found) {
+          return current.map((i) => (i.id === found.id ? { ...i, quantity: i.quantity + quantity } : i));
+        }
+        return [...current, newLine];
+      },
+      items,
+      'Não foi possível adicionar o item'
     );
     logAuditEvent({
       orgId,
@@ -309,8 +413,12 @@ export const usePosStore = create<PosState>((set, get) => ({
       i.id === orderItemId ? { ...i, quantity: i.quantity + 1 } : i
     );
     set({ tables: withItems(tables, tableId, items) });
-    updateTable(orgId, tableId, { items }).catch(
-      warnAndAlert('incrementar item', 'Não foi possível atualizar o item')
+    commitItems(
+      orgId,
+      tableId,
+      (current) => current.map((i) => (i.id === orderItemId ? { ...i, quantity: i.quantity + 1 } : i)),
+      items,
+      'Não foi possível atualizar o item'
     );
   },
 
@@ -323,8 +431,15 @@ export const usePosStore = create<PosState>((set, get) => ({
       .map((i) => (i.id === orderItemId ? { ...i, quantity: i.quantity - 1 } : i))
       .filter((i) => i.quantity > 0);
     set({ tables: withItems(tables, tableId, items) });
-    updateTable(orgId, tableId, { items }).catch(
-      warnAndAlert('decrementar item', 'Não foi possível atualizar o item')
+    commitItems(
+      orgId,
+      tableId,
+      (current) =>
+        current
+          .map((i) => (i.id === orderItemId ? { ...i, quantity: i.quantity - 1 } : i))
+          .filter((i) => i.quantity > 0),
+      items,
+      'Não foi possível atualizar o item'
     );
   },
 
@@ -335,8 +450,12 @@ export const usePosStore = create<PosState>((set, get) => ({
     if (!table) return;
     const items = table.items.filter((i) => i.id !== orderItemId);
     set({ tables: withItems(tables, tableId, items) });
-    updateTable(orgId, tableId, { items }).catch(
-      warnAndAlert('remover item', 'Não foi possível remover o item')
+    commitItems(
+      orgId,
+      tableId,
+      (current) => current.filter((i) => i.id !== orderItemId),
+      items,
+      'Não foi possível remover o item'
     );
   },
 

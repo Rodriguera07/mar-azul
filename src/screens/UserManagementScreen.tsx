@@ -155,7 +155,7 @@ export function UserManagementScreen({ navigation }: Props) {
             <View style={styles.formCard}>
               <Text style={styles.formTitle}>Novo usuário</Text>
 
-              <Text style={styles.fieldLabel}>NOME</Text>
+              <Text style={styles.fieldLabel}>Nome</Text>
               <TextInput
                 value={name}
                 onChangeText={setName}
@@ -164,7 +164,7 @@ export function UserManagementScreen({ navigation }: Props) {
                 style={styles.input}
               />
 
-              <Text style={styles.fieldLabel}>E-MAIL</Text>
+              <Text style={styles.fieldLabel}>E-mail</Text>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
@@ -176,7 +176,7 @@ export function UserManagementScreen({ navigation }: Props) {
                 style={styles.input}
               />
 
-              <Text style={styles.fieldLabel}>SENHA PROVISÓRIA</Text>
+              <Text style={styles.fieldLabel}>Senha provisória</Text>
               <TextInput
                 value={password}
                 onChangeText={setPassword}
@@ -187,7 +187,7 @@ export function UserManagementScreen({ navigation }: Props) {
                 style={styles.input}
               />
 
-              <Text style={styles.fieldLabel}>PAPEL</Text>
+              <Text style={styles.fieldLabel}>Papel</Text>
               <View style={styles.roleRow}>
                 {(['staff', 'admin'] as Role[]).map((r) => (
                   <AnimatedPressable
@@ -319,7 +319,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   content: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
   },
   addBtn: {
@@ -343,11 +344,15 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
   },
   formCard: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.large,
+    backgroundColor: colors.white,
+    borderRadius: 22,
     padding: spacing.md,
     marginBottom: spacing.lg,
-    ...elevationShadow(1),
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   formTitle: {
     ...typography.h3,
@@ -355,16 +360,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   fieldLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    marginTop: spacing.sm,
-    marginBottom: spacing.xxs,
+    fontFamily: font.semiBold,
+    fontSize: 13,
+    color: colors.textPrimary,
+    marginBottom: 6,
   },
   input: {
-    backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: shape.medium,
-    paddingHorizontal: spacing.sm,
-    height: 46,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    height: 52,
     ...typography.body,
     color: colors.textPrimary,
   },
@@ -373,24 +378,29 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   roleChip: {
+    backgroundColor: colors.white,
     flex: 1,
     paddingVertical: spacing.xs,
     borderRadius: shape.full,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
     alignItems: 'center',
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   roleChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.textPrimary,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   roleChipText: {
     ...typography.bodySm,
     color: colors.textSecondary,
   },
   roleChipTextActive: {
-    color: colors.textInverse,
+    color: colors.white,
     fontFamily: font.bold,
   },
   error: {
@@ -407,26 +417,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionTitle: {
-    ...typography.label,
-    fontSize: 12,
-    letterSpacing: 1.4,
-    color: colors.textMuted,
+    fontFamily: font.extraBold,
+    fontSize: 17,
+    letterSpacing: -0.4,
+    color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
   card: {
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: shape.large,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
+    backgroundColor: colors.white,
+    borderRadius: 22,
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
   rowName: {
     ...typography.bodySm,

@@ -19,7 +19,7 @@ import { ScreenBar } from '../components/ScreenBar';
 import { useAuthStore } from '../context/useAuthStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
-import { colors, elevationShadow, shape, spacing, typography } from '../theme';
+import { colors, font, elevationShadow, shape, spacing, typography } from '../theme';
 import { showAlert } from '../utils/alert';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChangePassword'>;
@@ -83,7 +83,7 @@ export function ChangePasswordScreen({ navigation }: Props) {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.card}>
-            <Text style={styles.fieldLabel}>SENHA ATUAL</Text>
+            <Text style={styles.fieldLabel}>Senha atual</Text>
             <View style={styles.inputWrap}>
               <TextInput
                 value={currentPassword}
@@ -111,7 +111,7 @@ export function ChangePasswordScreen({ navigation }: Props) {
               </Pressable>
             </View>
 
-            <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>NOVA SENHA</Text>
+            <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>Nova senha</Text>
             <View style={styles.inputWrap}>
               <TextInput
                 value={newPassword}
@@ -139,9 +139,7 @@ export function ChangePasswordScreen({ navigation }: Props) {
               </Pressable>
             </View>
 
-            <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
-              CONFIRMAR NOVA SENHA
-            </Text>
+            <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>Confirmar nova senha</Text>
             <View style={styles.inputWrap}>
               <TextInput
                 value={confirmPassword}
@@ -201,27 +199,33 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   content: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
   },
   card: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.large,
+    backgroundColor: colors.white,
+    borderRadius: 22,
     padding: spacing.md,
-    ...elevationShadow(1),
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   fieldLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    marginBottom: spacing.xxs,
+    fontFamily: font.semiBold,
+    fontSize: 13,
+    color: colors.textPrimary,
+    marginBottom: 6,
   },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: shape.medium,
-    paddingHorizontal: spacing.sm,
-    height: 46,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    height: 52,
     gap: spacing.xs,
   },
   input: {

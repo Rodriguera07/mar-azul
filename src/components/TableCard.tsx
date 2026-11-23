@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
-import { Image, ImageSourcePropType, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Image, ImageSourcePropType, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { getTableCurrentTotal } from '../context/usePosStore';
 import { DEFAULT_IMAGE_BY_ID } from '../data/menu';
 import { colors, elevationShadow, font } from '../theme';
@@ -42,6 +42,18 @@ export function TableCard({ table, onPress, style }: Props) {
   const tone = getTone(table.openedAt);
   const covers = getCoverImages(table);
 
+  // Quando o pedido muda (inclusive por outra pessoa, em outro aparelho) o
+  // bloco pisca em coral — dá pra ver o andamento sem precisar atualizar nada.
+  const signature = `${total}|${itemCount}`;
+  const previous = useRef(signature);
+  const flash = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (previous.current === signature) return;
+    previous.current = signature;
+    flash.setValue(1);
+    Animated.timing(flash, { toValue: 0, duration: 1600, useNativeDriver: true }).start();
+  }, [signature, flash]);
+
   return (
     <AnimatedPressable
       style={[styles.card, style]}
@@ -78,6 +90,11 @@ export function TableCard({ table, onPress, style }: Props) {
         </View>
       </View>
 
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.flash, { opacity: flash.interpolate({ inputRange: [0, 1], outputRange: [0, 0.2] }) }]}
+      />
+
       <View style={styles.body}>
         <Text style={styles.total}>{formatCurrency(total)}</Text>
         <Text style={styles.meta} numberOfLines={1}>
@@ -97,6 +114,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...elevationShadow(1),
   },
+  flash: { ...StyleSheet.absoluteFillObject, backgroundColor: dashboardPalette.brand },
   cover: { height: 96, backgroundColor: colors.surfaceContainerHigh },
   coverRow: { flex: 1, flexDirection: 'row', gap: 2 },
   coverImage: { flex: 1, height: '100%' },

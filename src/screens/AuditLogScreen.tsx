@@ -12,7 +12,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { getAuditEventMeta } from '../data/auditEvents';
 import { subscribeAuditLog } from '../services/firestoreOrg';
-import { colors, monoFontFamily, font, radius, spacing, typography } from '../theme';
+import { colors, font, radius, spacing, typography } from '../theme';
 import { AuditEventType, AuditLogEntry } from '../types';
 import { formatDateLabel, formatTime } from '../utils/format';
 
@@ -182,6 +182,7 @@ const styles = StyleSheet.create({
   filterScroll: {
     flexGrow: 0,
     flexShrink: 0,
+    marginTop: spacing.md,
   },
   filterRow: {
     alignItems: 'center',
@@ -190,60 +191,64 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
   },
   filterChip: {
+    backgroundColor: colors.white,
     flexShrink: 0,
     minHeight: 36,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
     borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   filterChipActive: {
     backgroundColor: colors.textPrimary,
-    borderColor: colors.textPrimary,
-    shadowColor: colors.textPrimary,
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   filterText: {
     ...typography.caption,
     color: colors.textSecondary,
   },
   filterTextActive: {
-    color: colors.textInverse,
+    color: colors.white,
   },
   content: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
   },
   group: {
     marginBottom: spacing.md,
   },
   groupLabel: {
-    ...typography.label,
-    fontSize: 12,
-    letterSpacing: 1,
-    color: colors.textMuted,
-    marginBottom: spacing.xs,
+    fontFamily: font.bold,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 8,
+    paddingHorizontal: 2,
   },
   card: {
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
+    backgroundColor: colors.white,
+    borderRadius: 22,
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
   rowIcon: {
     width: 32,
@@ -264,7 +269,7 @@ const styles = StyleSheet.create({
   },
   rowTime: {
     ...typography.caption,
-    fontFamily: monoFontFamily,
+    fontFamily: font.semiBold,
     color: colors.textMuted,
   },
   loadMoreBtn: {

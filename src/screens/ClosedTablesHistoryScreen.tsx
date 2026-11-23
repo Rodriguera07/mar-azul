@@ -11,7 +11,7 @@ import { useAuthStore } from '../context/useAuthStore';
 import { useClosedSalesRange } from '../hooks/useClosedSalesRange';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
-import { colors, elevationShadow, monoFontFamily, font, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { ClosedSale } from '../types';
 import { formatCurrency, formatDateLabel, formatTime } from '../utils/format';
 import { describeSalePayments } from '../utils/payments';
@@ -157,60 +157,70 @@ const styles = StyleSheet.create({
   },
   presetRow: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     gap: spacing.xs,
-    marginBottom: spacing.sm,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
   presetChip: {
     flex: 1,
     paddingVertical: spacing.xs,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
+    backgroundColor: colors.white,
     alignItems: 'center',
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   presetChipActive: {
     backgroundColor: colors.textPrimary,
-    borderColor: colors.textPrimary,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   presetText: {
     ...typography.caption,
     color: colors.textSecondary,
   },
   presetTextActive: {
-    color: colors.textInverse,
+    color: colors.white,
     fontFamily: font.bold,
   },
   content: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
   },
   group: {
     marginBottom: spacing.md,
   },
   groupLabel: {
-    ...typography.label,
-    fontSize: 12,
-    letterSpacing: 1,
-    color: colors.textMuted,
-    marginBottom: spacing.xs,
+    fontFamily: font.bold,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 8,
+    paddingHorizontal: 2,
   },
   card: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: shape.large,
+    backgroundColor: colors.white,
+    borderRadius: 22,
     overflow: 'hidden',
-    ...elevationShadow(1),
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outlineVariant,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
   rowIcon: {
     width: 32,
@@ -232,7 +242,7 @@ const styles = StyleSheet.create({
   },
   rowValue: {
     ...typography.bodySm,
-    fontFamily: monoFontFamily,
+    fontFamily: font.semiBold,
     color: colors.emerald,
   },
 });
