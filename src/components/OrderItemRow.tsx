@@ -45,11 +45,11 @@ export function OrderItemRow({ item, editable = true, onIncrement, onDecrement, 
           <Text style={styles.qty}>{item.quantity}</Text>
           <AnimatedPressable
             style={[styles.stepBtn, styles.stepBtnAdd]}
-            stateLayerColor={colors.emerald}
+            stateLayerColor={colors.primary}
             onPress={onIncrement}
             accessibilityLabel="Aumentar quantidade"
           >
-            <Ionicons name="add" size={14} color={colors.emerald} />
+            <Ionicons name="add" size={14} color={colors.primary} />
           </AnimatedPressable>
         </View>
       ) : (
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.dangerMuted,
   },
   stepBtnAdd: {
-    backgroundColor: colors.emeraldMuted,
+    backgroundColor: colors.primaryMuted,
   },
   qty: {
     ...typography.h3,

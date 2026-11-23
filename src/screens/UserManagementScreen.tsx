@@ -8,13 +8,13 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
+import { AppSwitch } from '../components/AppSwitch';
 import { Button } from '../components/Button';
 import { EmptyState } from '../components/EmptyState';
 import { useAuthStore } from '../context/useAuthStore';
@@ -23,7 +23,7 @@ import { RootStackParamList } from '../navigation/types';
 import { createOrgUser, sendPasswordReset } from '../services/adminApi';
 import { logAuditEvent } from '../services/auditLog';
 import { setOrgUserActive, subscribeOrgUsers } from '../services/firestoreOrg';
-import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { Role, UserProfile } from '../types';
 import { confirmAlert, showAlert } from '../utils/alert';
 
@@ -284,13 +284,11 @@ export function UserManagementScreen({ navigation }: Props) {
                       )}
                     </AnimatedPressable>
                   )}
-                  <Switch
+                  <AppSwitch
                     accessibilityLabel={user.active ? 'Desativar usuário' : 'Ativar usuário'}
                     value={user.active}
                     onValueChange={() => handleToggleActive(user)}
                     disabled={user.uid === currentUid}
-                    trackColor={{ false: colors.surfaceHighlight, true: colors.emeraldMuted }}
-                    thumbColor={user.active ? colors.emerald : colors.textMuted}
                   />
                 </View>
               ))}
@@ -399,7 +397,7 @@ const styles = StyleSheet.create({
   },
   roleChipTextActive: {
     color: colors.textInverse,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   error: {
     ...typography.bodySm,
@@ -438,7 +436,7 @@ const styles = StyleSheet.create({
   },
   rowName: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textPrimary,
   },
   rowEmail: {
@@ -459,7 +457,7 @@ const styles = StyleSheet.create({
   },
   roleBadgeText: {
     ...typography.caption,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textSecondary,
   },
   roleBadgeTextAdmin: {

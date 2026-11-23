@@ -2,9 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
+import { AppSwitch } from '../components/AppSwitch';
 import { Button } from '../components/Button';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { EmptyState } from '../components/EmptyState';
@@ -18,7 +19,7 @@ import {
 } from '../context/usePosStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
-import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { computeTotals } from '../utils/billing';
 import { formatCurrency, formatTime } from '../utils/format';
 
@@ -84,12 +85,12 @@ export function TableDetailScreen({ navigation, route }: Props) {
               <AnimatedPressable
                 style={styles.renameBtn}
                 scaleTo={0.92}
-                stateLayerColor={colors.white}
+                stateLayerColor={colors.onSurface}
                 onPress={openRename}
                 accessibilityLabel="Renomear ou trocar o número da mesa"
                 accessibilityRole="button"
               >
-                <Ionicons name="create" size={14} color={colors.textInverse} />
+                <Ionicons name="create-outline" size={14} color={colors.textPrimary} />
                 <Text style={styles.renameBtnText}>Trocar mesa</Text>
               </AnimatedPressable>
             )}
@@ -151,13 +152,11 @@ export function TableDetailScreen({ navigation, route }: Props) {
             <Text style={styles.feeTitle}>Taxa de serviço (10%)</Text>
             <Text style={styles.feeSub}>Aplicada sobre o subtotal da mesa</Text>
           </View>
-          <Switch
+          <AppSwitch
             accessibilityLabel="Taxa de serviço 10%"
             value={table.serviceFeeEnabled}
             onValueChange={() => toggleServiceFee(tableId)}
             disabled={!isOpen}
-            trackColor={{ false: colors.surfaceHighlight, true: colors.emeraldMuted }}
-            thumbColor={table.serviceFeeEnabled ? colors.emerald : colors.textMuted}
           />
         </View>
 
@@ -171,13 +170,11 @@ export function TableDetailScreen({ navigation, route }: Props) {
                   : 'Divide o total igualmente entre as pessoas'}
               </Text>
             </View>
-            <Switch
+            <AppSwitch
               accessibilityLabel="Dividir conta"
               value={table.splitEnabled}
               onValueChange={() => toggleSplit(tableId)}
               disabled={!isOpen || splitLocked}
-              trackColor={{ false: colors.surfaceHighlight, true: colors.primaryMuted }}
-              thumbColor={table.splitEnabled ? colors.primary : colors.textMuted}
             />
           </View>
 
@@ -252,7 +249,7 @@ export function TableDetailScreen({ navigation, route }: Props) {
           <Button
             label={splitLocked ? 'Continuar Pagamento' : 'Fechar Mesa'}
             size="lg"
-            variant="emerald"
+            variant="primary"
             onPress={() => navigation.navigate('CloseTable', { tableId })}
           />
         </View>
@@ -313,21 +310,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: colors.sand,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
     borderRadius: shape.full,
     overflow: 'hidden',
-    shadowColor: colors.sand,
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
   },
   renameBtnText: {
     ...typography.caption,
-    fontFamily: nunitoFontFamily.bold,
-    color: colors.textInverse,
+    fontFamily: font.semiBold,
+    color: colors.textPrimary,
   },
   renameInput: {
     width: '100%',
@@ -390,7 +384,7 @@ const styles = StyleSheet.create({
   addBtnText: {
     ...typography.bodySm,
     color: colors.textInverse,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   itemsCard: {
     backgroundColor: colors.surfaceContainerLow,
@@ -466,7 +460,7 @@ const styles = StyleSheet.create({
   splitSummaryValue: {
     ...typography.bodySm,
     color: colors.textPrimary,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   splitPerPersonBox: {
     marginTop: spacing.xs,

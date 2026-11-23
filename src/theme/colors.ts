@@ -1,19 +1,20 @@
-// "Beach bar by day" theme: warm sand base with the same turquoise /
-// sunset-coral / golden-sand accent family as the dark theme.
+// Tema de produto: base neutra (stone), superfícies brancas com borda fina e
+// coral como única cor de marca — usado só em ações e estados ativos. Amarelo
+// e verde ficam para atenção e dinheiro.
 export const colors = {
   // Base — areia clara e neutra, tom exato do mock de referência do Dashboard
-  background: '#F7F3EB',
-  backgroundAlt: '#F1EAD7',
-  surface: '#FFFDF7',
-  surfaceElevated: '#FFFDF7',
-  surfaceHighlight: '#FBF4E6',
-  border: '#ECE0C7',
-  borderLight: '#E3D6B4',
+  background: '#F5F5F4',
+  backgroundAlt: '#EFEEEC',
+  surface: '#FFFFFF',
+  surfaceElevated: '#FFFFFF',
+  surfaceHighlight: '#FAFAF9',
+  border: '#E7E5E4',
+  borderLight: '#EFEEED',
 
   // Marca — mar / turquesa
-  primary: '#0D8FA6', // teal do oceano — interativo geral
-  primaryMuted: '#E1F1F4',
-  primaryGlow: 'rgba(13, 143, 166, 0.16)',
+  primary: '#F0432B', // teal do oceano — interativo geral
+  primaryMuted: '#FFEFEA',
+  primaryGlow: 'rgba(240, 67, 43, 0.16)',
 
   emerald: '#0EA98D', // turquesa vivo — faturamento / positivo / sucesso
   emeraldMuted: '#DFF5F0',
@@ -23,9 +24,9 @@ export const colors = {
   coralMuted: '#FCEAE3',
   coralGlow: 'rgba(226, 96, 61, 0.16)',
 
-  sand: '#B87A1E', // areia dourada — detalhes / dinheiro físico
-  sandMuted: '#FBF0DC',
-  sandGlow: 'rgba(184, 122, 30, 0.16)',
+  sand: '#D98A00', // areia dourada — detalhes / dinheiro físico
+  sandMuted: '#FFF1D6',
+  sandGlow: 'rgba(217, 138, 0, 0.16)',
 
   // Semânticas
   success: '#0EA98D',
@@ -33,12 +34,12 @@ export const colors = {
   dangerMuted: '#FCE7EA',
   warning: '#E2603D',
   warningMuted: '#FCEAE3',
-  info: '#0D8FA6',
+  info: '#2A7DE1',
 
   // Texto
-  textPrimary: '#2C2419',
-  textSecondary: '#8B7E69',
-  textMuted: '#B7A88C',
+  textPrimary: '#1C1917',
+  textSecondary: '#78716C',
+  textMuted: '#A8A29E',
   textInverse: '#FFFFFF',
 
   // Formas de pagamento (cores distintas para facilitar leitura em gráficos)
@@ -56,34 +57,33 @@ export const colors = {
   // (container/onContainer, superfícies em camadas, outline) para que os
   // componentes possam seguir o vocabulário do design system do Flutter.
   onPrimary: '#FFFFFF',
-  primaryContainer: '#E1F1F4',
-  onPrimaryContainer: '#063A44',
+  primaryContainer: '#FFEFEA',
+  onPrimaryContainer: '#5A1408',
 
   onSecondary: '#FFFFFF',
   secondaryContainer: '#DFF5F0',
   onSecondaryContainer: '#04503F',
 
-  tertiary: '#B87A1E',
+  tertiary: '#D98A00',
   onTertiary: '#FFFFFF',
-  tertiaryContainer: '#FBF0DC',
+  tertiaryContainer: '#FFF1D6',
   onTertiaryContainer: '#5C3B0E',
 
   errorContainer: '#FCE7EA',
   onErrorContainer: '#6B1626',
 
-  onSurface: '#2C2419',
-  onSurfaceVariant: '#8B7E69',
-  outline: '#C9BC9E',
-  outlineVariant: '#E3D6B4',
+  onSurface: '#1C1917',
+  onSurfaceVariant: '#78716C',
+  outline: '#D6D3D1',
+  outlineVariant: '#E7E5E4',
 
-  // Superfícies em camadas: cada nível mistura um pouco mais do teal da
-  // marca sobre a base "areia" — equivalente ao surface tint do M3, usado
+  // Superfícies em camadas: cada nível escurece um pouco a base quente — equivalente ao surface tint do M3, usado
   // para dar profundidade sem depender só de sombra.
-  surfaceContainerLowest: '#FFFDF7',
-  surfaceContainerLow: '#F7FAF5',
-  surfaceContainer: '#EFF6F1',
-  surfaceContainerHigh: '#E7F1ED',
-  surfaceContainerHighest: '#DFEDE8',
+  surfaceContainerLowest: '#FFFFFF',
+  surfaceContainerLow: '#FAFAF9',
+  surfaceContainer: '#F5F5F4',
+  surfaceContainerHigh: '#EFEEEC',
+  surfaceContainerHighest: '#E7E5E4',
 } as const;
 
 export type AppColors = typeof colors;

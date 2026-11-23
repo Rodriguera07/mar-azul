@@ -11,7 +11,7 @@ import ReanimatedAnimated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { useAuthStore } from '../context/useAuthStore';
-import { colors, elevationShadow, nunitoFontFamily, radius, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, radius, shape, spacing, typography } from '../theme';
 import { dashboardPalette } from '../theme/dashboardPalette';
 import { RootStackParamList } from './types';
 
@@ -36,8 +36,8 @@ const NAV_ITEMS: DrawerItem[] = [
     key: 'ClosedTablesHistory',
     label: 'Histórico de Mesas Fechadas',
     icon: 'time-outline',
-    color: dashboardPalette.teal500,
-    muted: `${dashboardPalette.teal500}1F`,
+    color: dashboardPalette.positive,
+    muted: `${dashboardPalette.positive}1F`,
   },
   {
     key: 'UserManagement',
@@ -59,8 +59,8 @@ const NAV_ITEMS: DrawerItem[] = [
     key: 'ChangePassword',
     label: 'Alterar Senha',
     icon: 'key-outline',
-    color: dashboardPalette.teal700,
-    muted: `${dashboardPalette.teal700}1F`,
+    color: dashboardPalette.brand,
+    muted: `${dashboardPalette.brand}1F`,
     settingsSection: true,
   },
   {
@@ -161,7 +161,7 @@ function DrawerNavRow({
           <Ionicons name={item.icon} size={19} color={item.color} />
         </View>
         <Text
-          style={[styles.itemLabel, active && { color: item.color, fontFamily: nunitoFontFamily.bold }]}
+          style={[styles.itemLabel, active && { color: item.color, fontFamily: font.bold }]}
           numberOfLines={1}
         >
           {item.label}
@@ -201,7 +201,7 @@ export function AppDrawerContent({ navigation, state }: DrawerContentComponentPr
     <View style={styles.outer}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
         <LinearGradient
-          colors={[dashboardPalette.teal700, dashboardPalette.teal900]}
+          colors={[dashboardPalette.brand, dashboardPalette.ink900]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.header}
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   },
   roleBadgeText: {
     ...typography.caption,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textInverse,
   },
   itemsList: {
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
   logoutText: {
     ...typography.body,
     color: colors.textInverse,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   version: {
     ...typography.caption,

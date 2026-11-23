@@ -19,7 +19,7 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { useAuthStore } from '../context/useAuthStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
-import { colors, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, font, shape, spacing, typography } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DeleteAccount'>;
 
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
   leadKept: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textPrimary,
     marginTop: spacing.lg,
     marginBottom: spacing.xxs,

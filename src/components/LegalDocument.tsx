@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { LegalDoc } from '../content/legal';
 
 interface Props {
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h3,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textPrimary,
     marginBottom: spacing.xxs,
   },

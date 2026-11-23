@@ -25,7 +25,7 @@ import { useAuthStore } from '../context/useAuthStore';
 import { useMinimumVisible } from '../hooks/useMinimumVisible';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { sendPasswordReset } from '../services/adminApi';
-import { colors, nunitoFontFamily, spacing, typography } from '../theme';
+import { colors, font, spacing, typography } from '../theme';
 import { showAlert } from '../utils/alert';
 
 // Paleta "delivery": coral vivo + amarelo sol sobre tinta escura, com as
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
   brandTiny: { ...typography.label, color: UI.sun, letterSpacing: 3, fontSize: 10 },
   brandBig: { ...typography.display, fontSize: 20, color: colors.white, letterSpacing: 0.5 },
   headline: {
-    fontFamily: nunitoFontFamily.extraBold,
+    fontFamily: font.extraBold,
     fontSize: 40,
     lineHeight: 44,
     letterSpacing: -1,
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
   },
   cardCompact: { paddingTop: spacing.lg, paddingBottom: spacing.md },
   title: {
-    fontFamily: nunitoFontFamily.extraBold,
+    fontFamily: font.extraBold,
     fontSize: 26,
     letterSpacing: -0.5,
     color: colors.textPrimary,
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     ...typography.bodySm,
     color: UI.accent,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   errorBox: {
     flexDirection: 'row',
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   ctaCompact: { height: 52, marginTop: spacing.md },
-  ctaText: { ...typography.h3, fontFamily: nunitoFontFamily.extraBold, color: colors.white },
+  ctaText: { ...typography.h3, fontFamily: font.extraBold, color: colors.white },
   ctaArrow: {
     position: 'absolute',
     right: 8,
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   switchText: { ...typography.bodySm, color: colors.textSecondary },
-  switchAction: { ...typography.bodySm, color: UI.accent, fontFamily: nunitoFontFamily.extraBold },
+  switchAction: { ...typography.bodySm, color: UI.accent, fontFamily: font.extraBold },
   legalText: {
     ...typography.caption,
     color: 'rgba(255,255,255,0.65)',
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     marginTop: spacing.md,
   },
-  legalLink: { color: colors.white, fontFamily: nunitoFontFamily.bold },
+  legalLink: { color: colors.white, fontFamily: font.bold },
   legalModalHeader: {
     flexDirection: 'row',
     alignItems: 'center',

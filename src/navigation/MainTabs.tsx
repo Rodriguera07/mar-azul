@@ -1,33 +1,32 @@
+import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../context/useAuthStore';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { MenuManagementScreen } from '../screens/MenuManagementScreen';
 import { ReportsScreen } from '../screens/ReportsScreen';
 import { TablesScreen } from '../screens/TablesScreen';
-import { colors, nunitoFontFamily } from '../theme';
+import { colors, font } from '../theme';
 import { dashboardPalette } from '../theme/dashboardPalette';
 import { TabParamList } from './types';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
-// Emojis simples, sem tingimento por cor — igual ao mock de referência, em
-// vez de um ícone sólido tingido por aba (ficava "colorido" demais).
-const TAB_EMOJI: Record<keyof TabParamList, string> = {
-  Painel: '▦',
-  Mesas: '🍽',
-  Produtos: '📖',
-  Relatorios: '📈',
+const TAB_ICON: Record<
+  keyof TabParamList,
+  { on: keyof typeof Ionicons.glyphMap; off: keyof typeof Ionicons.glyphMap }
+> = {
+  Painel: { on: 'grid', off: 'grid-outline' },
+  Mesas: { on: 'restaurant', off: 'restaurant-outline' },
+  Produtos: { on: 'book', off: 'book-outline' },
+  Relatorios: { on: 'stats-chart', off: 'stats-chart-outline' },
 };
 
-function TabIcon({ name, focused }: { name: keyof TabParamList; focused: boolean }) {
-  return (
-    <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <Text style={styles.iconEmoji}>{TAB_EMOJI[name]}</Text>
-    </View>
-  );
+function TabIcon({ name, focused, color }: { name: keyof TabParamList; focused: boolean; color: string }) {
+  const icon = TAB_ICON[name];
+  return <Ionicons name={focused ? icon.on : icon.off} size={22} color={color} />;
 }
 
 // Barra de abas fixa (Painel / Mesas / Produtos / Relatórios) — navegação
@@ -46,18 +45,20 @@ export function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: dashboardPalette.teal700,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveTintColor: dashboardPalette.brand,
+        tabBarInactiveTintColor: colors.textMuted,
         sceneStyle: { backgroundColor: colors.background },
         tabBarStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.white,
           borderTopWidth: 1,
-          borderTopColor: colors.borderLight,
-          height: 56 + tabBarBottomPadding,
-          paddingTop: 6,
+          borderTopColor: colors.border,
+          height: 62 + tabBarBottomPadding,
+          paddingTop: 8,
           paddingBottom: tabBarBottomPadding,
         },
-        tabBarIcon: ({ focused }) => <TabIcon name={route.name as keyof TabParamList} focused={focused} />,
+        tabBarIcon: ({ focused, color }) => (
+          <TabIcon name={route.name as keyof TabParamList} focused={focused} color={color} />
+        ),
         // Em telas estreitas (~320-360px), 4 abas deixam pouco espaço por
         // label — sem limitar a 1 linha, "Relatórios" quebrava e ficava
         // cortado pela altura fixa da barra.
@@ -88,22 +89,10 @@ export function MainTabs() {
 }
 
 const styles = StyleSheet.create({
-  iconWrap: {
-    paddingHorizontal: 14,
-    paddingVertical: 1,
-    borderRadius: 999,
-    marginBottom: 2,
-  },
-  iconWrapActive: {
-    backgroundColor: `${dashboardPalette.teal700}1F`,
-  },
-  iconEmoji: {
-    fontSize: 19,
-    lineHeight: 22,
-  },
   label: {
-    fontFamily: nunitoFontFamily.semiBold,
-    fontSize: 10,
+    fontFamily: font.semiBold,
+    fontSize: 10.5,
     textAlign: 'center',
+    marginTop: 2,
   },
 });

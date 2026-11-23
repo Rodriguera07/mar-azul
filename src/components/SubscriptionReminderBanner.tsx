@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, nunitoFontFamily, radius, spacing } from '../theme';
+import { colors, font, radius, spacing } from '../theme';
 
 // Aviso de mensalidade do app: a assinatura vence todo dia 02. O card fica
 // discreto na maior parte do mês e ganha urgência (cor + texto) conforme a
@@ -40,12 +40,13 @@ function getMensalidadeStatus(now: Date): { status: Status; days: number } {
 
 const STATUS_STYLE: Record<
   Status,
-  { bg: string; iconBg: string; fg: string; icon: keyof typeof Ionicons.glyphMap }
+  { bg: string; border: string; iconBg: string; iconFg: string; fg: string; icon: keyof typeof Ionicons.glyphMap }
 > = {
-  today: { bg: colors.coralMuted, iconBg: colors.coral, fg: colors.coral, icon: 'alert-circle' },
-  overdue: { bg: colors.coralMuted, iconBg: colors.coral, fg: colors.coral, icon: 'alert-circle' },
-  upcoming: { bg: colors.sandMuted, iconBg: colors.sand, fg: colors.sand, icon: 'calendar' },
-  normal: { bg: colors.primaryMuted, iconBg: colors.primary, fg: colors.primary, icon: 'calendar-outline' },
+  today: { bg: colors.coralMuted, border: `${colors.coral}33`, iconBg: colors.coral, iconFg: colors.white, fg: colors.coral, icon: 'alert-circle' },
+  overdue: { bg: colors.coralMuted, border: `${colors.coral}33`, iconBg: colors.coral, iconFg: colors.white, fg: colors.coral, icon: 'alert-circle' },
+  upcoming: { bg: colors.sandMuted, border: `${colors.sand}33`, iconBg: colors.sand, iconFg: colors.white, fg: colors.sand, icon: 'calendar' },
+  // Estado normal é neutro (sem cor de alerta): só vira colorido perto do vencimento.
+  normal: { bg: colors.white, border: colors.border, iconBg: colors.surfaceContainerHigh, iconFg: colors.textPrimary, fg: colors.textPrimary, icon: 'calendar-outline' },
 };
 
 export function SubscriptionReminderBanner() {
@@ -77,9 +78,9 @@ export function SubscriptionReminderBanner() {
           : 'Vencimento fixo todo dia 02 de cada mês.';
 
   return (
-    <View style={[styles.card, { backgroundColor: style.bg }]}>
+    <View style={[styles.card, { backgroundColor: style.bg, borderColor: style.border }]}>
       <View style={[styles.iconWrap, { backgroundColor: style.iconBg }]}>
-        <Ionicons name={style.icon} size={18} color={colors.white} />
+        <Ionicons name={style.icon} size={18} color={style.iconFg} />
       </View>
       <View style={styles.textWrap}>
         <Text style={[styles.title, { color: style.fg }]} numberOfLines={1}>
@@ -108,6 +109,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     borderRadius: radius.lg,
+    borderWidth: 1,
     paddingHorizontal: spacing.md,
     paddingVertical: 12,
     marginBottom: spacing.md,
@@ -123,11 +125,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontFamily: nunitoFontFamily.extraBold,
+    fontFamily: font.extraBold,
     fontSize: 13.5,
   },
   subtitle: {
-    fontFamily: nunitoFontFamily.semiBold,
+    fontFamily: font.semiBold,
     fontSize: 11.5,
     color: colors.textSecondary,
     marginTop: 1,

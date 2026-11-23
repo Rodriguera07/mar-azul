@@ -16,7 +16,7 @@ import { Button } from '../components/Button';
 import { usePosStore } from '../context/usePosStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
-import { colors, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, font, shape, spacing, typography } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OpenTable'>;
 
@@ -136,7 +136,7 @@ export function OpenTableScreen({ navigation }: Props) {
         </ScrollView>
 
         <View style={[styles.footer, contentStyle]}>
-          <Button label="Abrir Mesa" size="lg" variant="emerald" onPress={handleConfirm} />
+          <Button label="Abrir Mesa" size="lg" variant="primary" onPress={handleConfirm} />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: colors.primary,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   chipDuplicate: {
     borderColor: colors.danger,

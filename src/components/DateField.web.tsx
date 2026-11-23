@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { colors, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, font, shape, spacing, typography } from '../theme';
 
 type Props = {
   value: Date;
@@ -38,7 +38,7 @@ export function DateField({ value, onChange, maximumDate }: Props) {
           border: 'none',
           outline: 'none',
           background: 'transparent',
-          fontFamily: nunitoFontFamily.regular,
+          fontFamily: font.regular,
           fontSize: typography.bodySm.fontSize,
           color: colors.textPrimary,
           padding: 0,

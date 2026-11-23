@@ -9,7 +9,7 @@ export type ElevationLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 const SURFACE_BY_LEVEL: Record<ElevationLevel, string> = {
   0: colors.surfaceContainerLowest,
-  1: colors.surfaceContainerLow,
+  1: colors.surfaceContainerLowest,
   2: colors.surfaceContainer,
   3: colors.surfaceContainerHigh,
   4: colors.surfaceContainerHigh,
@@ -18,17 +18,21 @@ const SURFACE_BY_LEVEL: Record<ElevationLevel, string> = {
 
 const SHADOW_BY_LEVEL: Record<ElevationLevel, ViewStyle> = {
   0: {},
+  // Nível 1 = cartão "plano": borda de 1px em vez de sombra visível (padrão de
+  // dashboards de produto); a sombra só sugere profundidade.
   1: {
+    borderWidth: 1,
+    borderColor: colors.border,
     shadowColor: colors.onSurface,
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
     shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+    elevation: 0,
   },
   2: {
     shadowColor: colors.onSurface,
-    shadowOpacity: 0.09,
-    shadowRadius: 7,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },

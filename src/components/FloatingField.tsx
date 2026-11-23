@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Platform, StyleSheet, TextInput, TextInputProps, View } from 'react-native';
-import { colors, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, font, shape, spacing, typography } from '../theme';
 
 interface Props extends Omit<TextInputProps, 'style'> {
   label: string;
@@ -87,12 +87,12 @@ const styles = StyleSheet.create({
   label: {
     position: 'absolute',
     left: 0,
-    fontFamily: nunitoFontFamily.semiBold,
+    fontFamily: font.semiBold,
     color: colors.textSecondary,
   },
   input: {
     ...typography.bodyLg,
-    fontFamily: nunitoFontFamily.semiBold,
+    fontFamily: font.semiBold,
     color: colors.textPrimary,
     height: '100%',
     paddingBottom: 0,

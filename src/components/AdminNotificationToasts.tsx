@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../context/useAuthStore';
 import { AUDIT_EVENT_META } from '../data/auditEvents';
 import { subscribeAuditLog } from '../services/firestoreOrg';
-import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { AuditEventType, AuditLogEntry } from '../types';
 
 // Mesmos eventos que já disparam push (ver notifyAdmins em usePosStore) —
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   },
   name: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textPrimary,
   },
   detail: {

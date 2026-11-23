@@ -20,7 +20,7 @@ import { CATEGORY_ICONS, CATEGORY_LABELS } from '../data/menu';
 import { usePosStore } from '../context/usePosStore';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { RootStackParamList } from '../navigation/types';
-import { colors, elevationShadow, nunitoFontFamily, shape, spacing, typography } from '../theme';
+import { colors, elevationShadow, font, shape, spacing, typography } from '../theme';
 import { MenuCategory, MenuItem } from '../types';
 import { formatCurrency } from '../utils/format';
 
@@ -222,7 +222,7 @@ export function AddItemsScreen({ navigation, route }: Props) {
         <Button
           label={`Concluir${totalItemsInCart > 0 ? ` (${totalItemsInCart} itens)` : ''}`}
           size="lg"
-          variant="emerald"
+          variant="primary"
           onPress={() => navigation.goBack()}
         />
       </View>
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   },
   categoryChipText: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.semiBold,
+    fontFamily: font.semiBold,
     color: colors.textPrimary,
   },
   categoryChipTextActive: {
@@ -362,19 +362,19 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     ...typography.body,
-    color: colors.emerald,
+    color: colors.textPrimary,
     marginTop: 4,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
   addBtn: {
     width: 36,
     height: 36,
     borderRadius: shape.full,
     overflow: 'hidden',
-    backgroundColor: colors.emerald,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.emerald,
+    shadowColor: colors.primary,
     shadowOpacity: 0.4,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },

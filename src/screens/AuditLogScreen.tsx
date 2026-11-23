@@ -11,7 +11,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useResponsiveContent } from '../hooks/useResponsiveContent';
 import { AUDIT_EVENT_META } from '../data/auditEvents';
 import { subscribeAuditLog } from '../services/firestoreOrg';
-import { colors, monoFontFamily, nunitoFontFamily, radius, spacing, typography } from '../theme';
+import { colors, monoFontFamily, font, radius, spacing, typography } from '../theme';
 import { AuditEventType, AuditLogEntry } from '../types';
 import { formatDateLabel, formatTime } from '../utils/format';
 
@@ -206,9 +206,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   filterChipActive: {
-    backgroundColor: colors.sand,
-    borderColor: colors.sand,
-    shadowColor: colors.sand,
+    backgroundColor: colors.textPrimary,
+    borderColor: colors.textPrimary,
+    shadowColor: colors.textPrimary,
     shadowOpacity: 0.35,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     ...typography.bodySm,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
     color: colors.textPrimary,
   },
   rowSub: {
@@ -279,6 +279,6 @@ const styles = StyleSheet.create({
   loadMoreText: {
     ...typography.bodySm,
     color: colors.primary,
-    fontFamily: nunitoFontFamily.bold,
+    fontFamily: font.bold,
   },
 });
