@@ -1,89 +1,63 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { LoginFoodMarquee } from './LoginFoodMarquee';
-import { colors, font, spacing, typography } from '../theme';
+import { colors, font, spacing } from '../theme';
+import { dashboardPalette } from '../theme/dashboardPalette';
 
 interface Props {
   message?: string;
 }
 
-// Mesma linguagem da tela de login ("delivery"): fotos do cardápio em
-// movimento sob um degradê escuro, coral + amarelo como acentos — a abertura
-// do app, o login e o painel parecem uma única cena, não telas soltas.
-const UI = {
-  ink: '#140A06',
-  accent: '#F0432B',
-  accentLight: '#FF7A45',
-  sun: '#FFB020',
-};
+const TRACK_WIDTH = 132;
+const BAR_WIDTH = 52;
 
-function LoadingDots() {
-  const anims = useRef([0, 1, 2].map(() => new Animated.Value(0))).current;
+// Barra de progresso indeterminada: um trecho coral desliza pela trilha sem
+// parar — indica "trabalhando" sem depender de um progresso real.
+function IndeterminateBar() {
+  const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const loops = anims.map((val, i) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(i * 160),
-          Animated.timing(val, {
-            toValue: 1,
-            duration: 420,
-            easing: Easing.out(Easing.quad),
-            useNativeDriver: true,
-          }),
-          Animated.timing(val, {
-            toValue: 0,
-            duration: 420,
-            easing: Easing.in(Easing.quad),
-            useNativeDriver: true,
-          }),
-          Animated.delay((2 - i) * 160),
-        ])
-      )
+    const loop = Animated.loop(
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: 1300,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: true,
+      })
     );
-    loops.forEach((loop) => loop.start());
-    return () => loops.forEach((loop) => loop.stop());
-  }, [anims]);
+    loop.start();
+    return () => loop.stop();
+  }, [progress]);
+
+  const translateX = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-BAR_WIDTH, TRACK_WIDTH],
+  });
 
   return (
-    <View style={styles.dotsRow}>
-      {anims.map((val, i) => (
-        <Animated.View
-          key={i}
-          style={[
-            styles.dot,
-            {
-              opacity: val.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }),
-              transform: [
-                { translateY: val.interpolate({ inputRange: [0, 1], outputRange: [0, -7] }) },
-              ],
-            },
-          ]}
-        />
-      ))}
+    <View style={styles.track}>
+      <Animated.View style={[styles.bar, { transform: [{ translateX }] }]} />
     </View>
   );
 }
 
 // Tela de loading usada tanto na abertura do app (restaurando sessão /
 // carregando fontes) quanto logo após o envio do login, pra evitar o corte
-// seco de "formulário" direto pro painel.
+// seco de "formulário" direto pro painel. Mesma linguagem do login: fundo
+// neutro, logo com borda fina, coral só no indicador de progresso.
 export function LoadingScreen({ message = 'Carregando…' }: Props) {
-  const pulse = useRef(new Animated.Value(0)).current;
   const fade = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(fade, { toValue: 1, duration: 320, useNativeDriver: true }).start();
+    Animated.timing(fade, { toValue: 1, duration: 300, useNativeDriver: true }).start();
   }, [fade]);
 
-  // Anel que se expande e some a partir do logo — indica "trabalhando" sem
-  // depender de uma barra de progresso real.
   useEffect(() => {
     const loop = Animated.loop(
       Animated.timing(pulse, {
         toValue: 1,
-        duration: 1600,
+        duration: 1800,
         easing: Easing.out(Easing.quad),
         useNativeDriver: true,
       })
@@ -92,34 +66,26 @@ export function LoadingScreen({ message = 'Carregando…' }: Props) {
     return () => loop.stop();
   }, [pulse]);
 
-  const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.9] });
-  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 0] });
+  const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.7] });
+  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0] });
 
   return (
     <View style={styles.flex}>
-      <LoginFoodMarquee tile={84} />
-      <LinearGradient
-        colors={['rgba(20,10,6,0.78)', 'rgba(20,10,6,0.88)', 'rgba(20,10,6,0.97)']}
-        locations={[0, 0.5, 1]}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
+      <LinearGradient colors={['#FFFFFF', colors.background]} style={styles.wash} pointerEvents="none" />
 
       <Animated.View style={[styles.center, { opacity: fade }]}>
         <View style={styles.logoWrap}>
           <Animated.View
             style={[styles.ring, { opacity: ringOpacity, transform: [{ scale: ringScale }] }]}
           />
-          <View style={styles.logoBadge}>
-            <Image source={require('../../assets/icon.png')} style={styles.logoImage} resizeMode="cover" />
-          </View>
+          <Image source={require('../../assets/icon.png')} style={styles.logo} resizeMode="cover" />
         </View>
 
-        <Text style={styles.brandTiny}>TRAILER</Text>
-        <Text style={styles.brandBig}>MAR AZUL</Text>
+        <Text style={styles.brandName}>Mar Azul</Text>
+        <Text style={styles.brandTag}>Gestão do quiosque</Text>
 
         <View style={styles.loaderWrap}>
-          <LoadingDots />
+          <IndeterminateBar />
           <Text style={styles.message}>{message}</Text>
         </View>
       </Animated.View>
@@ -128,7 +94,8 @@ export function LoadingScreen({ message = 'Carregando…' }: Props) {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: UI.ink },
+  flex: { flex: 1, backgroundColor: colors.background },
+  wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 420 },
   center: {
     flex: 1,
     alignItems: 'center',
@@ -136,65 +103,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   logoWrap: {
-    width: 92,
-    height: 92,
+    width: 76,
+    height: 76,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   ring: {
     position: 'absolute',
-    width: 92,
-    height: 92,
-    borderRadius: 28,
-    borderWidth: 3,
-    borderColor: UI.accentLight,
+    width: 76,
+    height: 76,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: dashboardPalette.brand,
   },
-  logoBadge: {
-    width: 92,
-    height: 92,
-    borderRadius: 28,
+  logo: {
+    width: 76,
+    height: 76,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  brandName: { fontFamily: font.bold, fontSize: 24, letterSpacing: -0.8, color: colors.textPrimary },
+  brandTag: { fontFamily: font.medium, fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  loaderWrap: { marginTop: spacing.xxl, alignItems: 'center', gap: spacing.sm },
+  track: {
+    width: TRACK_WIDTH,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.surfaceContainerHighest,
     overflow: 'hidden',
-    borderWidth: 2.5,
-    borderColor: 'rgba(255,255,255,0.92)',
-    shadowColor: UI.accent,
-    shadowOpacity: 0.5,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
   },
-  logoImage: { width: '100%', height: '100%' },
-  brandTiny: {
-    ...typography.label,
-    color: UI.sun,
-    letterSpacing: 4,
+  bar: {
+    width: BAR_WIDTH,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: dashboardPalette.brand,
   },
-  brandBig: {
-    ...typography.display,
-    fontSize: 30,
-    color: colors.white,
-    letterSpacing: 1,
-    marginTop: 2,
-  },
-  loaderWrap: {
-    marginTop: spacing.xxl,
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  dotsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  dot: {
-    width: 9,
-    height: 9,
-    borderRadius: 999,
-    backgroundColor: UI.sun,
-  },
-  message: {
-    ...typography.bodySm,
-    fontFamily: font.semiBold,
-    color: 'rgba(255,255,255,0.75)',
-    marginTop: spacing.xs,
-  },
+  message: { fontFamily: font.medium, fontSize: 13, color: colors.textSecondary },
 });
