@@ -1,7 +1,8 @@
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { auth } from '../config/firebase';
+import { auth, isAppleMobileWeb } from '../config/firebase';
+import { withTimeout } from '../utils/timeout';
 import { getAdminPushTokens, setUserPushToken, setUserWebPushSubscription } from './firestoreOrg';
 
 // Sem isso, uma notificação que chega com o app aberto em primeiro plano
@@ -39,10 +40,22 @@ async function registerForWebPushAsync(orgId: string, uid: string): Promise<void
   if (!vapidPublicKey) return;
 
   try {
-    const permission = await Notification.requestPermission();
+    // No iPhone isto só roda no app instalado na tela de início (no Safari
+    // comum a API nem existe — por isso o app funcionava no link e travava
+    // instalado). O iOS só aceita pedir permissão a partir de um toque do
+    // usuário; pedir aqui, sozinho no login, deixava a promessa pendurada /
+    // abria o aviso do sistema por cima do app. Então no iPhone não pedimos
+    // na abertura: só registramos se a permissão já foi concedida.
+    let permission = Notification.permission;
+    if (permission === 'default' && !isAppleMobileWeb) {
+      permission = await Notification.requestPermission();
+    }
     if (permission !== 'granted') return;
 
-    const registration = await navigator.serviceWorker.register('/sw.js');
+    // Espera o app terminar de abrir antes de mexer com Service Worker, e não
+    // deixa a espera prender nada se o iOS demorar a responder.
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    const registration = await withTimeout(navigator.serviceWorker.register('/sw.js'), 10000);
     let subscription = await registration.pushManager.getSubscription();
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({

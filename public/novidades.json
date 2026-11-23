@@ -1,9 +1,9 @@
 {
-  "titulo": "Avisos novos na tela de Cardápio",
+  "titulo": "App instalado no iPhone mais estável",
   "itens": [
-    "Restaurar preços mostra antes quantos itens mudam e exemplos de preços",
-    "Depois de restaurar, já dá para salvar direto pela janela",
-    "Salvar, descartar alterações e erros de conexão agora aparecem em janelas no visual do app",
-    "Se algum item estiver sem nome ou com valor zerado, o aviso diz quantos são"
+    "Corrige a tela branca e os toques que não respondiam no app instalado na tela de início do iPhone",
+    "O app não pede mais permissão de notificação sozinho na abertura no iPhone",
+    "Tremedeira na tela reduzida: a página não rola mais por baixo do app",
+    "O menu lateral abre pelo botão do avatar"
   ]
 }
