@@ -18,6 +18,7 @@ import { logAuditEvent } from '../services/auditLog';
 import { countActiveAdmins, deleteOwnAccountData } from '../services/firestoreOrg';
 import { UserProfile } from '../types';
 import { sanitizeUserProfile } from '../utils/sanitize';
+import { withTimeout } from '../utils/timeout';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -49,8 +50,10 @@ interface UserPointer {
   role: UserProfile['role'];
 }
 
+const READ_TIMEOUT_MS = 15000;
+
 async function fetchPointer(uid: string): Promise<UserPointer | null> {
-  const snap = await getDoc(doc(db, 'users', uid));
+  const snap = await withTimeout(getDoc(doc(db, 'users', uid)), READ_TIMEOUT_MS);
   return snap.exists() ? (snap.data() as UserPointer) : null;
 }
 
@@ -72,7 +75,7 @@ async function fetchPointerWithRetry(
 }
 
 async function fetchOrgProfile(orgId: string, uid: string): Promise<UserProfile | null> {
-  const snap = await getDoc(doc(db, 'organizations', orgId, 'users', uid));
+  const snap = await withTimeout(getDoc(doc(db, 'organizations', orgId, 'users', uid)), READ_TIMEOUT_MS);
   return snap.exists() ? sanitizeUserProfile(uid, snap.data()) : null;
 }
 
@@ -86,7 +89,11 @@ function friendlyAuthError(code: string): string {
     case 'auth/too-many-requests':
       return 'Muitas tentativas. Aguarde um instante e tente novamente.';
     case 'auth/network-request-failed':
+    case 'unavailable':
       return 'Sem conexão com a internet.';
+    case 'timeout':
+    case 'deadline-exceeded':
+      return 'A conexão está lenta e o servidor não respondeu. Tente novamente.';
     default:
       return 'Não foi possível entrar. Tente novamente.';
   }
@@ -145,34 +152,71 @@ function friendlyDeleteAccountError(code: string): string {
 // mudanças feitas por um admin (ex.: desativar a conta) se reflitam na hora.
 let profileUnsubscribe: Unsubscribe | null = null;
 
-function watchProfile(uid: string, orgId: string) {
+function stopWatchingProfile() {
   profileUnsubscribe?.();
-  profileUnsubscribe = onSnapshot(
-    doc(db, 'organizations', orgId, 'users', uid),
-    (snap) => {
-      if (!snap.exists()) {
-        useAuthStore.setState({ status: 'unauthenticated', user: null });
-        return;
+  profileUnsubscribe = null;
+}
+
+// Erros que significam "este usuário não pode mais ver o próprio perfil"
+// (conta removida/desativada pelo admin). Qualquer outro erro é passageiro
+// (rede caiu, iPhone voltou do segundo plano, token renovando).
+const FATAL_PROFILE_ERRORS = new Set(['permission-denied', 'unauthenticated', 'not-found']);
+
+function watchProfile(uid: string, orgId: string) {
+  stopWatchingProfile();
+  let cancelled = false;
+  let inner: Unsubscribe | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let attempt = 0;
+
+  const start = () => {
+    if (cancelled) return;
+    inner = onSnapshot(
+      doc(db, 'organizations', orgId, 'users', uid),
+      (snap) => {
+        attempt = 0;
+        if (!snap.exists()) {
+          stopWatchingProfile();
+          useAuthStore.setState({ status: 'unauthenticated', user: null });
+          return;
+        }
+        const profile = sanitizeUserProfile(uid, snap.data());
+        if (!profile.active) {
+          stopWatchingProfile();
+          signOut(auth);
+          return;
+        }
+        useAuthStore.setState({ status: 'authenticated', user: profile });
+      },
+      (err: any) => {
+        console.warn('[firestore] listener "profile" falhou', err);
+        inner = null;
+        const signedIn = useAuthStore.getState().status === 'authenticated';
+        // Antes, QUALQUER erro aqui deslogava — no iPhone, que derruba a
+        // conexão toda vez que o app vai para o segundo plano, isso jogava a
+        // pessoa de volta no login no meio do atendimento. Agora só uma
+        // falha de permissão encerra a sessão; o resto é religado sozinho.
+        // Na primeira carga (ainda sem perfil), desiste depois de algumas
+        // tentativas para não prender ninguém na tela de loading.
+        if (FATAL_PROFILE_ERRORS.has(err?.code) || (!signedIn && attempt >= 3)) {
+          stopWatchingProfile();
+          useAuthStore.setState({ status: 'unauthenticated', user: null });
+          return;
+        }
+        const delay = Math.min(15000, 1000 * 2 ** attempt);
+        attempt += 1;
+        timer = setTimeout(start, delay);
       }
-      const profile = sanitizeUserProfile(uid, snap.data());
-      if (!profile.active) {
-        profileUnsubscribe?.();
-        profileUnsubscribe = null;
-        signOut(auth);
-        return;
-      }
-      useAuthStore.setState({ status: 'authenticated', user: profile });
-    },
-    (err) => {
-      // Sem isso, um erro aqui (ex.: permissão revogada, sem conexão na
-      // primeira carga) deixava o usuário preso na tela de loading para
-      // sempre, sem cair de volta no login.
-      console.warn('[firestore] listener "profile" falhou', err);
-      profileUnsubscribe?.();
-      profileUnsubscribe = null;
-      useAuthStore.setState({ status: 'unauthenticated', user: null });
-    }
-  );
+    );
+  };
+
+  start();
+  profileUnsubscribe = () => {
+    cancelled = true;
+    if (timer) clearTimeout(timer);
+    inner?.();
+    inner = null;
+  };
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -192,6 +236,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         await signOut(auth);
         return { ok: false, error: 'Conta desativada. Fale com o admin.' };
       }
+      // Entra direto com o perfil já lido, sem depender só do
+      // onAuthStateChanged: se a abertura caiu no login por demora (ver
+      // o teto de tempo do App.tsx), o Firebase pode já considerar a mesma conta logada
+      // e não avisar de novo — e o app ficaria parado na tela de login.
+      useAuthStore.setState({ status: 'authenticated', user: profile });
+      watchProfile(profile.uid, profile.orgId);
       await logAuditEvent({
         orgId: profile.orgId,
         userId: profile.uid,
@@ -348,6 +398,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 // Restaura a sessão ao abrir o app e mantém org/role sincronizados enquanto
 // o usuário estiver logado. Chamado uma única vez (ver App.tsx).
+// (O teto de tempo da abertura, para não ficar preso no loading, fica no
+// App.tsx.)
 export function initAuthListener(): Unsubscribe {
   return onAuthStateChanged(auth, async (firebaseUser) => {
     if (!firebaseUser) {

@@ -69,6 +69,20 @@ export const auth: Auth =
     ? createWebAuth()
     : initializeAuth(app, { persistence: getReactNativePersistence(AsyncStorage) });
 
+// Todo navegador de iPhone/iPad (Safari, Chrome, app instalado na tela de
+// início) roda sobre o WebKit. Nele, o canal de streaming que o Firestore usa
+// por padrão às vezes fica "pendurado" sem dar erro — principalmente depois
+// de o app voltar do segundo plano ou trocar de Wi-Fi para 4G/5G. O sintoma é
+// tela carregando para sempre (getDoc nunca responde) ou dados que param de
+// atualizar. No iOS usamos long polling (requisições HTTP comuns), que é mais
+// lento por alguns milissegundos mas não trava. iPadOS se apresenta como Mac,
+// por isso a checagem extra de toque.
+export const isAppleMobileWeb: boolean =
+  Platform.OS === 'web' &&
+  typeof navigator !== 'undefined' &&
+  (/iPad|iPhone|iPod/i.test(navigator.userAgent || '') ||
+    (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints ?? 0) > 1));
+
 export const db: Firestore = initializeFirestore(app, {
   localCache: Platform.OS === 'web' ? memoryLocalCache() : persistentLocalCache(),
   // O app usa `campo?: string` (undefined) para "sem valor" em vários tipos
@@ -79,7 +93,14 @@ export const db: Firestore = initializeFirestore(app, {
   // iCloud costumam barrar o canal em tempo real (WebChannel) do Firestore, e
   // o app ficava sem receber dados. Com isto o SDK testa a conexão e, se o
   // canal normal falhar, muda sozinho para o modo compatível (long polling).
-  ...(Platform.OS === 'web' ? { experimentalAutoDetectLongPolling: true } : {}),
+  // No iPhone/iPad vai direto para o long polling (o canal normal às vezes
+  // trava sem falhar, e aí a detecção automática não percebe). As duas opções
+  // NÃO podem ser ligadas juntas — o Firestore recusa a configuração.
+  ...(isAppleMobileWeb
+    ? { experimentalForceLongPolling: true, experimentalAutoDetectLongPolling: false }
+    : Platform.OS === 'web'
+      ? { experimentalAutoDetectLongPolling: true }
+      : {}),
 });
 
 export { app, firebaseConfig };

@@ -3,7 +3,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!_expo/|assets/|api/).*)",
       "destination": "/index.html"
     }
   ],

@@ -48,6 +48,7 @@ import {
 import { formatDateKey } from '../utils/format';
 import { generateId } from '../utils/id';
 import { showAlert } from '../utils/alert';
+import { withTimeout } from '../utils/timeout';
 import type { Unsubscribe } from 'firebase/firestore';
 
 // Escritas "dispare e esqueça" (não aguardadas pela UI) falhavam em
@@ -208,6 +209,7 @@ let menuUnsubscribe: Unsubscribe | null = null;
 // Evita gravar a atualização da tabela duas vezes se o servidor reenviar o
 // documento antes de a primeira gravação terminar.
 let upgradingMenu = false;
+let syncGeneration = 0;
 
 export const usePosStore = create<PosState>((set, get) => ({
   tables: [],
@@ -246,20 +248,40 @@ export const usePosStore = create<PosState>((set, get) => ({
     // desse fechamento, não da meia-noite — senão, ao sair e entrar de novo
     // no mesmo dia, as vendas já encerradas voltam a aparecer como se o dia
     // nunca tivesse sido fechado.
-    getDaySummary(orgId, formatDateKey()).then((rollup) => {
-      // A org pode ter trocado (novo login) enquanto essa leitura estava em
-      // andamento — nesse caso, quem já reiniciou a sincronização por último
-      // é quem deve vencer.
-      if (get().orgId !== orgId) return;
-      const since =
-        rollup && rollup.closedAt > startOfToday.toISOString()
-          ? rollup.closedAt
-          : startOfToday.toISOString();
+    // Cada initOrgSync ganha um número: uma leitura que termina depois de
+    // outra sincronização já ter começado (novo login, mudança de papel, ou
+    // a mesma org reiniciada) é descartada — antes, a checagem só por orgId
+    // deixava duas escutas de vendas ligadas ao mesmo tempo nesse caso.
+    const generation = ++syncGeneration;
+    const subscribeSales = (since: string) => {
+      if (generation !== syncGeneration) return;
+      closedSalesUnsubscribe?.();
       set({ salesWindowStart: since });
       closedSalesUnsubscribe = subscribeClosedSalesSince(orgId, since, (closedSalesToday) =>
         set({ closedSalesToday })
       );
-    });
+    };
+    withTimeout(getDaySummary(orgId, formatDateKey()), 12000)
+      .then((rollup) => {
+        subscribeSales(
+          rollup && rollup.closedAt > startOfToday.toISOString()
+            ? rollup.closedAt
+            : startOfToday.toISOString()
+        );
+      })
+      .catch((err) => {
+        // Sem rede na abertura (ou leitura presa): antes, as vendas de hoje
+        // nunca eram assinadas e o Painel ficava com faturamento zerado até
+        // recarregar o app. Começa da meia-noite e ajusta assim que o resumo
+        // do dia puder ser lido.
+        console.warn('[usePosStore] ler resumo do dia', err);
+        subscribeSales(startOfToday.toISOString());
+        getDaySummary(orgId, formatDateKey())
+          .then((rollup) => {
+            if (rollup && rollup.closedAt > startOfToday.toISOString()) subscribeSales(rollup.closedAt);
+          })
+          .catch(() => {});
+      });
 
     menuUnsubscribe = subscribeMenu(orgId, (items, version) => {
       if (!items) {
@@ -298,6 +320,7 @@ export const usePosStore = create<PosState>((set, get) => ({
   },
 
   teardownOrgSync: () => {
+    syncGeneration += 1;
     lastRemote = [];
     pendingOps.clear();
     clearLiveEvents();

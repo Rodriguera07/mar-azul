@@ -17,6 +17,7 @@ import { UpdateBanner } from './src/components/UpdateBanner';
 import { initAuthListener, useAuthStore } from './src/context/useAuthStore';
 import { useMinimumVisible } from './src/hooks/useMinimumVisible';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { startConnectionKeeper } from './src/services/connectionKeeper';
 import { colors } from './src/theme';
 
 const navigationTheme = {
@@ -32,7 +33,10 @@ const navigationTheme = {
 };
 
 export default function App() {
-  useEffect(() => initAuthListener(), []);
+  useEffect(() => {
+    startConnectionKeeper();
+    return initAuthListener();
+  }, []);
 
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
