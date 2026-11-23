@@ -12,7 +12,7 @@ interface Props {
   bottomSpace?: number;
 }
 
-// Faixa de marca no topo das telas principais: degradê coral com círculos
+// Faixa de marca no topo das telas principais: degradê azul com círculos
 // decorativos e cantos inferiores bem arredondados. Cobre a área da barra de
 // status (usa o inset do topo), então a tela que a usa não precisa de
 // SafeAreaView no topo.
@@ -20,14 +20,20 @@ export function BrandHeader({ children, bottomSpace = 22 }: Props) {
   const insets = useSafeAreaInsets();
   return (
     <View style={styles.wrap}>
-      <LinearGradient
-        colors={[dashboardPalette.brandLight, dashboardPalette.brand, dashboardPalette.brandDark]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-      />
-      <View style={styles.circleA} pointerEvents="none" />
-      <View style={styles.circleB} pointerEvents="none" />
+      {/* Só o FUNDO (degradê + círculos) é recortado com cantos arredondados. O
+          conteúdo fica fora da área recortada: no iPhone, itens animados ou que
+          mudam dentro de um contêiner com `overflow: hidden` + cantos
+          arredondados fazem o WebKit repintar tudo e a tela piscar. */}
+      <View style={styles.bg} pointerEvents="none">
+        <LinearGradient
+          colors={[dashboardPalette.brandLight, dashboardPalette.brand, dashboardPalette.brandDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={styles.circleA} />
+        <View style={styles.circleB} />
+      </View>
       <View style={{ paddingTop: insets.top + 12, paddingBottom: bottomSpace, paddingHorizontal: 16 }}>
         {children}
       </View>
@@ -37,6 +43,10 @@ export function BrandHeader({ children, bottomSpace = 22 }: Props) {
 
 const styles = StyleSheet.create({
   wrap: {
+    position: 'relative',
+  },
+  bg: {
+    ...StyleSheet.absoluteFillObject,
     overflow: 'hidden',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,

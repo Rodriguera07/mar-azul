@@ -123,6 +123,7 @@ export function CloseTableScreen({ navigation, route }: Props) {
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
       <ScreenBar
+        titleSize={28}
         title={`Fechar Mesa ${table.label}`}
         onClose={() => navigation.goBack()}
       />
