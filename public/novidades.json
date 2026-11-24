@@ -1,9 +1,8 @@
 {
-  "titulo": "Avisos novos na tela de Cardápio",
+  "titulo": "Painel de erros dentro do app",
   "itens": [
-    "Restaurar preços mostra antes quantos itens mudam e exemplos de preços",
-    "Depois de restaurar, já dá para salvar direto pela janela",
-    "Salvar, descartar alterações e erros de conexão agora aparecem em janelas no visual do app",
-    "Se algum item estiver sem nome ou com valor zerado, o aviso diz quantos são"
+    "Se algo der errado, aparece um botão vermelho \"!\" no canto da tela",
+    "Ao tocar nele, dá para ver o que falhou e copiar para mandar ao suporte",
+    "Se a tela ficar em branco, o painel abre sozinho depois de alguns segundos"
   ]
 }

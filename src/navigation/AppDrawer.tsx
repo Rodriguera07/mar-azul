@@ -1,9 +1,9 @@
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import React from 'react';
 import { useWindowDimensions } from 'react-native';
+import { isAppleMobileWeb } from '../config/firebase';
 import { AppDrawerContent } from './AppDrawerContent';
 import { AppStack } from './AppStack';
-import { isAppleMobileWeb } from '../utils/platform';
 import { colors } from '../theme';
 import { DrawerParamList } from './types';
 
@@ -41,6 +41,11 @@ export function AppDrawer() {
           elevation: 20,
         },
         swipeEdgeWidth: 60,
+        // No iPhone (Safari / app da tela de início) o gesto de arrastar da
+        // borda esquerda é do próprio iOS ("voltar"): os dois disputavam o
+        // toque, causando tremedeira e toques perdidos. O menu continua
+        // abrindo pelo botão do avatar no Painel.
+        swipeEnabled: !isAppleMobileWeb,
       }}
       drawerContent={(props) => <AppDrawerContent {...props} />}
     >
