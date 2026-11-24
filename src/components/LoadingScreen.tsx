@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
 import { LoginFoodMarquee } from './LoginFoodMarquee';
+import { isAppleMobileWeb } from '../utils/platform';
 import { colors, font, spacing } from '../theme';
 import { dashboardPalette } from '../theme/dashboardPalette';
 
@@ -15,9 +16,13 @@ const BAR_WIDTH = 52;
 // Barra de progresso indeterminada: um trecho coral desliza pela trilha sem
 // parar — indica "trabalhando" sem depender de um progresso real.
 function IndeterminateBar() {
-  const progress = useRef(new Animated.Value(0)).current;
+  // No iPhone fica parada no meio da trilha (visível, sem animar).
+  const progress = useRef(new Animated.Value(isAppleMobileWeb ? 0.5 : 0)).current;
 
   useEffect(() => {
+    // iPhone: animação infinita faz o WebKit repintar a tela toda sem parar
+    // (mesmo motivo do PulseDot e das faixas de fotos) — fica parada.
+    if (isAppleMobileWeb) return;
     const loop = Animated.loop(
       Animated.timing(progress, {
         toValue: 1,
@@ -55,6 +60,7 @@ export function LoadingScreen({ message = 'Carregando…' }: Props) {
   }, [fade]);
 
   useEffect(() => {
+    if (isAppleMobileWeb) return;
     const loop = Animated.loop(
       Animated.timing(pulse, {
         toValue: 1,
