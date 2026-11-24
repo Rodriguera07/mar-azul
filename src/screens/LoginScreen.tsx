@@ -94,6 +94,19 @@ export function LoginScreen() {
   // Cobre o formulário com a tela de loading do app enquanto autentica
   // (mesma duração mínima da abertura, pra não piscar em logins rápidos).
   const showLoadingOverlay = useMinimumVisible(loading);
+  // A tela de loading tem animações que não param (barra, ondas, faixa de
+  // fotos). Antes ficava montada o tempo todo, invisível por cima do
+  // formulário, repintando a tela sem ninguém ver — no iPhone isso gerava
+  // tremedeira. Agora só existe enquanto aparece (e durante o fade-out).
+  const [overlayMounted, setOverlayMounted] = useState(false);
+  useEffect(() => {
+    if (showLoadingOverlay) {
+      setOverlayMounted(true);
+      return;
+    }
+    const t = setTimeout(() => setOverlayMounted(false), 320);
+    return () => clearTimeout(t);
+  }, [showLoadingOverlay]);
   useEffect(() => {
     Animated.timing(loadingOpacity, {
       toValue: showLoadingOverlay ? 1 : 0,
@@ -403,12 +416,14 @@ export function LoginScreen() {
         </SafeAreaView>
       </Modal>
 
-      <Animated.View
-        pointerEvents={showLoadingOverlay ? 'auto' : 'none'}
-        style={[styles.loadingOverlay, { opacity: loadingOpacity }]}
-      >
-        <LoadingScreen message={mode === 'login' ? 'Entrando…' : 'Criando sua conta…'} />
-      </Animated.View>
+      {overlayMounted ? (
+        <Animated.View
+          pointerEvents={showLoadingOverlay ? 'auto' : 'none'}
+          style={[styles.loadingOverlay, { opacity: loadingOpacity }]}
+        >
+          <LoadingScreen message={mode === 'login' ? 'Entrando…' : 'Criando sua conta…'} />
+        </Animated.View>
+      ) : null}
     </View>
   );
 }
