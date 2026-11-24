@@ -34,8 +34,10 @@ export function AppDrawer() {
           borderBottomRightRadius: 28,
           shadowColor: colors.black,
           shadowOffset: { width: 8, height: 0 },
-          shadowOpacity: 0.2,
-          shadowRadius: 24,
+          // No iPhone/iPad a sombra larga de uma camada de tela inteira fica
+          // sendo recomposta o tempo todo, mesmo com o menu fechado.
+          shadowOpacity: isAppleMobileWeb ? 0 : 0.2,
+          shadowRadius: isAppleMobileWeb ? 0 : 24,
           elevation: 20,
         },
         swipeEdgeWidth: 60,

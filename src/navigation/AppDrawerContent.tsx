@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentComponentProps, useDrawerProgress } from '@react-navigation/drawer';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import ReanimatedAnimated, {
   Extrapolation,
   interpolate,
@@ -315,9 +315,20 @@ export function AppDrawerContent({ navigation, state }: DrawerContentComponentPr
         <Text style={styles.version}>
           Trailer Mar Azul{getBuildId() ? ` · versão ${getBuildId()}` : ''}
         </Text>
+        {diagnosticsLine() ? <Text style={styles.version}>{diagnosticsLine()}</Text> : null}
       </View>
     </View>
   );
+}
+
+// Linha discreta para suporte: se a tela do app instalado "tremer", ela mostra
+// se a página está recarregando de verdade ou só mudando de tamanho.
+function diagnosticsLine(): string | null {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return null;
+  const d = (window as unknown as { __diag?: { loads: number; resizes: number; resets: number } }).__diag;
+  if (!d) return null;
+  const installed = (navigator as unknown as { standalone?: boolean }).standalone === true;
+  return `${installed ? 'instalado' : 'navegador'} · cargas ${d.loads} · tela ${d.resizes}/${d.resets}`;
 }
 
 // O state da Drawer.Navigator só sabe o nome da rota filha ("AppStack"); o
