@@ -1,8 +1,8 @@
 {
-  "titulo": "Painel de erros dentro do app",
+  "titulo": "iPhone mais estável",
   "itens": [
-    "Se algo der errado, aparece um botão vermelho \"!\" no canto da tela",
-    "Ao tocar nele, dá para ver o que falhou e copiar para mandar ao suporte",
-    "Se a tela ficar em branco, o painel abre sozinho depois de alguns segundos"
+    "Tela de entrada não pisca nem treme mais no app instalado no iPhone",
+    "Altura da tela acompanha o aparelho ao voltar do segundo plano ou fechar o teclado",
+    "Menos trabalho escondido em segundo plano, deixando o app mais leve"
   ]
 }

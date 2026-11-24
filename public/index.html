@@ -56,7 +56,10 @@
         "borrachava" (rolava um pouco e voltava) e disputava o gesto com as
         listas do app, o que dava tremedeira e toques que não pegavam. Fixar o
         corpo na tela impede a página de rolar por baixo do app; só as listas
-        internas rolam. 100dvh acompanha a altura real visível (sem barras).
+        internas rolam. O #root usa height:100% do corpo fixo (= a tela real).
+        Não usar 100dvh aqui: no iOS instalado o dvh fica desatualizado ao
+        voltar do segundo plano / girar / fechar o teclado, deixando o layout
+        desalinhado e com faixa em branco.
       */
       @media (hover: none) and (pointer: coarse) {
         body {
@@ -66,11 +69,6 @@
           right: 0;
           bottom: 0;
           width: 100%;
-        }
-        @supports (height: 100dvh) {
-          #root {
-            height: 100dvh;
-          }
         }
       }
     </style>
