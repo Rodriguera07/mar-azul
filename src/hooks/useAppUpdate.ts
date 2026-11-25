@@ -12,6 +12,20 @@ const CHECK_EVERY_MS = 5 * 60 * 1000;
 // Se o app ficou em segundo plano por mais que isso, é seguro recarregar na
 // volta (ninguém estava digitando) — antes disso só mostramos o aviso.
 const AUTO_RELOAD_AFTER_HIDDEN_MS = 60 * 1000;
+// Um app deixado aberto o dia todo no balcão (sem nunca ir pro segundo plano
+// por tempo suficiente) ficava preso na versão antiga até alguém tocar em
+// "Atualizar" — a maioria não toca. Depois de detectar uma versão nova,
+// aplica sozinho na primeira vez que ninguém estiver digitando, em vez de
+// depender só do toque ou de um tempo longo em segundo plano.
+const AUTO_APPLY_IDLE_MS = 20 * 1000;
+
+// Mesma checagem usada no resetScroll do index.html: não recarrega com
+// alguém no meio de uma edição (perderia o que não foi salvo ainda).
+function isUserBusy(): boolean {
+  if (typeof document === 'undefined') return false;
+  const a = document.activeElement as HTMLElement | null;
+  return !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
+}
 
 function currentBundlePath(): string | null {
   if (typeof document === 'undefined') return null;
@@ -69,6 +83,33 @@ export function useAppUpdate(): { updateAvailable: boolean; notes: ReleaseNotes 
     let cancelled = false;
     let hiddenAt: number | null = null;
     let found = false;
+    let autoApplyTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // Tenta aplicar sozinho depois de um tempo sem ninguém digitando. Se
+    // ainda estiver ocupado, adia e tenta de novo — nunca força em cima de
+    // uma edição em andamento.
+    const scheduleAutoApply = () => {
+      if (autoApplyTimer) clearTimeout(autoApplyTimer);
+      autoApplyTimer = setTimeout(() => {
+        if (cancelled || !found) return;
+        if (isUserBusy()) {
+          scheduleAutoApply();
+          return;
+        }
+        applyUpdate();
+      }, AUTO_APPLY_IDLE_MS);
+    };
+
+    const markFound = () => {
+      if (!found) {
+        found = true;
+        fetchReleaseNotes().then((n) => {
+          if (!cancelled) setNotes(n);
+        });
+      }
+      setUpdateAvailable(true);
+      scheduleAutoApply();
+    };
 
     const check = async () => {
       try {
@@ -76,15 +117,7 @@ export function useAppUpdate(): { updateAvailable: boolean; notes: ReleaseNotes 
         if (!res.ok) return;
         const html = await res.text();
         const latest = html.match(BUNDLE_PATTERN)?.[0];
-        if (!cancelled && latest && latest !== loaded) {
-          if (!found) {
-            fetchReleaseNotes().then((n) => {
-              if (!cancelled) setNotes(n);
-            });
-          }
-          found = true;
-          setUpdateAvailable(true);
-        }
+        if (!cancelled && latest && latest !== loaded) markFound();
       } catch {
         // Sem rede: tenta de novo na próxima checagem.
       }
@@ -101,9 +134,7 @@ export function useAppUpdate(): { updateAvailable: boolean; notes: ReleaseNotes 
         applyUpdate();
         return;
       }
-      check().then(() => {
-        if (found && wasAway > AUTO_RELOAD_AFTER_HIDDEN_MS) applyUpdate();
-      });
+      check();
     };
 
     check();
@@ -112,6 +143,7 @@ export function useAppUpdate(): { updateAvailable: boolean; notes: ReleaseNotes 
     return () => {
       cancelled = true;
       clearInterval(timer);
+      if (autoApplyTimer) clearTimeout(autoApplyTimer);
       document.removeEventListener('visibilitychange', onVisibility);
     };
   }, []);
